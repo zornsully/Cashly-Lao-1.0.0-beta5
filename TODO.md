@@ -156,8 +156,21 @@ wasn't the right shape for it anyway:
   owed before release**: updating the Play Store Data Safety form to
   match (a console action, not a code change — nothing in this repo
   can complete it).
+- **Push notifications (FCM)** — has since shipped as a backstop
+  alongside the existing local alerts (see `ROADMAP.md`'s "Beyond v1"
+  section for the full design, including the dedup mechanism and the
+  first-ever Cloud Functions backend in `functions/`). **Still owed
+  before release**: updating the Play Store Data Safety form for push-
+  notification data collection (same console-only caveat as the
+  Analytics item above), and real on-device verification of a push
+  actually arriving after a genuine force-close — everything verified
+  so far is local-alert behavior and the Cloud Functions test suite, not
+  the full closed-app delivery path (see that section for exactly what
+  is and isn't confirmed).
 - **CI pipeline** — done. `.github/workflows/ci.yml` runs `flutter
-  analyze` + `flutter test` on every push/PR to `main`.
+  analyze` + `flutter test` on every push/PR to `main`, plus a second,
+  independent job (`npm ci` / lint / build / test) for the Cloud
+  Functions backend in `functions/`.
 
 ## Localization & accessibility
 

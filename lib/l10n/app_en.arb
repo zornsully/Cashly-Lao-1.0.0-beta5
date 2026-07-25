@@ -359,7 +359,7 @@
   "appLockUnlockButton": "Unlock",
   "notificationsSectionTitle": "Notifications",
   "notificationsToggleLabel": "Budget & balance alerts",
-  "notificationsToggleHelperMessage": "Get notified when a budget goes over its limit, an account balance goes negative, or a savings goal contribution is due. Only while the app is open.",
+  "notificationsToggleHelperMessage": "Get notified when a budget goes over its limit, an account balance goes negative, or a savings goal contribution is due — even when Cashly isn't open.",
   "notificationsUpdateFailedMessage": "Could not update notifications. Please try again.",
   "notificationsPermissionDeniedMessage": "Notifications are turned off for Cashly in your device settings.",
   "budgetExceededNotificationTitle": "Budget exceeded",

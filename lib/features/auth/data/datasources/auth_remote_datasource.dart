@@ -371,6 +371,7 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
         FirestorePaths.categories,
         FirestorePaths.transactions,
         FirestorePaths.budgets,
+        FirestorePaths.fcmTokens,
       ]) {
         await _deleteAllInChunks(userDoc.collection(collectionName));
       }

@@ -385,9 +385,17 @@ reporting, notifications, and export — has since shipped:
   totals into one figure in the user's default currency — raw amounts
   stay currency-exact everywhere else, exactly as originally scoped.
 - **Notifications**: local (on-device) budget-exceeded / negative-
-  balance alerts, deliberately **not** FCM (a real infrastructure/
-  billing decision, not a shortcut) — see
-  `lib/core/providers/budget_alert_providers.dart`.
+  balance / savings-goal-reminder alerts
+  (`lib/core/providers/budget_alert_providers.dart`,
+  `goal_reminder_providers.dart`) stay exactly as they were, plus
+  Firebase Cloud Messaging as a backstop for when the app is fully
+  closed. A Cloud Functions backend (`functions/`, this repo's first
+  non-Flutter component) re-evaluates each alert condition server-side
+  and pushes only when a client-written presence heartbeat
+  (`lib/core/providers/presence_providers.dart`) shows local's own
+  listeners aren't currently running — see `ROADMAP.md`'s "Beyond v1"
+  section for the full design, including the dedup mechanism between
+  the two paths.
 - **Export**: CSV, built directly on `MonthlyReport.toExportRows()` as
   planned. PDF is the one format still open — see `TODO.md`.
 

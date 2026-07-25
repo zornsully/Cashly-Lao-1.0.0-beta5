@@ -36,6 +36,13 @@ final localNotificationsPluginProvider =
       return FlutterLocalNotificationsPlugin();
     });
 
+/// Deterministic tray-notification ID for a given alert type + entity ID.
+/// Shared by every local-alert call site *and* by FCM push display
+/// (`fcm_background_handler.dart`/`fcm_message_providers.dart`) so a local
+/// alert and a push for the same underlying crossing collapse into one
+/// notification (Android replaces-by-ID) rather than stacking two.
+int notificationIdFor(String type, String id) => '$type-$id'.hashCode;
+
 /// Called once from `main()`, before `runApp` — sets up the platform
 /// integration and the one channel this app uses. Does not request the
 /// Android 13+ POST_NOTIFICATIONS runtime permission; that's requested

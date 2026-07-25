@@ -12,7 +12,20 @@ service cloud.firestore {
     // purchase receipt. Premium/monetization was removed from v1 (see
     // `TODO.md`) rather than shipped as a client-writable demo flag.
     match /users/{userId} {
-      allow read, update: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && request.auth.uid == userId;
+      // The optional lastActiveAt check backs the FCM push-notification
+      // dedup mechanism (see functions/src/lib/presence.ts): the client
+      // heartbeats this field while the app is alive so Cloud Functions can
+      // tell "local notifications already cover this" from "app is closed,
+      // push is needed." Left optional — every other preference write
+      // (theme, language, etc.) never touches this field, and requiring it
+      // unconditionally would break those writes for a user who has never
+      // enabled notifications. (request.resource only applies to writes, so
+      // this check can't live in the read rule above.)
+      allow update: if request.auth != null
+        && request.auth.uid == userId
+        && (!('lastActiveAt' in request.resource.data)
+          || request.resource.data.lastActiveAt is timestamp);
       allow create: if request.auth != null
         && request.auth.uid == userId
         && request.resource.data.uid == userId
@@ -178,6 +191,43 @@ service cloud.firestore {
           && request.resource.data.autoContributionFrequency in
             ['', 'weekly', 'biweekly', 'monthly']
           && request.resource.data.lastContributionAt is timestamp;
+      }
+
+      match /fcmTokens/{tokenId} {
+        // Document ID *is* the token value (same "ID encodes the natural
+        // key" convention as budgets' {categoryId}_{yyyy-MM}) — so
+        // registering/removing a specific token is a direct doc reference,
+        // never an array scan.
+        allow read, delete: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null
+          && request.auth.uid == userId
+          && tokenId == request.resource.data.token
+          && request.resource.data.token is string
+          && request.resource.data.token.size() > 0
+          && request.resource.data.platform in ['android', 'ios']
+          && request.resource.data.createdAt is timestamp
+          && request.resource.data.updatedAt is timestamp;
+        // createdAt pinned immutable: a token refresh should only ever bump
+        // updatedAt, same reasoning as budgets'/savingsGoals' pinned fields.
+        allow update: if request.auth != null
+          && request.auth.uid == userId
+          && tokenId == request.resource.data.token
+          && request.resource.data.token is string
+          && request.resource.data.token.size() > 0
+          && request.resource.data.platform in ['android', 'ios']
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.updatedAt is timestamp;
+      }
+
+      match /notificationState/{stateId} {
+        // Written only by Cloud Functions (Admin SDK), never the client —
+        // the durable, cross-invocation version of budget_alert_providers
+        // .dart's in-memory _AlertedIds, deciding whether a given
+        // budget/account/goal crossing has already been pushed. Explicit
+        // deny here (redundant with the trailing catch-all) purely so this
+        // collection's existence and ownership is documented in-place
+        // rather than only discoverable by reading functions/ code.
+        allow read, write: if false;
       }
     }
 

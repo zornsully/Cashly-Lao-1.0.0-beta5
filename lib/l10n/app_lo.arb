@@ -294,7 +294,7 @@
   "appLockUnlockButton": "ປົດລັອກ",
   "notificationsSectionTitle": "ການແຈ້ງເຕືອນ",
   "notificationsToggleLabel": "ການແຈ້ງເຕືອນງົບປະມານ ແລະ ຍອດເງິນ",
-  "notificationsToggleHelperMessage": "ຮັບການແຈ້ງເຕືອນເມື່ອງົບປະມານເກີນຂອບເຂດ, ຍອດເງິນບັນຊີຕິດລົບ, ຫຼື ເຖິງກຳນົດຝາກເງິນເຂົ້າເປົ້າໝາຍການເກັບເງິນ. ໃຊ້ໄດ້ສະເພາະຕອນເປີດແອັບເທົ່ານັ້ນ.",
+  "notificationsToggleHelperMessage": "ຮັບການແຈ້ງເຕືອນເມື່ອງົບປະມານເກີນຂອບເຂດ, ຍອດເງິນບັນຊີຕິດລົບ, ຫຼື ເຖິງກຳນົດຝາກເງິນເຂົ້າເປົ້າໝາຍການເກັບເງິນ — ເຖິງແມ່ນຕອນທີ່ບໍ່ໄດ້ເປີດແອັບ Cashly ຢູ່ກໍ່ຕາມ.",
   "notificationsUpdateFailedMessage": "ບໍ່ສາມາດອັບເດດການແຈ້ງເຕືອນໄດ້. ກະລຸນາລອງໃໝ່ອີກຄັ້ງ.",
   "notificationsPermissionDeniedMessage": "ການແຈ້ງເຕືອນສຳລັບ Cashly ຖືກປິດຢູ່ໃນການຕັ້ງຄ່າອຸປະກອນຂອງທ່ານ.",
   "budgetExceededNotificationTitle": "ງົບປະມານເກີນຂອບເຂດ",

@@ -898,7 +898,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationsToggleHelperMessage =>
-      'Get notified when a budget goes over its limit, an account balance goes negative, or a savings goal contribution is due. Only while the app is open.';
+      'Get notified when a budget goes over its limit, an account balance goes negative, or a savings goal contribution is due — even when Cashly isn\'t open.';
 
   @override
   String get notificationsUpdateFailedMessage =>

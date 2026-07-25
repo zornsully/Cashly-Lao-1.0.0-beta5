@@ -520,11 +520,62 @@ surfaced a genuine Google Sign-In bug in the process (see `TODO.md`):
 - ~~Sync-status indicator~~ — shipped.
 
 Decisions since revisited (queued, not yet implemented):
-- **Push notifications** — v1 shipped **local** (on-device) alerts only,
-  a deliberate infrastructure/billing decision at the time. That
-  decision has since been revisited: Firebase Cloud Messaging (real
-  push — budget/bill/savings reminders plus promotional notifications)
-  is now planned as a follow-up milestone. Not started.
+- ~~**Push notifications**~~ — shipped, as a hybrid: the v1 **local**
+  (on-device) budget-exceeded/negative-balance/savings-goal-reminder
+  alerts (`budget_alert_providers.dart`, `goal_reminder_providers.dart`)
+  are unchanged and still the primary path — Firebase Cloud Messaging is
+  purely a **backstop** for when the app is fully closed, not a
+  replacement. First-ever non-Flutter component in this repo: a
+  TypeScript Cloud Functions backend (`functions/`, own `package.json`/
+  `tsconfig.json`/Jest suite/CI job), five functions — `onTransactionWrite`/
+  `onBudgetWrite` (budget overspend, recomputed from raw transactions,
+  same currency-matching logic as `BuildBudgetProgressUseCase` ported to
+  TS), `onAccountWrite` (negative balance, read straight off the
+  denormalized `balance` field, no recompute needed), `checkGoalReminders`
+  (hourly *scheduled* function, not write-triggered — a reminder can come
+  due with zero intervening writes), and `onUserDeleted` (cleanup).
+  Dedup mechanism (the core design problem — a Function fires
+  unconditionally on every write, so it needs to know whether local
+  already covers a crossing): the client heartbeats `lastActiveAt` onto
+  its own profile doc every 60s while notifications are enabled
+  (`lib/core/providers/presence_providers.dart`); every Function checks
+  this before sending — fresh means skip, local's covering it; stale or
+  missing means the app is closed, so it pushes. A durable
+  `notificationState` doc per alertable entity
+  (`functions/src/lib/evaluateAndNotify.ts`) mirrors `_AlertedIds`'
+  false→true/true→false transition shape client-side, just made to
+  survive Cloud Function cold starts. Pushes are sent **data-only**
+  (never a `notification` payload) so both foreground and background
+  delivery render through the *same* Dart content-building +
+  `showLocalNotification` call local alerts use
+  (`lib/core/utils/fcm_notification_content.dart`), including the same
+  deterministic notification ID (`notificationIdFor`, extracted from
+  three previously-inline `hashCode` expressions) — this is what makes
+  ARB strings needed for this feature exactly zero, and what collapses
+  an imperfectly-deduplicated send into one tray notification instead of
+  two. Token lifecycle is a full Clean Architecture feature
+  (`lib/features/notifications/`) reactively registering/unregistering
+  off the existing `notificationsEnabled` preference, plus on sign-out
+  (`AuthController.logout()`, before `signOut()` completes) and full
+  account deletion. Accepted, documented gap: if a push fires while
+  closed and the user later reopens the app independently (not by
+  tapping the notification) while the condition is still true, local's
+  session-scoped dedup has no memory of the push and alerts once more —
+  closing this fully would mean making `_AlertedIds` durable across
+  sessions, judged disproportionate to this pass. Two enhancements the
+  plan explicitly scoped as optional and deliberately skipped rather
+  than silently assumed: pre-seeding local's dedup set from a
+  notification tap-to-open (`getInitialMessage`), and re-running the
+  goal-reminder check on every heartbeat tick (would close a narrow
+  pre-existing gap where a purely time-based due-crossing never
+  re-triggers locally if the app stays open and idle with zero
+  `savingsGoals` writes — worth a follow-up if it proves to matter in
+  practice). iOS untouched, same deferred treatment as the existing
+  "iOS never tested" gap. Still owed: Play Store Data Safety form update
+  for push-notification data collection (same as Analytics' own,
+  still-open item below), and real on-device verification of the full
+  loop (push arriving after a genuine force-close, not just foreground
+  local alerts).
 - ~~**Analytics**~~ — shipped. `firebase_analytics` added,
   `analyticsProvider` in `firebase_providers.dart`, collection disabled
   in debug builds the same way Crashlytics already is

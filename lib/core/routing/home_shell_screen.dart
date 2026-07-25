@@ -6,7 +6,10 @@ import '../../features/categories/presentation/providers/category_providers.dart
 import '../../l10n/app_localizations.dart';
 import '../constants/app_motion.dart';
 import '../providers/budget_alert_providers.dart';
+import '../providers/fcm_message_providers.dart';
+import '../providers/fcm_token_registration_providers.dart';
 import '../providers/goal_reminder_providers.dart';
+import '../providers/presence_providers.dart';
 import '../widgets/sync_status_banner.dart';
 
 /// The authenticated app's persistent bottom-navigation chrome. Each branch
@@ -26,6 +29,9 @@ class HomeShellScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     watchBudgetAndBalanceAlerts(ref, l10n);
     watchGoalReminders(ref, l10n);
+    watchFcmTokenRegistration(ref);
+    watchPresenceHeartbeat(ref);
+    watchPushNotifications(ref, l10n);
 
     return Scaffold(
       // StatefulShellRoute swaps branches instantly (an IndexedStack under
