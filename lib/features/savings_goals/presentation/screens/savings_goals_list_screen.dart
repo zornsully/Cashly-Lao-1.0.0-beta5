@@ -1,0 +1,93 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/app_symbols.dart';
+import '../../../../core/routing/app_routes.dart';
+import '../../../../core/widgets/app_skeleton_loader.dart';
+import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/error_view.dart';
+import '../../../../core/widgets/responsive_center.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../providers/savings_goal_providers.dart';
+import '../widgets/goal_card.dart';
+
+/// Goal management (archive/unarchive/delete) lives on the Detail screen's
+/// AppBar menu, not here — this list is tap-to-navigate only, same
+/// separation of concerns as Budget's list vs its edit form.
+class SavingsGoalsListScreen extends ConsumerWidget {
+  const SavingsGoalsListScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final showArchived = ref.watch(showArchivedGoalsProvider);
+    final progressAsync = ref.watch(savingsGoalProgressProvider(showArchived));
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n.savingsGoalsTitle),
+        actions: [
+          IconButton(
+            tooltip: showArchived
+                ? l10n.hideArchivedTooltip
+                : l10n.showArchivedTooltip,
+            icon: Icon(showArchived ? Icons.archive : Icons.archive_outlined),
+            onPressed: () =>
+                ref.read(showArchivedGoalsProvider.notifier).toggle(),
+          ),
+        ],
+      ),
+      body: ResponsiveCenter(
+        child: progressAsync.when(
+          loading: () => const AppSkeletonList(),
+          error: (error, _) => ErrorView(message: '$error'),
+          data: (progressList) {
+            if (progressList.isEmpty) {
+              // With showArchived == true the query returns archived *and*
+              // active goals, so an empty result here always means there
+              // are no goals at all yet — never "no archived ones" (same
+              // reasoning as AccountsListScreen's empty check).
+              return EmptyState(
+                icon: AppSymbols.savings,
+                title: l10n.noSavingsGoalsYetTitle,
+                message: l10n.noSavingsGoalsYetMessage,
+                action: FilledButton.icon(
+                  onPressed: () => context.push(AppRoutes.savingsGoalNew),
+                  icon: const Icon(Icons.add),
+                  label: Text(l10n.addGoalButton),
+                ),
+              );
+            }
+
+            return ListView.separated(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.md,
+                AppSpacing.md,
+                AppSpacing.xxl,
+              ),
+              itemCount: progressList.length,
+              separatorBuilder: (_, _) =>
+                  const SizedBox(height: AppSpacing.sm),
+              itemBuilder: (context, index) {
+                final progress = progressList[index];
+                return GoalCard(
+                  progress: progress,
+                  onTap: () => context.push(
+                    AppRoutes.savingsGoalDetailPath(progress.goal.id),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.push(AppRoutes.savingsGoalNew),
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}

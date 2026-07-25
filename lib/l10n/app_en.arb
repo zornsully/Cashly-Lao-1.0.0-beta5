@@ -1,0 +1,415 @@
+{
+  "@@locale": "en",
+
+  "appName": "Cashly",
+  "@appName": {"description": "The app's name, shown on the splash screen."},
+
+  "errorGenericTitle": "Something went wrong",
+  "retry": "Retry",
+  "cancel": "Cancel",
+  "delete": "Delete",
+
+  "splashTimeoutMessage": "This is taking longer than expected. Check your device's network connection and try again.",
+
+  "loginTitle": "Welcome back",
+  "loginSubtitle": "Sign in to keep track of your money.",
+  "emailLabel": "Email",
+  "passwordLabel": "Password",
+  "passwordRequiredError": "Password is required.",
+  "forgotPasswordLink": "Forgot password?",
+  "signIn": "Sign in",
+  "loginFailedMessage": "Could not sign in. Please try again.",
+  "noAccountPrompt": "Don't have an account?",
+  "signUpLink": "Sign up",
+  "orDividerLabel": "Or",
+  "continueWithGoogle": "Continue with Google",
+  "googleSignInFailedMessage": "Could not sign in with Google. Please try again.",
+
+  "registerTitle": "Create your account",
+  "registerSubtitle": "Start budgeting smarter in a couple of minutes.",
+  "fullNameLabel": "Full name",
+  "confirmPasswordLabel": "Confirm password",
+  "createAccountButton": "Create account",
+  "registerFailedMessage": "Could not create your account. Please try again.",
+  "haveAccountPrompt": "Already have an account?",
+
+  "forgotPasswordTitle": "Reset your password",
+  "forgotPasswordSubtitle": "Enter your email and we'll send you a reset link.",
+  "sendResetLinkButton": "Send reset link",
+  "resetEmailFailedMessage": "Could not send the reset email. Please try again.",
+  "checkEmailTitle": "Check your email",
+  "checkEmailSubtitle": "We've sent a password reset link to {email}.",
+  "@checkEmailSubtitle": {
+    "placeholders": {"email": {"type": "String"}}
+  },
+  "backToSignInButton": "Back to sign in",
+
+  "verifyEmailTitle": "Verify your email",
+  "verifyEmailSubtitle": "We've sent a verification link to {email}. Click it, then continue below.",
+  "@verifyEmailSubtitle": {
+    "placeholders": {"email": {"type": "String"}}
+  },
+  "verifiedButton": "I've verified my email",
+  "resendEmailButton": "Resend email",
+  "resendEmailCountdownButton": "Resend email ({seconds}s)",
+  "@resendEmailCountdownButton": {
+    "placeholders": {"seconds": {"type": "int"}}
+  },
+  "verificationEmailSentMessage": "Verification email sent.",
+  "resendFailedMessage": "Could not resend the email. Please try again.",
+  "notVerifiedYetMessage": "We couldn't confirm verification yet.",
+  "signOutButton": "Sign out",
+
+  "dashboardTitle": "Dashboard",
+  "offlineBannerMessage": "Offline — changes will sync when you're back online",
+  "reportsTooltip": "Reports",
+  "previousMonthTooltip": "Previous month",
+  "nextMonthTooltip": "Next month",
+  "showPasswordTooltip": "Show password",
+  "hidePasswordTooltip": "Hide password",
+  "editDisplayNameTooltip": "Edit name",
+  "deleteTransactionTitle": "Delete transaction?",
+  "deleteTransactionMessage": "This permanently deletes the transaction and reverses its effect on the account's balance. This cannot be undone.",
+  "deleteTransactionFailedMessage": "Could not delete the transaction.",
+  "welcomeToCashly": "Welcome to Cashly",
+  "addFirstAccountMessage": "Add your first account to start seeing your finances summarized here.",
+  "addAccountButton": "Add account",
+  "recentTransactionsTitle": "Recent Transactions",
+  "noTransactionsThisMonth": "No transactions yet this month.",
+  "spendingByCategoryTitle": "Spending by Category",
+  "budgetsTitle": "Budgets",
+  "accountBalancesTitle": "Account Balances",
+  "seeAll": "See all",
+  "totalBalanceLabel": "Total Balance ({currencyCode})",
+  "@totalBalanceLabel": {
+    "placeholders": {"currencyCode": {"type": "String"}}
+  },
+  "incomeMonthLabel": "Income (month)",
+  "expenseMonthLabel": "Expense (month)",
+
+  "languageSectionTitle": "Language",
+  "languageEnglish": "English",
+  "languageLao": "ລາວ",
+  "languageUpdateFailedMessage": "Could not update your language.",
+
+  "emailRequiredError": "Email is required.",
+  "emailInvalidError": "Enter a valid email address.",
+  "passwordTooShortError": "Password must be at least 8 characters.",
+  "passwordNeedsUppercaseError": "Include at least one uppercase letter.",
+  "passwordNeedsNumberError": "Include at least one number.",
+  "confirmPasswordRequiredError": "Confirm your password.",
+  "passwordsDoNotMatchError": "Passwords do not match.",
+  "nameRequiredError": "Name is required.",
+  "nameTooShortError": "Name must be at least 2 characters.",
+  "fieldRequiredError": "{label} is required.",
+  "@fieldRequiredError": {
+    "placeholders": {"label": {"type": "String"}}
+  },
+  "amountRequiredError": "Amount is required.",
+  "amountInvalidError": "Enter a valid number.",
+  "amountMustBePositiveError": "Amount must be greater than zero.",
+
+  "incomeLabel": "Income",
+  "expenseLabel": "Expense",
+  "transferLabel": "Transfer",
+  "archivedBadgeLabel": "Archived",
+  "defaultBadgeLabel": "Default",
+  "archiveMenuItem": "Archive",
+  "unarchiveMenuItem": "Unarchive",
+  "hideArchivedTooltip": "Hide archived",
+  "showArchivedTooltip": "Show archived",
+  "saveChangesButton": "Save changes",
+
+  "accountsTitle": "Accounts",
+  "noAccountsYetTitle": "No accounts yet",
+  "noAccountsYetMessage": "Add a cash, wallet, bank, credit card, or savings account to start tracking your money.",
+  "addAccountButton": "Add account",
+  "deleteAccountTitle": "Delete account?",
+  "deleteAccountMessage": "This permanently deletes \"{name}\". This cannot be undone.",
+  "@deleteAccountMessage": {
+    "placeholders": {"name": {"type": "String"}}
+  },
+  "deleteAccountFailedMessage": "Could not delete the account.",
+  "updateAccountFailedMessage": "Could not update the account.",
+  "accountFormEditTitle": "Edit account",
+  "accountNameLabel": "Account name",
+  "accountTypeLabel": "Account type",
+  "currentBalanceLabel": "Current balance",
+  "initialBalanceLabel": "Initial balance",
+  "currencyLabel": "Currency",
+  "saveAccountFailedMessage": "Could not save the account. Please try again.",
+  "accountTypeCashLabel": "Cash",
+  "accountTypeWalletLabel": "Wallet",
+  "accountTypeBankLabel": "Bank",
+  "accountTypeCreditCardLabel": "Credit Card",
+  "accountTypeSavingsLabel": "Savings",
+
+  "categoriesTitle": "Categories",
+  "noExpenseCategoriesYetTitle": "No expense categories yet",
+  "noIncomeCategoriesYetTitle": "No income categories yet",
+  "addCategoryToStartMessage": "Add one to start tagging your transactions.",
+  "addCategoryButton": "Add category",
+  "deleteCategoryTitle": "Delete category?",
+  "deleteCategoryMessage": "This permanently deletes \"{name}\". This cannot be undone.",
+  "@deleteCategoryMessage": {
+    "placeholders": {"name": {"type": "String"}}
+  },
+  "deleteCategoryFailedMessage": "Could not delete the category.",
+  "updateCategoryFailedMessage": "Could not update the category.",
+  "reorderCategoriesFailedMessage": "Could not save the new order.",
+  "categoryFormEditTitle": "Edit category",
+  "categoryNameLabel": "Category name",
+  "categoryTypeLabel": "Type",
+  "saveCategoryFailedMessage": "Could not save the category. Please try again.",
+
+  "budgetTitle": "Budget",
+  "deleteBudgetTitle": "Delete budget?",
+  "deleteBudgetMessage": "This removes the budget for \"{name}\" this month. This cannot be undone.",
+  "@deleteBudgetMessage": {
+    "placeholders": {"name": {"type": "String"}}
+  },
+  "deleteBudgetFailedMessage": "Could not delete the budget.",
+  "addExpenseCategoryFirstMessage": "Add an expense category first, then set a budget for it.",
+  "noBudgetSetLabel": "No budget set",
+  "setBudgetButton": "Set budget",
+  "budgetFormEditTitle": "Edit budget",
+  "categoryAndMonthLockedMessage": "Category and month can't be changed here — delete and re-create the budget instead.",
+  "monthlyLimitLabel": "Monthly limit",
+  "budgetCurrencyRestrictionMessage": "Only transactions in this currency count toward this budget.",
+  "deleteBudgetTooltip": "Delete budget",
+  "overspentByMessage": "Over by {amount}",
+  "@overspentByMessage": {
+    "placeholders": {"amount": {"type": "String"}}
+  },
+  "remainingAmountMessage": "{amount} remaining",
+  "@remainingAmountMessage": {
+    "placeholders": {"amount": {"type": "String"}}
+  },
+  "saveBudgetFailedMessage": "Could not save the budget. Please try again.",
+
+  "savingsGoalsTitle": "Savings Goals",
+  "savingsGoalsTooltip": "Savings goals",
+  "noSavingsGoalsYetTitle": "No savings goals yet",
+  "noSavingsGoalsYetMessage": "Set a target and link an account to start tracking progress toward it.",
+  "addGoalButton": "Add goal",
+  "goalFormEditTitle": "Edit goal",
+  "goalNameLabel": "Goal name",
+  "targetAmountLabel": "Target amount",
+  "linkedAccountLabel": "Linked account",
+  "linkedAccountLockedMessage": "Linked account can't be changed here — delete and re-create the goal instead.",
+  "createNewAccountOption": "+ Add a new account",
+  "accountAlreadyBacksGoalError": "This account already backs another active savings goal.",
+  "noEligibleAccountsMessage": "All your accounts already back another active goal — add a new one to continue.",
+  "autoContributionSectionTitle": "Auto contribution",
+  "autoContributionToggleLabel": "Remind me to contribute",
+  "autoContributionAmountLabel": "Contribution amount",
+  "autoContributionFrequencyLabel": "Frequency",
+  "goalFrequencyWeeklyLabel": "Weekly",
+  "goalFrequencyBiweeklyLabel": "Every 2 weeks",
+  "goalFrequencyMonthlyLabel": "Monthly",
+  "saveGoalFailedMessage": "Could not save the goal. Please try again.",
+  "deleteGoalTitle": "Delete goal?",
+  "deleteGoalMessage": "This deletes the goal. It doesn't affect the linked account or its balance. This cannot be undone.",
+  "deleteGoalFailedMessage": "Could not delete the goal.",
+  "contributeButton": "Contribute",
+  "contributionSourceAccountLabel": "From account",
+  "contributionAmountLabel": "Amount",
+  "confirmContributionButton": "Confirm contribution",
+  "contributionFailedMessage": "Could not save the contribution. Please try again.",
+  "contributionDueBannerMessage": "Your {amount} contribution is due.",
+  "@contributionDueBannerMessage": {
+    "placeholders": {"amount": {"type": "String"}}
+  },
+  "goalCompletedBadgeLabel": "Completed",
+  "goalDueBadgeLabel": "Due",
+  "estimatedCompletionScheduledMessage": "On track to finish by {date}",
+  "@estimatedCompletionScheduledMessage": {
+    "placeholders": {"date": {"type": "String"}}
+  },
+  "estimatedCompletionTrailingAverageMessage": "Estimated to finish around {date} at your recent pace",
+  "@estimatedCompletionTrailingAverageMessage": {
+    "placeholders": {"date": {"type": "String"}}
+  },
+  "estimatedCompletionInsufficientDataMessage": "Add a few contributions to see an estimated finish date.",
+  "estimatedCompletionCompletedMessage": "You've reached your goal.",
+  "accountActivityTitle": "Account activity",
+  "noAccountActivityYetMessage": "Contributions and other transactions on the linked account will show up here.",
+  "goalCelebrationTitle": "Goal reached!",
+  "goalCelebrationMessage": "You've hit your \"{goalName}\" goal.",
+  "@goalCelebrationMessage": {
+    "placeholders": {"goalName": {"type": "String"}}
+  },
+  "goalNotFoundMessage": "This goal no longer exists.",
+  "linkedAccountArchivedMessage": "This goal's linked account is archived.",
+
+  "transactionsTitle": "Transactions",
+  "transactionsTabLabel": "Transactions",
+  "deleteTransactionTitle": "Delete transaction?",
+  "deleteTransactionMessage": "This permanently deletes the transaction and reverses its effect on the account's balance. This cannot be undone.",
+  "deleteTransactionFailedMessage": "Could not delete the transaction.",
+  "noTransactionsInMonthTitle": "No transactions in {month}",
+  "@noTransactionsInMonthTitle": {
+    "placeholders": {"month": {"type": "String"}}
+  },
+  "addFirstTransactionMessage": "Add your first income or expense for this month.",
+  "addTransactionButton": "Add transaction",
+  "searchTransactionsHint": "Search transactions",
+  "searchTooltip": "Search",
+  "closeSearchTooltip": "Close search",
+  "filterSortTooltip": "Filter & sort",
+  "filterSortSheetTitle": "Filter & sort",
+  "typeFilterLabel": "Type",
+  "allTypesLabel": "All types",
+  "accountFilterLabel": "Account",
+  "allAccountsLabel": "All accounts",
+  "categoryFilterLabel": "Category",
+  "allCategoriesLabel": "All categories",
+  "sortByLabel": "Sort by",
+  "sortDateNewestLabel": "Newest first",
+  "sortDateOldestLabel": "Oldest first",
+  "sortAmountHighLabel": "Amount: high to low",
+  "sortAmountLowLabel": "Amount: low to high",
+  "clearFiltersButton": "Clear filters",
+  "noMatchingTransactionsTitle": "No matching transactions",
+  "noMatchingTransactionsMessage": "Try adjusting your search or filters.",
+  "transferToLabel": "Transfer to {account}",
+  "@transferToLabel": {
+    "placeholders": {"account": {"type": "String"}}
+  },
+  "transferFromLabel": "From {account}",
+  "@transferFromLabel": {
+    "placeholders": {"account": {"type": "String"}}
+  },
+  "unknownAccountLabel": "Unknown account",
+  "uncategorizedLabel": "Uncategorized",
+  "transactionFormEditTitle": "Edit transaction",
+  "amountLabel": "Amount",
+  "fromAccountLabel": "From account",
+  "accountFieldLabel": "Account",
+  "unavailableAccountLabel": "Unavailable account — choose another",
+  "pleaseSelectAccountError": "Please select an account.",
+  "toAccountLabel": "To account",
+  "pickFromAccountFirstMessage": "Pick a from account first",
+  "transferSameCurrencyHelperText": "Must be the same currency as the from account",
+  "pleaseSelectDestinationAccountError": "Please select a destination account.",
+  "cantTransferToSameAccountError": "Can't transfer to the same account.",
+  "transferSameCurrencyError": "Must be the same currency as the from account.",
+  "categoryFieldLabel": "Category",
+  "unavailableCategoryLabel": "Unavailable category — choose another",
+  "pleaseSelectCategoryError": "Please select a category.",
+  "dateLabel": "Date",
+  "noteOptionalLabel": "Note (optional)",
+  "saveTransactionFailedMessage": "Could not save the transaction. Please try again.",
+  "archivedSuffixFormat": "{name} (Archived)",
+  "@archivedSuffixFormat": {
+    "placeholders": {"name": {"type": "String"}}
+  },
+
+  "reportsTitle": "Reports",
+  "exportReportTooltip": "Export as CSV",
+  "exportReportSubject": "Cashly report — {month}",
+  "@exportReportSubject": {
+    "placeholders": {"month": {"type": "String"}}
+  },
+  "exportReportFailedMessage": "Could not export the report. Please try again.",
+  "convertedTotalsCardTitle": "Converted total",
+  "convertedTotalsCaption": "Approximate total across all your currencies, shown in {currency}.",
+  "@convertedTotalsCaption": {
+    "placeholders": {"currency": {"type": "String"}}
+  },
+  "convertedTotalsRatesAsOf": "Rates as of {date} · Rates by ExchangeRate-API",
+  "@convertedTotalsRatesAsOf": {
+    "placeholders": {"date": {"type": "String"}}
+  },
+  "nothingToReportYetTitle": "Nothing to report yet",
+  "nothingToReportYetMessage": "Once you record income or expenses for this month, you'll see monthly summaries, spending breakdowns, and trends here.",
+  "incomeExpenseTrendSectionTitle": "Income vs Expense Trend",
+  "spendingByCategorySectionTitle": "Spending by Category",
+  "budgetVsActualSectionTitle": "Budget vs Actual",
+  "seeAllButton": "See all",
+  "netLabel": "Net",
+  "totalLabel": "Total",
+  "monthIncomeExpenseSummaryMessage": "{month} — Income {income}, Expense {expense}",
+  "@monthIncomeExpenseSummaryMessage": {
+    "placeholders": {
+      "month": {"type": "String"},
+      "income": {"type": "String"},
+      "expense": {"type": "String"}
+    }
+  },
+
+  "save": "Save",
+
+  "settingsTitle": "Settings",
+  "appearanceSectionTitle": "Appearance",
+  "themeLabel": "Theme",
+  "themeSystemLabel": "System",
+  "themeLightLabel": "Light",
+  "themeDarkLabel": "Dark",
+  "themeUpdateFailedMessage": "Could not update your theme.",
+  "securitySectionTitle": "Security",
+  "appLockToggleLabel": "App lock",
+  "appLockToggleHelperMessage": "Require your fingerprint, face, or device PIN to open Cashly.",
+  "appLockUnsupportedMessage": "Set up a fingerprint, face unlock, or screen lock on this device to use app lock.",
+  "appLockUpdateFailedMessage": "Could not update app lock. Please try again.",
+  "appLockTitle": "Cashly is locked",
+  "appLockReasonMessage": "Authenticate to open Cashly",
+  "appLockFailedMessage": "Authentication failed. Please try again.",
+  "appLockUnavailableMessage": "Authentication isn't available right now. Please try again.",
+  "appLockUnlockButton": "Unlock",
+  "notificationsSectionTitle": "Notifications",
+  "notificationsToggleLabel": "Budget & balance alerts",
+  "notificationsToggleHelperMessage": "Get notified when a budget goes over its limit, an account balance goes negative, or a savings goal contribution is due. Only while the app is open.",
+  "notificationsUpdateFailedMessage": "Could not update notifications. Please try again.",
+  "notificationsPermissionDeniedMessage": "Notifications are turned off for Cashly in your device settings.",
+  "budgetExceededNotificationTitle": "Budget exceeded",
+  "budgetExceededNotificationBody": "You've gone over your {category} budget for this month.",
+  "@budgetExceededNotificationBody": {
+    "placeholders": {"category": {"type": "String"}}
+  },
+  "negativeBalanceNotificationTitle": "Account balance negative",
+  "negativeBalanceNotificationBody": "Your {account} balance has gone negative.",
+  "@negativeBalanceNotificationBody": {
+    "placeholders": {"account": {"type": "String"}}
+  },
+  "goalReminderNotificationTitle": "Savings goal reminder",
+  "goalReminderNotificationBody": "Time for your {frequency} contribution to \"{goalName}\".",
+  "@goalReminderNotificationBody": {
+    "placeholders": {
+      "frequency": {"type": "String"},
+      "goalName": {"type": "String"}
+    }
+  },
+  "defaultsSectionTitle": "Defaults",
+  "defaultCurrencyLabel": "Default currency",
+  "defaultCurrencyHelperMessage": "Used to pre-select the currency when you create a new account or budget.",
+  "defaultCurrencyUpdateFailedMessage": "Could not update your default currency.",
+  "currencyDisplayFormat": "{code} — {name}",
+  "@currencyDisplayFormat": {
+    "placeholders": {
+      "code": {"type": "String"},
+      "name": {"type": "String"}
+    }
+  },
+
+  "profileTitle": "Profile",
+  "editNameDialogTitle": "Edit name",
+  "fullNameLabel": "Full name",
+  "nameUpdatedMessage": "Name updated.",
+  "nameUpdateFailedMessage": "Could not update your name.",
+  "deleteUserAccountTitle": "Delete account?",
+  "deleteUserAccountMessageWithPassword": "This permanently deletes your account and all of your data — accounts, transactions, categories, and budgets. This cannot be undone.",
+  "deleteUserAccountMessageGoogle": "This permanently deletes your account and all of your data — accounts, transactions, categories, and budgets. This cannot be undone. You'll be asked to confirm with Google on the next step.",
+  "confirmYourPasswordLabel": "Confirm your password",
+  "deleteAccountConfirmButton": "Delete Account",
+  "deleteUserAccountFailedMessage": "Could not delete your account.",
+  "addYourNameLabel": "Add your name",
+  "emailVerifiedLabel": "Email verified",
+  "notVerifiedLabel": "Not verified",
+  "memberSinceLabel": "Member since",
+  "signOutButton": "Sign out",
+  "deleteAccountButtonLabel": "Delete account",
+
+  "iconLabel": "Icon",
+  "colorLabel": "Color"
+}

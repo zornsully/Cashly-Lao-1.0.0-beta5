@@ -1,0 +1,189 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Each user may only read and write their own profile document.
+    // No client can read or list another user's data.
+    //
+    // NOTE: this update rule isn't restricted to specific fields, so it
+    // isn't a safe place to add anything money-related (e.g. a future
+    // `isPremium` flag) without either field-level validation here or,
+    // better, a server-validated write via a Cloud Function checking a
+    // purchase receipt. Premium/monetization was removed from v1 (see
+    // `TODO.md`) rather than shipped as a client-writable demo flag.
+    match /users/{userId} {
+      allow read, update: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.uid == userId
+        && request.resource.data.email == request.auth.token.email;
+      // Account deletion (Settings) deletes this doc first, as its own
+      // commit, before clearing the subcollections below — see the
+      // `categories` rule's delete exception for why the ordering matters.
+      allow delete: if request.auth != null && request.auth.uid == userId;
+
+      // Each user's accounts, categories, transactions, etc. live in
+      // subcollections under their own profile document so ownership is
+      // enforced by the path itself.
+      match /accounts/{accountId} {
+        allow read, delete: if request.auth != null && request.auth.uid == userId;
+        allow create, update: if request.auth != null
+          && request.auth.uid == userId
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.type in
+            ['cash', 'wallet', 'bank', 'creditCard', 'savings']
+          && request.resource.data.balance is number
+          && request.resource.data.currencyCode is string
+          && request.resource.data.icon is string
+          && request.resource.data.color is string
+          && request.resource.data.isArchived is bool;
+      }
+
+      match /categories/{categoryId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        // Default categories are seeded by the user themselves (client-side
+        // batch) but can never be deleted, only archived — *unless* the
+        // user's whole profile doc is already gone, which only happens as
+        // step 1 of full account deletion (see auth_remote_datasource.dart
+        // `deleteAccount`). That ordering is what makes this exception safe:
+        // there's no way to make the profile doc "disappear" while still
+        // using the app normally, so this can't be used to route around the
+        // default-category delete protection any other way.
+        allow delete: if request.auth != null
+          && request.auth.uid == userId
+          && (resource.data.isDefault == false
+            || !exists(/databases/$(database)/documents/users/$(userId)));
+        allow create: if request.auth != null
+          && request.auth.uid == userId
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.type in ['income', 'expense']
+          && request.resource.data.icon is string
+          && request.resource.data.color is string
+          && request.resource.data.isDefault is bool
+          && request.resource.data.isArchived is bool
+          && request.resource.data.sortOrder is number;
+        // `isDefault` is fixed at creation (CategoryEntity.copyWith doesn't
+        // even expose it) — pinned here too so a client can't flip a
+        // default category's flag to false and then delete it, bypassing
+        // the delete rule above.
+        allow update: if request.auth != null
+          && request.auth.uid == userId
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.type in ['income', 'expense']
+          && request.resource.data.icon is string
+          && request.resource.data.color is string
+          && request.resource.data.isDefault is bool
+          && request.resource.data.isDefault == resource.data.isDefault
+          && request.resource.data.isArchived is bool
+          && request.resource.data.sortOrder is number;
+      }
+
+      match /transactions/{transactionId} {
+        allow read, delete: if request.auth != null && request.auth.uid == userId;
+        // categoryId and toAccountId are always present as strings — ''
+        // for whichever one doesn't apply to this transaction's type —
+        // rather than an absent field, so every rule below can check
+        // `.size() > 0` uniformly instead of a separate "field exists"
+        // check. income/expense need a real categoryId and no
+        // toAccountId; transfer needs a real, distinct toAccountId and no
+        // categoryId.
+        allow create, update: if request.auth != null
+          && request.auth.uid == userId
+          && request.resource.data.accountId is string
+          && request.resource.data.accountId.size() > 0
+          && request.resource.data.categoryId is string
+          && request.resource.data.toAccountId is string
+          && request.resource.data.type in ['income', 'expense', 'transfer']
+          && (request.resource.data.type == 'transfer'
+            ? (request.resource.data.categoryId.size() == 0
+              && request.resource.data.toAccountId.size() > 0
+              && request.resource.data.toAccountId != request.resource.data.accountId)
+            : (request.resource.data.categoryId.size() > 0
+              && request.resource.data.toAccountId.size() == 0))
+          && request.resource.data.amount is number
+          && request.resource.data.amount > 0
+          && request.resource.data.date is timestamp
+          && request.resource.data.note is string;
+      }
+
+      match /budgets/{budgetId} {
+        allow read, delete: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null
+          && request.auth.uid == userId
+          && request.resource.data.categoryId is string
+          && request.resource.data.categoryId.size() > 0
+          && request.resource.data.month is timestamp
+          && request.resource.data.limitAmount is number
+          && request.resource.data.limitAmount > 0
+          && request.resource.data.currencyCode is string
+          && request.resource.data.currencyCode.size() > 0;
+        // `categoryId`/`month` are fixed at creation (BudgetEntity.copyWith
+        // only exposes limitAmount/currencyCode, and the document ID itself
+        // is derived from `{categoryId}_{yyyy-MM}` — see budget_remote_
+        // datasource.dart) — pinned here too so a client can't repoint an
+        // existing budget document at a different category/month via a
+        // raw update, which would desync the ID from its own fields.
+        allow update: if request.auth != null
+          && request.auth.uid == userId
+          && request.resource.data.categoryId == resource.data.categoryId
+          && request.resource.data.month == resource.data.month
+          && request.resource.data.limitAmount is number
+          && request.resource.data.limitAmount > 0
+          && request.resource.data.currencyCode is string
+          && request.resource.data.currencyCode.size() > 0;
+      }
+
+      match /savingsGoals/{goalId} {
+        allow read, delete: if request.auth != null && request.auth.uid == userId;
+        // No currencyCode field here at all, unlike accounts/budgets — a
+        // goal's currency is always derived live from its linked account
+        // (AccountEntity.currencyCode is user-editable after creation, so
+        // caching a copy here could silently disagree with the account).
+        allow create: if request.auth != null
+          && request.auth.uid == userId
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.targetAmount is number
+          && request.resource.data.targetAmount > 0
+          && request.resource.data.accountId is string
+          && request.resource.data.accountId.size() > 0
+          && request.resource.data.icon is string
+          && request.resource.data.color is string
+          && request.resource.data.isArchived is bool
+          && request.resource.data.autoContributionAmount is number
+          && request.resource.data.autoContributionAmount >= 0
+          && request.resource.data.autoContributionFrequency in
+            ['', 'weekly', 'biweekly', 'monthly']
+          && request.resource.data.lastContributionAt is timestamp;
+        // accountId pinned immutable: repointing a goal at a different
+        // account after creation would desync it from whatever account
+        // actually backed its past contributions (see
+        // ContributeToGoalUseCase — contributions are transfers into
+        // accountId, so progress and history both key off it staying put).
+        allow update: if request.auth != null
+          && request.auth.uid == userId
+          && request.resource.data.accountId == resource.data.accountId
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.targetAmount is number
+          && request.resource.data.targetAmount > 0
+          && request.resource.data.icon is string
+          && request.resource.data.color is string
+          && request.resource.data.isArchived is bool
+          && request.resource.data.autoContributionAmount is number
+          && request.resource.data.autoContributionAmount >= 0
+          && request.resource.data.autoContributionFrequency in
+            ['', 'weekly', 'biweekly', 'monthly']
+          && request.resource.data.lastContributionAt is timestamp;
+      }
+    }
+
+    // Deny everything else by default until a feature explicitly needs it.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

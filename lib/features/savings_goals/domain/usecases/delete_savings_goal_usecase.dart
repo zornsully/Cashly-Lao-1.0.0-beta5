@@ -1,0 +1,14 @@
+import 'package:fpdart/fpdart.dart';
+
+import '../../../../core/error/failure.dart';
+import '../repositories/savings_goal_repository.dart';
+
+class DeleteSavingsGoalUseCase {
+  const DeleteSavingsGoalUseCase(this._repository);
+
+  final SavingsGoalRepository _repository;
+
+  Future<Either<Failure, Unit>> call(String id) {
+    return _repository.deleteGoal(id);
+  }
+}

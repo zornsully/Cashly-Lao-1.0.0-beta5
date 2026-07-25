@@ -1,0 +1,271 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../providers/firebase_providers.dart';
+
+import '../../features/accounts/domain/entities/account_entity.dart';
+import '../../features/accounts/presentation/screens/account_form_screen.dart';
+import '../../features/accounts/presentation/screens/accounts_list_screen.dart';
+import '../../features/auth/presentation/providers/auth_providers.dart';
+import '../../features/auth/presentation/screens/forgot_password_screen.dart';
+import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/auth/presentation/screens/profile_screen.dart';
+import '../../features/auth/presentation/screens/register_screen.dart';
+import '../../features/auth/presentation/screens/splash_screen.dart';
+import '../../features/auth/presentation/screens/verify_email_screen.dart';
+import '../../features/categories/domain/entities/category_entity.dart';
+import '../../features/categories/domain/entities/category_type.dart';
+import '../../features/categories/presentation/screens/categories_list_screen.dart';
+import '../../features/categories/presentation/screens/category_form_screen.dart';
+import '../../features/budget/domain/entities/budget_entity.dart';
+import '../../features/budget/presentation/screens/budget_form_screen.dart';
+import '../../features/budget/presentation/screens/budgets_list_screen.dart';
+import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
+import '../../features/reports/presentation/screens/reports_screen.dart';
+import '../../features/savings_goals/domain/entities/savings_goal_entity.dart';
+import '../../features/savings_goals/presentation/screens/savings_goal_detail_screen.dart';
+import '../../features/savings_goals/presentation/screens/savings_goal_form_screen.dart';
+import '../../features/savings_goals/presentation/screens/savings_goals_list_screen.dart';
+import '../../features/settings/presentation/screens/lock_screen.dart';
+import '../../features/settings/presentation/screens/settings_screen.dart';
+import '../../features/settings/presentation/providers/settings_providers.dart';
+import '../../features/transactions/domain/entities/transaction_entity.dart';
+import '../../features/transactions/presentation/screens/transaction_form_screen.dart';
+import '../../features/transactions/presentation/screens/transactions_list_screen.dart';
+import '../providers/app_lock_state_provider.dart';
+import 'app_routes.dart';
+import 'home_shell_screen.dart';
+
+const _publicRoutes = {
+  AppRoutes.login,
+  AppRoutes.register,
+  AppRoutes.forgotPassword,
+};
+
+const _authOnlyRoutes = {
+  AppRoutes.splash,
+  AppRoutes.login,
+  AppRoutes.register,
+  AppRoutes.forgotPassword,
+  AppRoutes.verifyEmail,
+};
+
+/// The app's single [GoRouter] instance. Auth guarding lives entirely in
+/// [redirect]: no screen needs to manually check "am I logged in?" before
+/// rendering, and no screen needs to manually navigate after a successful
+/// login/logout — both happen reactively as [authStateChangesProvider]
+/// updates from Firebase.
+final appRouterProvider = Provider<GoRouter>((ref) {
+  // Driven by ref.listen on authStateChangesProvider itself — Riverpod's
+  // own single, shared subscription to authRepository.authStateChanges()
+  // — rather than a second, independent call to authStateChanges() here.
+  // A separate subscription to the same underlying Firebase stream
+  // doesn't reliably replay the stream's first event to a late
+  // subscriber, which left this provider needing a value (redirect below
+  // reads it via ref.read, which isn't itself reactive) permanently
+  // stuck without one — the app never left the splash screen for any
+  // user, ever.
+  final refreshNotifier = _AuthRefreshNotifier();
+  ref.listen(authStateChangesProvider, (_, _) => refreshNotifier.refresh());
+  // App lock gate needs the router to re-evaluate `redirect` whenever
+  // either changes: the session unlocks/re-locks, or the preference itself
+  // is toggled in Settings (so turning it off there immediately clears the
+  // gate rather than waiting for the next navigation).
+  ref.listen(isUnlockedProvider, (_, _) => refreshNotifier.refresh());
+  ref.listen(userPreferencesProvider, (_, _) => refreshNotifier.refresh());
+  ref.onDispose(refreshNotifier.dispose);
+
+  return GoRouter(
+    initialLocation: AppRoutes.splash,
+    refreshListenable: refreshNotifier,
+    observers: [FirebaseAnalyticsObserver(analytics: ref.read(analyticsProvider))],
+    redirect: (context, state) {
+      final authState = ref.read(authStateChangesProvider);
+      final location = state.matchedLocation;
+
+      if (!authState.hasValue) {
+        return location == AppRoutes.splash ? null : AppRoutes.splash;
+      }
+
+      final user = authState.value;
+
+      if (user == null) {
+        return _publicRoutes.contains(location) ? null : AppRoutes.login;
+      }
+
+      if (!user.emailVerified) {
+        return location == AppRoutes.verifyEmail ? null : AppRoutes.verifyEmail;
+      }
+
+      final appLockEnabled =
+          ref.read(userPreferencesProvider).value?.appLockEnabled ?? false;
+      if (appLockEnabled && !ref.read(isUnlockedProvider)) {
+        return location == AppRoutes.lock ? null : AppRoutes.lock;
+      }
+      if (location == AppRoutes.lock) {
+        return AppRoutes.home;
+      }
+
+      return _authOnlyRoutes.contains(location) ? AppRoutes.home : null;
+    },
+    routes: [
+      GoRoute(
+        path: AppRoutes.splash,
+        builder: (context, state) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.login,
+        builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.register,
+        builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.forgotPassword,
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.verifyEmail,
+        builder: (context, state) => const VerifyEmailScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.lock,
+        builder: (context, state) => const LockScreen(),
+      ),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            HomeShellScreen(navigationShell: navigationShell),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.dashboard,
+                builder: (context, state) => const DashboardScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.accounts,
+                builder: (context, state) => const AccountsListScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.transactions,
+                builder: (context, state) => const TransactionsListScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.categories,
+                builder: (context, state) => const CategoriesListScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.budget,
+                builder: (context, state) => const BudgetsListScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.profile,
+                builder: (context, state) => const ProfileScreen(),
+              ),
+            ],
+          ),
+        ],
+      ),
+      GoRoute(
+        path: AppRoutes.accountNew,
+        builder: (context, state) => const AccountFormScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.accountEdit,
+        builder: (context, state) =>
+            AccountFormScreen(existing: state.extra as AccountEntity?),
+      ),
+      GoRoute(
+        path: AppRoutes.categoryNew,
+        builder: (context, state) =>
+            CategoryFormScreen(initialType: state.extra as CategoryType?),
+      ),
+      GoRoute(
+        path: AppRoutes.categoryEdit,
+        builder: (context, state) =>
+            CategoryFormScreen(existing: state.extra as CategoryEntity?),
+      ),
+      GoRoute(
+        path: AppRoutes.transactionNew,
+        builder: (context, state) => const TransactionFormScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.transactionEdit,
+        builder: (context, state) =>
+            TransactionFormScreen(existing: state.extra as TransactionEntity?),
+      ),
+      GoRoute(
+        path: AppRoutes.budgetNew,
+        builder: (context, state) =>
+            BudgetFormScreen(newBudgetArgs: state.extra as NewBudgetArgs?),
+      ),
+      GoRoute(
+        path: AppRoutes.budgetEdit,
+        builder: (context, state) =>
+            BudgetFormScreen(existing: state.extra as BudgetEntity?),
+      ),
+      GoRoute(
+        path: AppRoutes.reports,
+        builder: (context, state) => const ReportsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.settings,
+        builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.savingsGoals,
+        builder: (context, state) => const SavingsGoalsListScreen(),
+      ),
+      // Registered before savingsGoalDetail: both /savings-goals/new and
+      // /savings-goals/:id would otherwise match the literal path
+      // "/savings-goals/new", and go_router resolves top-level routes in
+      // declaration order rather than preferring the more specific one.
+      GoRoute(
+        path: AppRoutes.savingsGoalNew,
+        builder: (context, state) => const SavingsGoalFormScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.savingsGoalEdit,
+        builder: (context, state) =>
+            SavingsGoalFormScreen(existing: state.extra as SavingsGoalEntity?),
+      ),
+      GoRoute(
+        path: AppRoutes.savingsGoalDetail,
+        builder: (context, state) => SavingsGoalDetailScreen(
+          goalId: state.pathParameters['id']!,
+        ),
+      ),
+    ],
+  );
+});
+
+/// Bridges a `ref.listen` callback into a [Listenable] for GoRouter's
+/// `refreshListenable` — see [appRouterProvider] for why this goes through
+/// Riverpod's own listener rather than a second, independent subscription
+/// to the underlying auth stream.
+class _AuthRefreshNotifier extends ChangeNotifier {
+  void refresh() => notifyListeners();
+}

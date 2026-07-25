@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: 'stable'
+          cache: true
+
+      - run: flutter pub get
+
+      # lib/l10n/app_localizations*.dart are gitignored generated code —
+      # `generate: true` in pubspec.yaml means `flutter build`/`test` would
+      # regenerate them implicitly too, but doing it explicitly here keeps
+      # the analyze step (which doesn't trigger codegen on its own) from
+      # failing on missing files.
+      - run: flutter gen-l10n
+
+      - run: flutter analyze
+
+      - run: flutter test

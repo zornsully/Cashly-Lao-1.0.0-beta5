@@ -1,0 +1,62 @@
+{
+  "project_info": {
+    "project_number": "406428434702",
+    "project_id": "cashly-lao",
+    "storage_bucket": "cashly-lao.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:406428434702:android:1debebd15d366fee36d75f",
+        "android_client_info": {
+          "package_name": "com.cashlylao.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "406428434702-c5u0sd0aojj3si6boj89khu0sdmke2ju.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cashlylao.app",
+            "certificate_hash": "edda5b8ad6e56069053794015b2d735703bc32af"
+          }
+        },
+        {
+          "client_id": "406428434702-kqaqoqlilrvkjcu5kaoet3li4frfudva.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cashlylao.app",
+            "certificate_hash": "ec61aeb6dc9612e444be2d51c879501c96515ad2"
+          }
+        },
+        {
+          "client_id": "406428434702-hmq4kb427bsvhcehc4452mr4oct42il3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD__2UQZZGP8_kzhiWkI9PZBH4VNpqeReQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "406428434702-hmq4kb427bsvhcehc4452mr4oct42il3.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "406428434702-psoe1m5rnes7anofu5ebnue4hr68jtfq.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.cashlylao.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
