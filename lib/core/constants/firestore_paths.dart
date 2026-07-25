@@ -24,4 +24,22 @@ abstract final class FirestorePaths {
 
   /// Subcollection of `users/{uid}`: `users/{uid}/savingsGoals/{goalId}`.
   static const String savingsGoals = 'savingsGoals';
+
+  /// Subcollection of `users/{uid}`: `users/{uid}/fcmTokens/{tokenId}`.
+  /// Document ID is the token string itself — see `firestore.rules`.
+  static const String fcmTokens = 'fcmTokens';
+
+  /// Subcollection of `users/{uid}`: `users/{uid}/notificationState/{stateId}`.
+  /// Server-only (Cloud Functions Admin SDK) — the client never reads or
+  /// writes this, so no Dart datasource ever references this constant
+  /// directly; kept here only so the collection name has one source of
+  /// truth alongside every other one.
+  static const String notificationState = 'notificationState';
+
+  /// Field on the `users/{uid}` document: a heartbeat timestamp the client
+  /// writes periodically while the authenticated app is alive, so Cloud
+  /// Functions can distinguish "local notifications already cover this"
+  /// from "app is closed, push is needed." See
+  /// `lib/core/providers/presence_providers.dart`.
+  static const String lastActiveAtField = 'lastActiveAt';
 }

@@ -62,7 +62,7 @@ void _handleGoals(
     ref.read(_alertedDueGoalIdsProvider.notifier).add(goal.id);
     showLocalNotification(
       ref.read(localNotificationsPluginProvider),
-      id: 'goal-${goal.id}'.hashCode,
+      id: notificationIdFor('goal', goal.id),
       title: l10n.goalReminderNotificationTitle,
       body: l10n.goalReminderNotificationBody(
         goal.autoContributionFrequency!.localizedLabel(l10n),

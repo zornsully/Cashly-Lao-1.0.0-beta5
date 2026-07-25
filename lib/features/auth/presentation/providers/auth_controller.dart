@@ -4,6 +4,7 @@ import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/providers/firebase_providers.dart';
 import '../../../../core/utils/analytics_logger.dart';
+import '../../../notifications/presentation/providers/fcm_token_providers.dart';
 import 'auth_providers.dart';
 
 /// Drives the loading/error state for every auth *action* (login, register,
@@ -66,8 +67,26 @@ class AuthController extends AsyncNotifier<void> {
     return success;
   }
 
-  Future<bool> logout() {
+  Future<bool> logout() async {
+    await _unregisterFcmTokenBestEffort();
     return _run(() => ref.read(logoutUseCaseProvider).call());
+  }
+
+  /// Must run *before* `signOut()` completes — Firestore rules require
+  /// `request.auth.uid` to still resolve to this user, and it would be
+  /// rejected afterward. Best-effort and never blocks sign-out: a stray
+  /// leftover token can't cause a wrongly-delivered push either way, since
+  /// every Cloud Function send is gated on `notificationsEnabled` before a
+  /// token is ever read (see `fcm_token_registration_providers.dart`'s doc
+  /// comment for the fuller reasoning, which this mirrors).
+  Future<void> _unregisterFcmTokenBestEffort() async {
+    try {
+      final token = await ref.read(messagingProvider).getToken();
+      if (token == null) return;
+      await ref.read(unregisterFcmTokenUseCaseProvider).call(token: token);
+    } catch (_) {
+      // Best-effort — see method doc comment.
+    }
   }
 
   Future<bool> sendPasswordResetEmail(String email) {

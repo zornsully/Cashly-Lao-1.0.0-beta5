@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Singleton Firebase SDK instances, exposed through Riverpod so every
@@ -20,4 +21,8 @@ final firestoreProvider = Provider<FirebaseFirestore>((ref) {
 /// safe to call from code paths tests exercise without a Firebase app.
 final analyticsProvider = Provider<FirebaseAnalytics>((ref) {
   return FirebaseAnalytics.instance;
+});
+
+final messagingProvider = Provider<FirebaseMessaging>((ref) {
+  return FirebaseMessaging.instance;
 });

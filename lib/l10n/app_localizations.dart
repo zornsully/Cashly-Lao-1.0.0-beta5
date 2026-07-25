@@ -1695,7 +1695,7 @@ abstract class AppLocalizations {
   /// No description provided for @notificationsToggleHelperMessage.
   ///
   /// In en, this message translates to:
-  /// **'Get notified when a budget goes over its limit, an account balance goes negative, or a savings goal contribution is due. Only while the app is open.'**
+  /// **'Get notified when a budget goes over its limit, an account balance goes negative, or a savings goal contribution is due — even when Cashly isn\'t open.'**
   String get notificationsToggleHelperMessage;
 
   /// No description provided for @notificationsUpdateFailedMessage.

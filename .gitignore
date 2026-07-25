@@ -107,6 +107,10 @@ unlinked_spec.ds
 # Coverage
 coverage/
 
+# Cloud Functions (functions/) — Node/TypeScript, not Flutter
+functions/node_modules/
+functions/lib/
+
 # Symbols
 app.*.symbols
 

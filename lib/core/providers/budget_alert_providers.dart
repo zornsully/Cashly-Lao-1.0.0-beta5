@@ -71,7 +71,7 @@ void _handleBudgetProgress(
     ref.read(_alertedOverspentBudgetIdsProvider.notifier).add(id);
     showLocalNotification(
       ref.read(localNotificationsPluginProvider),
-      id: 'budget-$id'.hashCode,
+      id: notificationIdFor('budget', id),
       title: l10n.budgetExceededNotificationTitle,
       body: l10n.budgetExceededNotificationBody(progress.category.name),
       channel: budgetAlertsChannel,
@@ -108,7 +108,7 @@ void _handleAccounts(
     ref.read(_alertedNegativeAccountIdsProvider.notifier).add(account.id);
     showLocalNotification(
       ref.read(localNotificationsPluginProvider),
-      id: 'account-${account.id}'.hashCode,
+      id: notificationIdFor('account', account.id),
       title: l10n.negativeBalanceNotificationTitle,
       body: l10n.negativeBalanceNotificationBody(account.name),
       channel: budgetAlertsChannel,

@@ -896,7 +896,7 @@ class AppLocalizationsLo extends AppLocalizations {
 
   @override
   String get notificationsToggleHelperMessage =>
-      'ຮັບການແຈ້ງເຕືອນເມື່ອງົບປະມານເກີນຂອບເຂດ, ຍອດເງິນບັນຊີຕິດລົບ, ຫຼື ເຖິງກຳນົດຝາກເງິນເຂົ້າເປົ້າໝາຍການເກັບເງິນ. ໃຊ້ໄດ້ສະເພາະຕອນເປີດແອັບເທົ່ານັ້ນ.';
+      'ຮັບການແຈ້ງເຕືອນເມື່ອງົບປະມານເກີນຂອບເຂດ, ຍອດເງິນບັນຊີຕິດລົບ, ຫຼື ເຖິງກຳນົດຝາກເງິນເຂົ້າເປົ້າໝາຍການເກັບເງິນ — ເຖິງແມ່ນຕອນທີ່ບໍ່ໄດ້ເປີດແອັບ Cashly ຢູ່ກໍ່ຕາມ.';
 
   @override
   String get notificationsUpdateFailedMessage =>

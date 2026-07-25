@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import 'core/providers/app_lock_state_provider.dart';
+import 'core/providers/presence_providers.dart';
 import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'features/settings/presentation/providers/settings_providers.dart';
@@ -37,6 +38,9 @@ class _CashlyAppState extends ConsumerState<CashlyApp>
     // authentication it's in the middle of.
     if (state == AppLifecycleState.paused) {
       ref.read(isUnlockedProvider.notifier).lock();
+    }
+    if (state == AppLifecycleState.resumed) {
+      pingPresenceNow(ref);
     }
   }
 

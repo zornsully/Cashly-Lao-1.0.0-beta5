@@ -35,6 +35,21 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Cashly always sends data-only FCM messages and displays them
+             itself via flutter_local_notifications (see
+             fcm_message_providers.dart / fcm_background_handler.dart), so
+             this meta-data is never used by that path. It exists purely so
+             a `notification`-payload message sent manually through the
+             Firebase Console's Notification Composer (a promotional/
+             broadcast use case this app deliberately leaves open, with no
+             code of its own) still auto-displays with the right icon/color
+             instead of a bare default. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@mipmap/ic_launcher" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/ic_launcher_background" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
