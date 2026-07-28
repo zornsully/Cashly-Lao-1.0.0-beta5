@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/settings/presentation/providers/settings_providers.dart';
@@ -26,8 +27,7 @@ class _PresenceHeartbeat extends Notifier<void> {
     ref.onDispose(() => _timer?.cancel());
 
     final enabled =
-        ref.watch(userPreferencesProvider).value?.notificationsEnabled ??
-        false;
+        ref.watch(userPreferencesProvider).value?.notificationsEnabled ?? false;
     _timer?.cancel();
     _timer = null;
     if (!enabled) return;
@@ -61,6 +61,7 @@ void watchPresenceHeartbeat(WidgetRef ref) =>
 /// next periodic tick — closes the gap where a Cloud Function could fire a
 /// redundant push in the brief window right after resume.
 void pingPresenceNow(WidgetRef ref) {
+  if (kIsWeb) return;
   final enabled =
       ref.read(userPreferencesProvider).value?.notificationsEnabled ?? false;
   if (!enabled) return;

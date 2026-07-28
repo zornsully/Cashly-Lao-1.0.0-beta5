@@ -52,43 +52,37 @@ void main() {
   // "no signed-in user", and cache that error forever — Settings would show
   // that error permanently even after a real, successful sign-in, because
   // nothing ever told the provider to re-subscribe.
-  test(
-    'never touches the repository while signed out, and never lands in an '
-    'error state',
-    () async {
-      container.listen(userPreferencesProvider, (_, _) {});
-      authController.add(null);
-      await Future<void>.delayed(Duration.zero);
+  test('never touches the repository while signed out, and never lands in an '
+      'error state', () async {
+    container.listen(userPreferencesProvider, (_, _) {});
+    authController.add(null);
+    await Future<void>.delayed(Duration.zero);
 
-      verifyNever(() => repository.watchPreferences());
-      expect(container.read(userPreferencesProvider).hasError, isFalse);
-    },
-  );
+    verifyNever(() => repository.watchPreferences());
+    expect(container.read(userPreferencesProvider).hasError, isFalse);
+  });
 
-  test(
-    'subscribes to preferences once a user signs in, even though the '
-    'provider first built before any user existed',
-    () async {
-      when(
-        () => repository.watchPreferences(),
-      ).thenAnswer((_) => Stream.value(preferences));
+  test('subscribes to preferences once a user signs in, even though the '
+      'provider first built before any user existed', () async {
+    when(
+      () => repository.watchPreferences(),
+    ).thenAnswer((_) => Stream.value(preferences));
 
-      container.listen(userPreferencesProvider, (_, _) {});
-      // Nobody signed in yet — mirrors the app cold-starting before the
-      // auth stream has resolved.
-      authController.add(null);
-      await Future<void>.delayed(Duration.zero);
-      verifyNever(() => repository.watchPreferences());
+    container.listen(userPreferencesProvider, (_, _) {});
+    // Nobody signed in yet — mirrors the app cold-starting before the
+    // auth stream has resolved.
+    authController.add(null);
+    await Future<void>.delayed(Duration.zero);
+    verifyNever(() => repository.watchPreferences());
 
-      // The user signs in afterward. Two hops of async propagation here —
-      // authController's event, then the nested watchPreferences() stream
-      // it triggers — so flush the microtask queue twice.
-      authController.add(user);
-      await Future<void>.delayed(Duration.zero);
-      await Future<void>.delayed(Duration.zero);
+    // The user signs in afterward. Two hops of async propagation here —
+    // authController's event, then the nested watchPreferences() stream
+    // it triggers — so flush the microtask queue twice.
+    authController.add(user);
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
 
-      expect(container.read(userPreferencesProvider).value, preferences);
-      verify(() => repository.watchPreferences()).called(1);
-    },
-  );
+    expect(container.read(userPreferencesProvider).value, preferences);
+    verify(() => repository.watchPreferences()).called(1);
+  });
 }

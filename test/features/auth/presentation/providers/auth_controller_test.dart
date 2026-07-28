@@ -27,18 +27,15 @@ void main() {
   // chance to run. logout() must still succeed in a test environment with
   // no Firebase app initialized and none of the FCM providers overridden —
   // exactly the scenario a real widget test exercises today.
-  test(
-    'logout succeeds even though no Firebase app is initialized for the '
-    'FCM token unregister step',
-    () async {
-      when(() => repository.logout()).thenAnswer((_) async => const Right(unit));
+  test('logout succeeds even though no Firebase app is initialized for the '
+      'FCM token unregister step', () async {
+    when(() => repository.logout()).thenAnswer((_) async => const Right(unit));
 
-      final result = await container
-          .read(authControllerProvider.notifier)
-          .logout();
+    final result = await container
+        .read(authControllerProvider.notifier)
+        .logout();
 
-      expect(result, isTrue);
-      verify(() => repository.logout()).called(1);
-    },
-  );
+    expect(result, isTrue);
+    verify(() => repository.logout()).called(1);
+  });
 }

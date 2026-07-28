@@ -22,9 +22,7 @@ abstract final class AppBottomSheet {
         duration: AppMotion.normal,
       ),
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppRadius.xl),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       builder: (context) => SafeArea(
         child: Padding(

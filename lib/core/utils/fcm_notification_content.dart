@@ -21,10 +21,7 @@ import '../providers/local_notifications_providers.dart';
 /// the app's own writes), so a background isolate handler silently drops
 /// what it can't recognize rather than throwing.
 ({String title, String body, AndroidNotificationChannel channel})?
-buildPushNotificationContent(
-  AppLocalizations l10n,
-  Map<String, dynamic> data,
-) {
+buildPushNotificationContent(AppLocalizations l10n, Map<String, dynamic> data) {
   switch (data['type']) {
     case 'budget_exceeded':
       return (

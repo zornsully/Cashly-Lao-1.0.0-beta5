@@ -44,9 +44,7 @@ class _AppPasswordFieldState extends State<AppPasswordField> {
       prefixIcon: Icons.lock_outline,
       suffixIcon: IconButton(
         icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
-        tooltip: _obscure
-            ? l10n.showPasswordTooltip
-            : l10n.hidePasswordTooltip,
+        tooltip: _obscure ? l10n.showPasswordTooltip : l10n.hidePasswordTooltip,
         onPressed: () => setState(() => _obscure = !_obscure),
       ),
     );

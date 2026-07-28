@@ -1,0 +1,956 @@
+name: Release Cashly Lao
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing immutable version tag to release (for example v1.0.2).
+        required: true
+        type: string
+      source_ref:
+        description: Optional ref that must resolve to the same commit as the tag.
+        required: false
+        default: ''
+        type: string
+      publish:
+        description: Request protected production publication after candidate review.
+        required: true
+        default: false
+        type: boolean
+      reviewed_release_notes:
+        description: Confirm that RELEASE_NOTES.md in this immutable tag has been reviewed by a human.
+        required: true
+        default: false
+        type: boolean
+
+# A tag push prepares candidates only. Publishing needs a manual run with
+# reviewed notes, then two protected production approvals: one for signing and
+# one for public publication/deployment.
+permissions:
+  contents: read
+
+concurrency:
+  group: cashly-release-${{ github.event_name == 'push' && github.ref_name || inputs.release_tag }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Validate and build review candidates
+    uses: ./.github/workflows/prepare-release.yml
+    with:
+      release_tag: ${{ github.event_name == 'push' && github.ref_name || inputs.release_tag }}
+      source_ref: ${{ github.event_name == 'push' && github.ref || inputs.source_ref }}
+
+  readiness:
+    name: Create candidate approval summary
+    needs: prepare
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      publish_requested: ${{ steps.summary.outputs.publish_requested }}
+    steps:
+      - name: Summarize release readiness
+        id: summary
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+          RELEASE_COMMIT: ${{ needs.prepare.outputs.commit }}
+          RELEASE_NOTES_SHA256: ${{ needs.prepare.outputs.release_notes_sha256 }}
+          PRERELEASE: ${{ needs.prepare.outputs.prerelease }}
+          ANDROID_AVAILABILITY: ${{ needs.prepare.outputs.android_availability }}
+          IOS_AVAILABILITY: ${{ needs.prepare.outputs.ios_availability }}
+          WINDOWS_AVAILABILITY: ${{ needs.prepare.outputs.windows_availability }}
+          MACOS_AVAILABILITY: ${{ needs.prepare.outputs.macos_availability }}
+          WEB_AVAILABILITY: ${{ needs.prepare.outputs.web_availability }}
+          EVENT_NAME: ${{ github.event_name }}
+          DISPATCH_REF_TYPE: ${{ github.ref_type }}
+          DISPATCH_REF_NAME: ${{ github.ref_name }}
+          REQUESTED_PUBLISH: ${{ inputs.publish }}
+          REVIEWED_RELEASE_NOTES: ${{ inputs.reviewed_release_notes }}
+        run: |
+          set -euo pipefail
+          publish_requested=false
+          if [[ "$PRERELEASE" == 'true' ]]; then
+            echo "Public prereleases are disabled. This run is review-only." >> "$GITHUB_STEP_SUMMARY"
+          elif [[ "$EVENT_NAME" == 'workflow_dispatch' && "$REQUESTED_PUBLISH" == 'true' ]]; then
+            if [[ "$DISPATCH_REF_TYPE" != 'tag' || "$DISPATCH_REF_NAME" != "$RELEASE_TAG" ]]; then
+              echo "A protected publication dispatch must run from the exact immutable release tag, not a branch or another tag." >&2
+              exit 1
+            fi
+            if [[ "$REVIEWED_RELEASE_NOTES" != 'true' ]]; then
+              echo "Production publication requires an explicit confirmation that RELEASE_NOTES.md in the immutable tag was reviewed; generated draft notes are never published automatically." >&2
+              exit 1
+            fi
+            publish_requested=true
+          fi
+
+          {
+            echo "# Cashly Lao candidate approval summary"
+            echo
+            echo "- **Version:** \`$RELEASE_VERSION\`"
+            echo "- **Tag:** \`$RELEASE_TAG\`"
+            echo "- **Commit:** \`$RELEASE_COMMIT\`"
+            echo "- **Reviewed notes:** \`RELEASE_NOTES.md\` (SHA-256 \`$RELEASE_NOTES_SHA256\`)"
+            echo
+            echo "| Platform | Candidate status | Public-release plan |"
+            echo "| --- | --- | --- |"
+            echo "| Android | $ANDROID_AVAILABILITY | Signed APK only after first protected approval. |"
+            echo "| iOS | $IOS_AVAILABILITY | Coming soon pending Apple signing and distribution. |"
+            echo "| Windows | $WINDOWS_AVAILABILITY | Coming soon pending Windows code signing. |"
+            echo "| macOS | $MACOS_AVAILABILITY | Coming soon pending Apple signing and notarization. |"
+            echo "| Web | $WEB_AVAILABILITY | Stable site only after second protected approval. |"
+            echo
+            echo "Required formatting, analysis, tests, and release-candidate checks passed. The availability table distinguishes buildable review candidates from platforms that remain intentionally unavailable for public distribution."
+            echo
+            if [[ "$publish_requested" == 'true' ]]; then
+              echo "The next job waits for the first \`production\` approval to create and verify a signed Android artifact. A second artifact-rich summary then precedes the final \`production\` publication approval."
+            else
+              echo "No public release, download metadata, or Firebase Hosting deployment is requested. Start this workflow manually with the same stable tag, \`publish\` enabled, and reviewed notes to continue."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "publish_requested=$publish_requested" >> "$GITHUB_OUTPUT"
+
+  signed_android_candidate:
+    name: Protected Android signing
+    needs: [prepare, readiness]
+    if: needs.readiness.outputs.publish_requested == 'true' && needs.prepare.outputs.prerelease != 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    environment: production
+    concurrency:
+      group: cashly-production-publication
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the validated immutable commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ needs.prepare.outputs.commit }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Restore Dart dependencies and generated code
+        run: |
+          flutter pub get
+          flutter gen-l10n
+
+      - name: Reconfirm the immutable release tag before signing
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+          RELEASE_COMMIT: ${{ needs.prepare.outputs.commit }}
+        run: |
+          set -euo pipefail
+          ref_json="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RELEASE_TAG}")"
+          object_type="$(jq -r '.object.type' <<< "$ref_json")"
+          object_sha="$(jq -r '.object.sha' <<< "$ref_json")"
+          for attempt in 1 2 3 4 5; do
+            if [[ "$object_type" == 'commit' ]]; then
+              break
+            fi
+            if [[ "$object_type" != 'tag' || -z "$object_sha" || "$object_sha" == 'null' ]]; then
+              echo "Could not resolve $RELEASE_TAG to a Git commit." >&2
+              exit 1
+            fi
+            tag_json="$(gh api "repos/${GITHUB_REPOSITORY}/git/tags/${object_sha}")"
+            object_type="$(jq -r '.object.type' <<< "$tag_json")"
+            object_sha="$(jq -r '.object.sha' <<< "$tag_json")"
+          done
+          if [[ "$object_type" != 'commit' || "$object_sha" != "$RELEASE_COMMIT" ]]; then
+            echo "The remote release tag no longer resolves to the reviewed immutable commit." >&2
+            exit 1
+          fi
+
+      - name: Verify protected Android signing configuration
+        shell: bash
+        env:
+          ANDROID_UPLOAD_KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_SIGNING_CERT_SHA256: ${{ secrets.ANDROID_SIGNING_CERT_SHA256 }}
+        run: |
+          set -euo pipefail
+          for name in ANDROID_UPLOAD_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD ANDROID_SIGNING_CERT_SHA256; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "The protected production environment is missing $name." >&2
+              exit 1
+            fi
+          done
+
+      - name: Build and verify signed Android APK
+        shell: bash
+        env:
+          ANDROID_UPLOAD_KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_SIGNING_CERT_SHA256: ${{ secrets.ANDROID_SIGNING_CERT_SHA256 }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+          RELEASE_COMMIT: ${{ needs.prepare.outputs.commit }}
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p artifacts android/app
+          keystore_path='android/app/cashly-release-upload.jks'
+          key_properties_path='android/key.properties'
+          trap 'rm -f "$keystore_path" "$key_properties_path"' EXIT
+
+          if [[ "$(git rev-parse HEAD)" != "$RELEASE_COMMIT" ]]; then
+            echo "Signing checkout does not match the reviewed candidate commit." >&2
+            exit 1
+          fi
+          dart run tool/verify_release.dart --tag "$RELEASE_TAG" --ref "$RELEASE_COMMIT"
+
+          printf '%s' "$ANDROID_UPLOAD_KEYSTORE_BASE64" | base64 --decode > "$keystore_path"
+          cat > "$key_properties_path" <<EOF
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyPassword=$ANDROID_KEY_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          storeFile=cashly-release-upload.jks
+          EOF
+
+          flutter build apk --release
+          built_apk='build/app/outputs/flutter-apk/app-release.apk'
+          test -s "$built_apk"
+          apksigner_path="$(find "${ANDROID_HOME:?ANDROID_HOME is required}/build-tools" -type f -name apksigner -print | sort -V | tail -n 1)"
+          test -n "$apksigner_path"
+          signer_report="$("$apksigner_path" verify --verbose --print-certs "$built_apk")"
+          expected_certificate_sha256="$(printf '%s' "$ANDROID_SIGNING_CERT_SHA256" | tr -d '[:space:]:' | tr '[:lower:]' '[:upper:]')"
+          actual_certificate_sha256="$(printf '%s\n' "$signer_report" | awk -F': ' '/certificate SHA-256 digest:/ {print $NF; exit}' | tr -d '[:space:]:' | tr '[:lower:]' '[:upper:]')"
+          if ! [[ "$expected_certificate_sha256" =~ ^[A-F0-9]{64}$ ]]; then
+            echo 'ANDROID_SIGNING_CERT_SHA256 must be an approved SHA-256 certificate fingerprint.' >&2
+            exit 1
+          fi
+          if [[ -z "$actual_certificate_sha256" || "$actual_certificate_sha256" != "$expected_certificate_sha256" ]]; then
+            echo 'The APK signer certificate does not match the approved Android upload key.' >&2
+            exit 1
+          fi
+
+          aapt_path="$(dirname "$apksigner_path")/aapt"
+          test -x "$aapt_path"
+          pubspec_version="$(awk '/^version:/ {print $2; exit}' pubspec.yaml)"
+          expected_build_number="${pubspec_version#*+}"
+          if [[ "$expected_build_number" == "$pubspec_version" || ! "$expected_build_number" =~ ^[1-9][0-9]*$ ]]; then
+            echo 'pubspec.yaml must define a positive Android build number for publication.' >&2
+            exit 1
+          fi
+          apk_badging="$("$aapt_path" dump badging "$built_apk")"
+          expected_package_line="package: name='com.cashlylao.app' versionCode='${expected_build_number}' versionName='${RELEASE_VERSION}'"
+          if [[ "$apk_badging" != *"$expected_package_line"* ]]; then
+            echo 'The signed APK package identity or version does not match the reviewed release.' >&2
+            exit 1
+          fi
+
+          artifact="artifacts/Cashly-Lao-Android-${RELEASE_VERSION}.apk"
+          cp "$built_apk" "$artifact"
+          sha256="$(sha256sum "$artifact" | awk '{print $1}' | tr '[:lower:]' '[:upper:]')"
+          size="$(stat --printf='%s' "$artifact")"
+          # The private GitHub draft below is retained only for internal audit
+          # and rollback. The public manifest may advertise only this immutable,
+          # versioned Firebase Hosting path after its preview has been verified.
+          download_url="https://cashly-lao.web.app/downloads/Cashly-Lao-Android-${RELEASE_VERSION}.apk"
+          jq -n \
+            --arg platform android \
+            --arg fileName "Cashly-Lao-Android-${RELEASE_VERSION}.apk" \
+            --arg downloadUrl "$download_url" \
+            --arg sha256 "$sha256" \
+            --argjson fileSizeBytes "$size" \
+            '{artifacts: [{platform: $platform, fileName: $fileName, downloadUrl: $downloadUrl, fileSizeBytes: $fileSizeBytes, sha256: $sha256}]}' \
+            > release-artifacts.json
+          dart run tool/verify_release.dart \
+            --tag "$RELEASE_TAG" \
+            --ref "$RELEASE_COMMIT" \
+            --artifact "android=$artifact"
+
+      - name: Upload private signed Android candidate
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
+        with:
+          name: cashly-lao-signed-android-${{ needs.prepare.outputs.version }}
+          path: |
+            artifacts/Cashly-Lao-Android-${{ needs.prepare.outputs.version }}.apk
+            release-artifacts.json
+          if-no-files-found: error
+          retention-days: 3
+
+  final_publication_bundle:
+    name: Assemble the exact Firebase Hosting release bundle
+    needs: [prepare, signed_android_candidate]
+    if: needs.signed_android_candidate.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the validated immutable commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ needs.prepare.outputs.commit }}
+          persist-credentials: false
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Restore Dart dependencies and generated code
+        run: |
+          flutter pub get
+          flutter gen-l10n
+
+      - name: Download the private signed Android candidate
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
+        with:
+          name: cashly-lao-signed-android-${{ needs.prepare.outputs.version }}
+          path: signed-artifact
+
+      - name: Download the reviewed web candidate
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
+        with:
+          name: cashly-lao-web-candidate-${{ needs.prepare.outputs.version }}
+          path: web-candidate
+
+      - name: Build and strictly verify the exact public release bundle
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+          RELEASE_COMMIT: ${{ needs.prepare.outputs.commit }}
+          RELEASE_NOTES_SHA256: ${{ needs.prepare.outputs.release_notes_sha256 }}
+        run: |
+          set -euo pipefail
+          source_apk="signed-artifact/artifacts/Cashly-Lao-Android-${RELEASE_VERSION}.apk"
+          source_metadata='signed-artifact/release-artifacts.json'
+          web_candidate="$(find web-candidate -type f -name "Cashly-Lao-Web-${RELEASE_VERSION}.zip" -print -quit)"
+          test -s "$source_apk"
+          test -s "$source_metadata"
+          test -n "$web_candidate"
+          test -s "$web_candidate"
+          if [[ "$(git rev-parse HEAD)" != "$RELEASE_COMMIT" ]]; then
+            echo 'Final release bundle checkout does not match the reviewed candidate commit.' >&2
+            exit 1
+          fi
+          if [[ "$(sha256sum RELEASE_NOTES.md | awk '{print $1}')" != "$RELEASE_NOTES_SHA256" ]]; then
+            echo 'RELEASE_NOTES.md differs from the reviewed immutable-tag file.' >&2
+            exit 1
+          fi
+
+          mkdir -p artifacts
+          cp "$source_apk" "artifacts/Cashly-Lao-Android-${RELEASE_VERSION}.apk"
+          cp "$source_metadata" release-artifacts.json
+          apk_sha256="$(sha256sum "artifacts/Cashly-Lao-Android-${RELEASE_VERSION}.apk" | awk '{print $1}' | tr '[:lower:]' '[:upper:]')"
+          apk_size="$(stat --printf='%s' "artifacts/Cashly-Lao-Android-${RELEASE_VERSION}.apk")"
+          expected_apk_sha256="$(jq -r '.artifacts[] | select(.platform == "android") | .sha256' release-artifacts.json | tr '[:lower:]' '[:upper:]')"
+          expected_apk_size="$(jq -r '.artifacts[] | select(.platform == "android") | .fileSizeBytes' release-artifacts.json)"
+          if [[ "$apk_sha256" != "$expected_apk_sha256" || "$apk_size" != "$expected_apk_size" ]]; then
+            echo 'The signed Android artifact no longer matches its immutable metadata.' >&2
+            exit 1
+          fi
+
+          rm -rf build/web
+          mkdir -p build/web
+          unzip -q "$web_candidate" -d build/web
+          test -s build/web/index.html
+          hosted_apk="build/web/downloads/Cashly-Lao-Android-${RELEASE_VERSION}.apk"
+          mkdir -p "$(dirname "$hosted_apk")"
+          cp "artifacts/Cashly-Lao-Android-${RELEASE_VERSION}.apk" "$hosted_apk"
+          hosted_apk_sha256="$(sha256sum "$hosted_apk" | awk '{print $1}' | tr '[:lower:]' '[:upper:]')"
+          hosted_apk_size="$(stat --printf='%s' "$hosted_apk")"
+          if [[ "$hosted_apk_sha256" != "$apk_sha256" || "$hosted_apk_size" != "$apk_size" ]]; then
+            echo 'The APK staged for Firebase Hosting differs from the signed artifact.' >&2
+            exit 1
+          fi
+          # The release page remains an internal private-GitHub audit record.
+          # The artifact URL in release-artifacts.json is the public Firebase
+          # Hosting URL, which is not exposed from production until the exact
+          # preview version is validated and promoted below.
+          dart run tool/generate_release_manifest.dart \
+            --version "$RELEASE_VERSION" \
+            --release-url "https://github.com/${GITHUB_REPOSITORY}/releases/tag/${RELEASE_TAG}" \
+            --output build/web/release-manifest.json \
+            --artifacts release-artifacts.json \
+            --commit "$RELEASE_COMMIT" \
+            --channel stable \
+            --notes RELEASE_NOTES.md
+          test -s build/web/release-manifest.json
+          (
+            cd build/web
+            zip -qr "../../artifacts/Cashly-Lao-Web-${RELEASE_VERSION}.zip" .
+          )
+          sha256sum artifacts/Cashly-Lao-Android-${RELEASE_VERSION}.apk \
+            artifacts/Cashly-Lao-Web-${RELEASE_VERSION}.zip > artifacts/SHA256SUMS.txt
+          dart run tool/verify_release.dart \
+            --tag "$RELEASE_TAG" \
+            --ref "$RELEASE_COMMIT" \
+            --manifest build/web/release-manifest.json \
+            --artifact "android=artifacts/Cashly-Lao-Android-${RELEASE_VERSION}.apk" \
+            --artifact "web=artifacts/Cashly-Lao-Web-${RELEASE_VERSION}.zip"
+
+      - name: Retain the exact reviewed publication bundle
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
+        with:
+          name: cashly-lao-final-publication-${{ needs.prepare.outputs.version }}
+          path: artifacts
+          if-no-files-found: error
+          retention-days: 14
+
+  final_readiness:
+    name: Create final artifact approval summary
+    needs: [prepare, final_publication_bundle]
+    if: needs.final_publication_bundle.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      apk_sha256: ${{ steps.summary.outputs.apk_sha256 }}
+      apk_size: ${{ steps.summary.outputs.apk_size }}
+      web_sha256: ${{ steps.summary.outputs.web_sha256 }}
+      web_size: ${{ steps.summary.outputs.web_size }}
+    steps:
+      - name: Download the exact final publication bundle
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
+        with:
+          name: cashly-lao-final-publication-${{ needs.prepare.outputs.version }}
+          path: final-bundle
+
+      - name: Verify and summarize the exact public artifacts
+        id: summary
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+          RELEASE_COMMIT: ${{ needs.prepare.outputs.commit }}
+          RELEASE_NOTES_SHA256: ${{ needs.prepare.outputs.release_notes_sha256 }}
+        run: |
+          set -euo pipefail
+          artifact="final-bundle/artifacts/Cashly-Lao-Android-${RELEASE_VERSION}.apk"
+          web_artifact="final-bundle/artifacts/Cashly-Lao-Web-${RELEASE_VERSION}.zip"
+          checksums='final-bundle/artifacts/SHA256SUMS.txt'
+          test -s "$artifact"
+          test -s "$web_artifact"
+          test -s "$checksums"
+          apk_sha256="$(sha256sum "$artifact" | awk '{print $1}' | tr '[:lower:]' '[:upper:]')"
+          apk_size="$(stat --printf='%s' "$artifact")"
+          web_sha256="$(sha256sum "$web_artifact" | awk '{print $1}' | tr '[:lower:]' '[:upper:]')"
+          web_size="$(stat --printf='%s' "$web_artifact")"
+          expected_apk_sha256="$(awk '$2 ~ /Cashly-Lao-Android-.*\.apk$/ {print $1; exit}' "$checksums" | tr '[:lower:]' '[:upper:]')"
+          expected_web_sha256="$(awk '$2 ~ /Cashly-Lao-Web-.*\.zip$/ {print $1; exit}' "$checksums" | tr '[:lower:]' '[:upper:]')"
+          if [[ -z "$expected_apk_sha256" || "$apk_sha256" != "$expected_apk_sha256" || -z "$expected_web_sha256" || "$web_sha256" != "$expected_web_sha256" ]]; then
+            echo 'The final publication artifacts do not match their checksum list.' >&2
+            exit 1
+          fi
+          unzip -tq "$web_artifact" > /dev/null
+
+          {
+            echo "# Final production approval summary"
+            echo
+            echo "- **Version / tag:** \`$RELEASE_VERSION\` / \`$RELEASE_TAG\`"
+            echo "- **Commit:** \`$RELEASE_COMMIT\`"
+            echo "- **Reviewed notes:** \`RELEASE_NOTES.md\` (SHA-256 \`$RELEASE_NOTES_SHA256\`)"
+            echo "- **Signed APK:** \`Cashly-Lao-Android-${RELEASE_VERSION}.apk\` ($apk_size bytes, SHA-256 \`$apk_sha256\`)"
+            echo "- **Signer:** Android apksigner verified the approved certificate fingerprint and package identity."
+            echo "- **Final website package:** \`Cashly-Lao-Web-${RELEASE_VERSION}.zip\` ($web_size bytes, SHA-256 \`$web_sha256\`)"
+            echo "- **Manifest:** generated from the signed APK metadata and validated through the landing-page trust parser."
+           echo "- **Website change:** promote this exact reviewed Firebase preview version only after the next protected approval and only after its anonymous APK download, SHA-256, size, and response headers are verified."
+            echo "- **Unavailable platforms:** iOS, Windows, and macOS remain Coming Soon; no fake public download is created."
+            echo
+           echo "The final artifacts are private workflow artifacts. The next job requires a second \`production\` approval before it can create an internal GitHub Release draft or promote the exact verified Firebase Hosting version."
+          } >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "apk_sha256=$apk_sha256"
+            echo "apk_size=$apk_size"
+            echo "web_sha256=$web_sha256"
+            echo "web_size=$web_size"
+          } >> "$GITHUB_OUTPUT"
+
+  publish_production:
+    name: Protected publication and deployment
+    needs: [prepare, readiness, final_publication_bundle, final_readiness]
+    if: needs.final_readiness.result == 'success' && needs.prepare.outputs.prerelease != 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    environment:
+      name: production
+      url: https://cashly-lao.web.app
+    concurrency:
+      group: cashly-production-publication
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: Check out the validated immutable commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ needs.prepare.outputs.commit }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Reconfirm the immutable release tag before publication
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+          RELEASE_COMMIT: ${{ needs.prepare.outputs.commit }}
+        run: |
+          set -euo pipefail
+          ref_json="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RELEASE_TAG}")"
+          object_type="$(jq -r '.object.type' <<< "$ref_json")"
+          object_sha="$(jq -r '.object.sha' <<< "$ref_json")"
+          for attempt in 1 2 3 4 5; do
+            if [[ "$object_type" == 'commit' ]]; then
+              break
+            fi
+            if [[ "$object_type" != 'tag' || -z "$object_sha" || "$object_sha" == 'null' ]]; then
+              echo "Could not resolve $RELEASE_TAG to a Git commit." >&2
+              exit 1
+            fi
+            tag_json="$(gh api "repos/${GITHUB_REPOSITORY}/git/tags/${object_sha}")"
+            object_type="$(jq -r '.object.type' <<< "$tag_json")"
+            object_sha="$(jq -r '.object.sha' <<< "$tag_json")"
+          done
+          if [[ "$object_type" != 'commit' || "$object_sha" != "$RELEASE_COMMIT" ]]; then
+            echo "The remote release tag no longer resolves to the reviewed immutable commit." >&2
+            exit 1
+          fi
+
+      - name: Download the exact final publication bundle
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
+        with:
+          name: cashly-lao-final-publication-${{ needs.prepare.outputs.version }}
+          path: approved-publication
+
+      - name: Verify publication inputs and reviewed notes
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+          RELEASE_COMMIT: ${{ needs.prepare.outputs.commit }}
+          REVIEWED_RELEASE_NOTES: ${{ inputs.reviewed_release_notes }}
+          EXPECTED_APK_SHA256: ${{ needs.final_readiness.outputs.apk_sha256 }}
+          EXPECTED_APK_SIZE: ${{ needs.final_readiness.outputs.apk_size }}
+          EXPECTED_WEB_SHA256: ${{ needs.final_readiness.outputs.web_sha256 }}
+          EXPECTED_WEB_SIZE: ${{ needs.final_readiness.outputs.web_size }}
+          EXPECTED_RELEASE_NOTES_SHA256: ${{ needs.prepare.outputs.release_notes_sha256 }}
+        run: |
+          set -euo pipefail
+          if [[ "$REVIEWED_RELEASE_NOTES" != 'true' ]]; then
+            echo "The immutable tag's RELEASE_NOTES.md must be explicitly confirmed as reviewed before public publication." >&2
+            exit 1
+          fi
+          if [[ "$(git rev-parse HEAD)" != "$RELEASE_COMMIT" ]]; then
+            echo "Publication checkout does not match the reviewed candidate commit." >&2
+            exit 1
+          fi
+          actual_release_notes_sha256="$(sha256sum RELEASE_NOTES.md | awk '{print $1}')"
+          if [[ "$actual_release_notes_sha256" != "$EXPECTED_RELEASE_NOTES_SHA256" ]]; then
+            echo "RELEASE_NOTES.md differs from the reviewed immutable-tag file." >&2
+            exit 1
+          fi
+          cp -R approved-publication/artifacts .
+          apk="artifacts/Cashly-Lao-Android-${RELEASE_VERSION}.apk"
+          web="artifacts/Cashly-Lao-Web-${RELEASE_VERSION}.zip"
+          checksums='artifacts/SHA256SUMS.txt'
+          test -s "$apk"
+          test -s "$web"
+          test -s "$checksums"
+          actual_apk_sha256="$(sha256sum "$apk" | awk '{print $1}' | tr '[:lower:]' '[:upper:]')"
+          actual_apk_size="$(stat --printf='%s' "$apk")"
+          actual_web_sha256="$(sha256sum "$web" | awk '{print $1}' | tr '[:lower:]' '[:upper:]')"
+          actual_web_size="$(stat --printf='%s' "$web")"
+          checksum_apk_sha256="$(awk '$2 ~ /Cashly-Lao-Android-.*\.apk$/ {print $1; exit}' "$checksums" | tr '[:lower:]' '[:upper:]')"
+          checksum_web_sha256="$(awk '$2 ~ /Cashly-Lao-Web-.*\.zip$/ {print $1; exit}' "$checksums" | tr '[:lower:]' '[:upper:]')"
+          if [[ -z "$checksum_apk_sha256" || "$actual_apk_sha256" != "$EXPECTED_APK_SHA256" || "$actual_apk_sha256" != "$checksum_apk_sha256" || "$actual_apk_size" != "$EXPECTED_APK_SIZE" ]]; then
+            echo "The approved Android artifact differs from the final approval summary." >&2
+            exit 1
+          fi
+          if [[ -z "$checksum_web_sha256" || "$actual_web_sha256" != "$EXPECTED_WEB_SHA256" || "$actual_web_sha256" != "$checksum_web_sha256" || "$actual_web_size" != "$EXPECTED_WEB_SIZE" ]]; then
+            echo "The approved website artifact differs from the final approval summary." >&2
+            exit 1
+          fi
+          rm -rf build/web
+          mkdir -p build/web
+          unzip -q "$web" -d build/web
+          test -s build/web/index.html
+          test -s build/web/release-manifest.json
+
+      - name: Verify protected Firebase deployment configuration
+        shell: bash
+        env:
+          GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          for name in GCP_WORKLOAD_IDENTITY_PROVIDER GCP_SERVICE_ACCOUNT FIREBASE_PROJECT_ID; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "The protected production environment is missing $name." >&2
+              exit 1
+            fi
+          done
+          if [[ "$FIREBASE_PROJECT_ID" != 'cashly-lao' ]]; then
+            echo 'FIREBASE_PROJECT_ID must be cashly-lao so the approved manifest URL and Hosting site cannot diverge.' >&2
+            exit 1
+          fi
+          echo 'Direct APK hosting is validated through Firebase Hosting preview before any live promotion; Firebase rejects APK hosting on Spark-plan projects.'
+
+      - name: Authenticate to Firebase with Workload Identity
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          create_credentials_file: true
+
+      # `auth` exports Application Default Credentials. Set up the Cloud SDK
+      # explicitly before asking gcloud for a short-lived REST API token.
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+
+      - name: Deploy and validate an exact Firebase Hosting preview
+        id: firebase_preview
+        shell: bash
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_TOOLS_VERSION: '13.35.1'
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+          RELEASE_COMMIT: ${{ needs.prepare.outputs.commit }}
+          APK_SHA256: ${{ needs.final_readiness.outputs.apk_sha256 }}
+          APK_SIZE: ${{ needs.final_readiness.outputs.apk_size }}
+        run: |
+          set -euo pipefail
+          hosting_site_id='cashly-lao'
+          channel="release-${GITHUB_RUN_ID}"
+          npx --yes "firebase-tools@${FIREBASE_TOOLS_VERSION}" hosting:channel:deploy "$channel" \
+            --expires 1d \
+            --only hosting:cashly-lao \
+            --project "$FIREBASE_PROJECT_ID" \
+            --non-interactive
+          access_token="$(gcloud auth print-access-token)"
+          test -n "$access_token"
+          preview_channel_json="$(curl --fail --silent --show-error \
+            --header "Authorization: Bearer $access_token" \
+            "https://firebasehosting.googleapis.com/v1beta1/sites/${hosting_site_id}/channels/${channel}")"
+          preview_origin="$(jq -r '.url // empty' <<< "$preview_channel_json")"
+          preview_version="$(jq -r '.release.version.name // empty' <<< "$preview_channel_json")"
+          preview_origin="${preview_origin%/}"
+          if [[ "$preview_origin" != https://${hosting_site_id}--${channel}-*.web.app ]]; then
+            echo "Firebase returned an unexpected preview origin: $preview_origin" >&2
+            exit 1
+          fi
+          if [[ ! "$preview_version" =~ ^sites/${hosting_site_id}/versions/[^/]+$ ]]; then
+            echo "Firebase did not return an immutable preview version: $preview_version" >&2
+            exit 1
+          fi
+          curl --fail --silent --show-error --retry 4 --retry-delay 4 --max-time 30 \
+            "$preview_origin/" > preview-index.html
+          grep -q 'main.dart.js' preview-index.html
+          curl --fail --silent --show-error --retry 4 --retry-delay 4 --max-time 30 \
+            "$preview_origin/main.dart.js" > /dev/null
+          curl --fail --silent --show-error --retry 4 --retry-delay 4 --max-time 30 \
+            "$preview_origin/release-manifest.json" > preview-release-manifest.json
+          expected_android_url="https://cashly-lao.web.app/downloads/Cashly-Lao-Android-${RELEASE_VERSION}.apk"
+          jq -e \
+            --arg tag "$RELEASE_TAG" \
+            --arg commit "$RELEASE_COMMIT" \
+            --arg version "$RELEASE_VERSION" \
+            --arg sha256 "$APK_SHA256" \
+            --arg url "$expected_android_url" \
+            '
+              .schemaVersion == 2 and
+              .release.tag == $tag and
+              .release.commitSha == $commit and
+              .release.channel == "stable" and
+              ([.platforms[] | select(
+                .platform == "android" and
+                .availability == "available" and
+                .isLatest == true and
+                .version == $version and
+                .sha256 == $sha256 and
+                .downloadUrl == $url
+              )] | length == 1)
+            ' preview-release-manifest.json > /dev/null
+
+          # This GET deliberately has no token or cookies. A preview URL is
+          # publicly reachable, so verify the exact bytes and wire metadata
+          # users would receive before a production manifest can be promoted.
+          preview_apk_url="$preview_origin/downloads/Cashly-Lao-Android-${RELEASE_VERSION}.apk"
+          curl --fail --location --silent --show-error \
+            --retry 5 --retry-all-errors --retry-delay 5 \
+            --connect-timeout 15 --max-time 240 \
+            --header 'Accept-Encoding: identity' \
+            --dump-header preview-android.headers \
+            "$preview_apk_url" --output preview-android.apk
+          test -s preview-android.apk
+          actual_sha256="$(sha256sum preview-android.apk | awk '{print $1}' | tr '[:lower:]' '[:upper:]')"
+          actual_size="$(stat --printf='%s' preview-android.apk)"
+          content_type="$(awk 'BEGIN { IGNORECASE=1 } /^content-type:/ { value=$0; sub(/^[^:]*:[[:space:]]*/, "", value); gsub(/\r/, "", value); result=tolower(value) } END { print result }' preview-android.headers)"
+          content_length="$(awk 'BEGIN { IGNORECASE=1 } /^content-length:/ { value=$0; sub(/^[^:]*:[[:space:]]*/, "", value); gsub(/\r/, "", value); result=value } END { print result }' preview-android.headers)"
+          content_encoding="$(awk 'BEGIN { IGNORECASE=1 } /^content-encoding:/ { value=$0; sub(/^[^:]*:[[:space:]]*/, "", value); gsub(/\r/, "", value); result=tolower(value) } END { print result }' preview-android.headers)"
+          content_disposition="$(awk 'BEGIN { IGNORECASE=1 } /^content-disposition:/ { value=$0; sub(/^[^:]*:[[:space:]]*/, "", value); gsub(/\r/, "", value); result=tolower(value) } END { print result }' preview-android.headers)"
+          case "$content_type" in
+            application/vnd.android.package-archive*|application/x-android-package-archive*|application/octet-stream*) ;;
+            *)
+              echo "Firebase preview returned an unsafe APK Content-Type: $content_type" >&2
+              exit 1
+              ;;
+          esac
+          case "$content_disposition" in
+            attachment|attachment\;*) ;;
+            *)
+              echo "Firebase preview did not force an APK attachment download: $content_disposition" >&2
+              exit 1
+              ;;
+          esac
+          if [[ "$actual_sha256" != "$APK_SHA256" || "$actual_size" != "$APK_SIZE" || "$content_length" != "$APK_SIZE" ]]; then
+            echo 'The anonymous Firebase preview APK is not the approved signed artifact. Production will remain unchanged.' >&2
+            exit 1
+          fi
+          if [[ -n "$content_encoding" && "$content_encoding" != 'identity' ]]; then
+            echo "Firebase preview transformed the APK with Content-Encoding: $content_encoding" >&2
+            exit 1
+          fi
+
+          # A channel name is mutable. Confirm that the exact version whose
+          # anonymous bytes we just validated is still active, then promote
+          # that immutable version rather than cloning the channel name.
+          validated_channel_json="$(curl --fail --silent --show-error \
+            --header "Authorization: Bearer $access_token" \
+            "https://firebasehosting.googleapis.com/v1beta1/sites/${hosting_site_id}/channels/${channel}")"
+          validated_version="$(jq -r '.release.version.name // empty' <<< "$validated_channel_json")"
+          if [[ "$validated_version" != "$preview_version" ]]; then
+            echo 'The Firebase preview channel changed during validation; it will not be promoted.' >&2
+            exit 1
+          fi
+          {
+            echo "channel=$channel"
+            echo "origin=$preview_origin"
+            echo "version_id=${preview_version##*/}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create an internal GitHub Release draft and retain exact artifacts
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          set -euo pipefail
+          repository_private="$(gh api "repos/${GITHUB_REPOSITORY}" --jq '.private')"
+          if [[ "$repository_private" != 'true' ]]; then
+            echo 'Publication is configured for a private repository. Refusing to create an internal release if repository visibility changed.' >&2
+            exit 1
+          fi
+          if gh release view "$RELEASE_TAG" --json isDraft --jq '.isDraft' > existing-release.txt 2>/dev/null; then
+            echo "A release or draft already exists for $RELEASE_TAG. It will not be overwritten; inspect or delete the private draft before retrying." >&2
+            exit 1
+          fi
+          gh release create "$RELEASE_TAG" \
+            --verify-tag \
+            --draft \
+            --title "Cashly Lao $RELEASE_VERSION" \
+            --notes-file RELEASE_NOTES.md
+          gh release upload "$RELEASE_TAG" \
+            "artifacts/Cashly-Lao-Android-${RELEASE_VERSION}.apk" \
+            "artifacts/Cashly-Lao-Web-${RELEASE_VERSION}.zip" \
+            artifacts/SHA256SUMS.txt
+
+      - name: Capture the current live Firebase Hosting version for automatic recovery
+        id: live_before_promotion
+        shell: bash
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          hosting_site_id='cashly-lao'
+          access_token="$(gcloud auth print-access-token)"
+          test -n "$access_token"
+          curl --fail --silent --show-error \
+            --header "Authorization: Bearer $access_token" \
+            "https://firebasehosting.googleapis.com/v1beta1/sites/${hosting_site_id}/channels/live" \
+            > current-live-channel.json
+          previous_version="$(jq -r '.release.version.name // empty' current-live-channel.json)"
+          if [[ ! "$previous_version" =~ ^sites/${hosting_site_id}/versions/[^/]+$ ]]; then
+            echo 'A known live Firebase Hosting version is required before promotion so a failed health check can be automatically restored.' >&2
+            exit 1
+          fi
+          echo "version_id=${previous_version##*/}" >> "$GITHUB_OUTPUT"
+
+      - name: Promote the exact verified Firebase preview version to live
+        shell: bash
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_TOOLS_VERSION: '13.35.1'
+          PREVIEW_VERSION_ID: ${{ steps.firebase_preview.outputs.version_id }}
+        run: |
+          set -euo pipefail
+          hosting_site_id='cashly-lao'
+          test -n "$PREVIEW_VERSION_ID"
+          npx --yes "firebase-tools@${FIREBASE_TOOLS_VERSION}" hosting:clone \
+            "${hosting_site_id}:@${PREVIEW_VERSION_ID}" \
+            "${hosting_site_id}:live" \
+            --project "$FIREBASE_PROJECT_ID" \
+            --non-interactive
+
+      - name: Verify promoted production website and Android download
+        id: production_health
+        continue-on-error: true
+        shell: bash
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+          RELEASE_COMMIT: ${{ needs.prepare.outputs.commit }}
+          APK_SHA256: ${{ needs.final_readiness.outputs.apk_sha256 }}
+          APK_SIZE: ${{ needs.final_readiness.outputs.apk_size }}
+        run: |
+          set -euo pipefail
+          hosting_site_id='cashly-lao'
+          production_origin="https://${hosting_site_id}.web.app"
+          curl --fail --silent --show-error --retry 5 --retry-delay 5 --max-time 30 \
+            "$production_origin/" > production-index.html
+          grep -q 'main.dart.js' production-index.html
+          curl --fail --silent --show-error --retry 5 --retry-delay 5 --max-time 30 \
+            "$production_origin/main.dart.js" > /dev/null
+          manifest='production-release-manifest.json'
+          curl --fail --silent --show-error --retry 5 --retry-delay 5 --max-time 30 \
+            "$production_origin/release-manifest.json" > "$manifest"
+          expected_android_url="https://cashly-lao.web.app/downloads/Cashly-Lao-Android-${RELEASE_VERSION}.apk"
+          jq -e \
+            --arg tag "$RELEASE_TAG" \
+            --arg commit "$RELEASE_COMMIT" \
+            --arg version "$RELEASE_VERSION" \
+            --arg sha256 "$APK_SHA256" \
+            --arg url "$expected_android_url" \
+            '
+              .schemaVersion == 2 and
+              .release.tag == $tag and
+              .release.commitSha == $commit and
+              .release.channel == "stable" and
+              ([.platforms[] | select(
+                .platform == "android" and
+                .availability == "available" and
+                .isLatest == true and
+                .version == $version and
+                .sha256 == $sha256 and
+                .downloadUrl == $url
+              )] | length == 1)
+            ' "$manifest" > /dev/null
+
+          production_apk_url="$production_origin/downloads/Cashly-Lao-Android-${RELEASE_VERSION}.apk"
+          curl --fail --location --silent --show-error \
+            --retry 5 --retry-all-errors --retry-delay 5 \
+            --connect-timeout 15 --max-time 240 \
+            --header 'Accept-Encoding: identity' \
+            --dump-header production-android.headers \
+            "$production_apk_url" --output production-android.apk
+          test -s production-android.apk
+          actual_sha256="$(sha256sum production-android.apk | awk '{print $1}' | tr '[:lower:]' '[:upper:]')"
+          actual_size="$(stat --printf='%s' production-android.apk)"
+          content_type="$(awk 'BEGIN { IGNORECASE=1 } /^content-type:/ { value=$0; sub(/^[^:]*:[[:space:]]*/, "", value); gsub(/\r/, "", value); result=tolower(value) } END { print result }' production-android.headers)"
+          content_length="$(awk 'BEGIN { IGNORECASE=1 } /^content-length:/ { value=$0; sub(/^[^:]*:[[:space:]]*/, "", value); gsub(/\r/, "", value); result=value } END { print result }' production-android.headers)"
+          content_encoding="$(awk 'BEGIN { IGNORECASE=1 } /^content-encoding:/ { value=$0; sub(/^[^:]*:[[:space:]]*/, "", value); gsub(/\r/, "", value); result=tolower(value) } END { print result }' production-android.headers)"
+          content_disposition="$(awk 'BEGIN { IGNORECASE=1 } /^content-disposition:/ { value=$0; sub(/^[^:]*:[[:space:]]*/, "", value); gsub(/\r/, "", value); result=tolower(value) } END { print result }' production-android.headers)"
+          case "$content_type" in
+            application/vnd.android.package-archive*|application/x-android-package-archive*|application/octet-stream*) ;;
+            *)
+              echo "Production Firebase Hosting returned an unsafe APK Content-Type: $content_type" >&2
+              exit 1
+              ;;
+          esac
+          case "$content_disposition" in
+            attachment|attachment\;*) ;;
+            *)
+              echo "Production Firebase Hosting did not force an APK attachment download: $content_disposition" >&2
+              exit 1
+              ;;
+          esac
+          if [[ "$actual_sha256" != "$APK_SHA256" || "$actual_size" != "$APK_SIZE" || "$content_length" != "$APK_SIZE" ]]; then
+            echo 'The promoted Firebase APK is not the approved signed artifact.' >&2
+            exit 1
+          fi
+          if [[ -n "$content_encoding" && "$content_encoding" != 'identity' ]]; then
+            echo "Production Firebase Hosting transformed the APK with Content-Encoding: $content_encoding" >&2
+            exit 1
+          fi
+
+      - name: Automatically restore the prior live Hosting version after a failed health check
+        if: steps.production_health.outcome == 'failure'
+        shell: bash
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_TOOLS_VERSION: '13.35.1'
+          PREVIOUS_VERSION_ID: ${{ steps.live_before_promotion.outputs.version_id }}
+        run: |
+          set -euo pipefail
+          hosting_site_id='cashly-lao'
+          test -n "$PREVIOUS_VERSION_ID"
+          npx --yes "firebase-tools@${FIREBASE_TOOLS_VERSION}" hosting:clone \
+            "${hosting_site_id}:@${PREVIOUS_VERSION_ID}" \
+            "${hosting_site_id}:live" \
+            --project "$FIREBASE_PROJECT_ID" \
+            --non-interactive
+          access_token="$(gcloud auth print-access-token)"
+          curl --fail --silent --show-error \
+            --header "Authorization: Bearer $access_token" \
+            "https://firebasehosting.googleapis.com/v1beta1/sites/${hosting_site_id}/channels/live" \
+            > restored-live-channel.json
+          restored_version="$(jq -r '.release.version.name // empty' restored-live-channel.json)"
+          if [[ "$restored_version" != "sites/${hosting_site_id}/versions/${PREVIOUS_VERSION_ID}" ]]; then
+            echo 'Firebase Hosting did not confirm restoration of the prior live version.' >&2
+            exit 1
+          fi
+          curl --fail --silent --show-error --retry 5 --retry-delay 5 --max-time 30 \
+            "https://${hosting_site_id}.web.app/" > restored-index.html
+          grep -q 'main.dart.js' restored-index.html
+          echo 'The promoted version failed health checks and the prior live Firebase Hosting version was restored. The internal GitHub draft remains private for investigation.' >&2
+          exit 1
+
+      - name: Write final publication report
+        if: success()
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+          RELEASE_COMMIT: ${{ needs.prepare.outputs.commit }}
+          APK_SHA256: ${{ needs.final_readiness.outputs.apk_sha256 }}
+          APK_SIZE: ${{ needs.final_readiness.outputs.apk_size }}
+          WEB_SHA256: ${{ needs.final_readiness.outputs.web_sha256 }}
+          WEB_SIZE: ${{ needs.final_readiness.outputs.web_size }}
+        run: |
+          set -euo pipefail
+          actual_web_size="$(stat --printf='%s' "artifacts/Cashly-Lao-Web-${RELEASE_VERSION}.zip")"
+          actual_web_sha256="$(sha256sum "artifacts/Cashly-Lao-Web-${RELEASE_VERSION}.zip" | awk '{print $1}' | tr '[:lower:]' '[:upper:]')"
+          if [[ "$actual_web_size" != "$WEB_SIZE" || "$actual_web_sha256" != "$WEB_SHA256" ]]; then
+            echo 'The deployed website package differs from the final approval summary.' >&2
+            exit 1
+          fi
+          {
+            echo "# Cashly Lao publication complete"
+            echo
+            echo "- **Version / tag / commit:** \`$RELEASE_VERSION\` / \`$RELEASE_TAG\` / \`$RELEASE_COMMIT\`"
+            echo "- **Internal release record:** retained as a private GitHub draft for audit and rollback."
+            echo "- **Website:** https://cashly-lao.web.app"
+            echo
+            echo "| Asset | Size (bytes) | SHA-256 |"
+            echo "| --- | ---: | --- |"
+            echo "| Cashly-Lao-Android-$RELEASE_VERSION.apk | $APK_SIZE | \`$APK_SHA256\` |"
+            echo "| Cashly-Lao-Web-$RELEASE_VERSION.zip | $WEB_SIZE | \`$WEB_SHA256\` |"
+            echo
+            echo "iOS, Windows, and macOS remain unavailable in public download metadata until their signing requirements are configured."
+          } >> "$GITHUB_STEP_SUMMARY"

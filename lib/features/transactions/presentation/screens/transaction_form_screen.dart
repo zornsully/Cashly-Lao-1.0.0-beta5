@@ -26,9 +26,15 @@ import '../providers/transaction_controller.dart';
 /// reconciling account balances either way — see
 /// [TransactionRemoteDataSource]).
 class TransactionFormScreen extends ConsumerStatefulWidget {
-  const TransactionFormScreen({super.key, this.existing});
+  const TransactionFormScreen({super.key, this.existing, this.initialType});
 
   final TransactionEntity? existing;
+
+  /// Lets a contextual entry point (for example the desktop dashboard's
+  /// "Add income" action) open the existing form with the matching type.
+  /// An existing transaction always wins so edit flows cannot be changed by
+  /// a stale route extra.
+  final TransactionType? initialType;
 
   @override
   ConsumerState<TransactionFormScreen> createState() =>
@@ -56,7 +62,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
       text: existing != null ? existing.amount.toStringAsFixed(2) : '',
     );
     _noteController = TextEditingController(text: existing?.note ?? '');
-    _type = existing?.type ?? TransactionType.expense;
+    _type = existing?.type ?? widget.initialType ?? TransactionType.expense;
     _date = existing?.date ?? DateTime.now();
     _accountId = existing?.accountId;
     _categoryId = existing?.categoryId;
@@ -219,7 +225,9 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          _isEditing ? l10n.transactionFormEditTitle : l10n.addTransactionButton,
+          _isEditing
+              ? l10n.transactionFormEditTitle
+              : l10n.addTransactionButton,
         ),
       ),
       body: SafeArea(
@@ -273,9 +281,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                         labelText: _isTransfer
                             ? l10n.fromAccountLabel
                             : l10n.accountFieldLabel,
-                        prefixIcon: const Icon(
-                          AppSymbols.accountBalanceWallet,
-                        ),
+                        prefixIcon: const Icon(AppSymbols.accountBalanceWallet),
                       ),
                       items: _withOrphanFallback(
                         items: [
@@ -375,8 +381,9 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                           currentValue: _categoryId,
                           missingLabel: l10n.unavailableCategoryLabel,
                         ),
-                        validator: (value) =>
-                            value == null ? l10n.pleaseSelectCategoryError : null,
+                        validator: (value) => value == null
+                            ? l10n.pleaseSelectCategoryError
+                            : null,
                         onChanged: (value) =>
                             setState(() => _categoryId = value),
                       ),
@@ -387,9 +394,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                       child: InputDecorator(
                         decoration: InputDecoration(
                           labelText: l10n.dateLabel,
-                          prefixIcon: const Icon(
-                            Icons.calendar_today_outlined,
-                          ),
+                          prefixIcon: const Icon(Icons.calendar_today_outlined),
                         ),
                         child: Text(DateFormat.yMMMd().format(_date)),
                       ),

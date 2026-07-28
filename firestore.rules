@@ -149,6 +149,40 @@ service cloud.firestore {
           && request.resource.data.currencyCode.size() > 0;
       }
 
+      // One document per `{yyyy-MM}_{currency}` keeps a Smart Money Score's
+      // opening balance durable across devices. The client may refresh the
+      // latest deterministic calculation, but it can never rewrite an
+      // existing month's opening fields or delete history.
+      match /smartMoneyScores/{scoreId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null
+          && request.auth.uid == userId
+          && request.resource.data.monthStart is timestamp
+          && request.resource.data.monthKey is string
+          && request.resource.data.currencyCode is string
+          && request.resource.data.currencyCode.size() > 0
+          && scoreId == request.resource.data.monthKey + '_'
+            + request.resource.data.currencyCode
+          && request.resource.data.openingBalance is number
+          && request.resource.data.baselineState in
+            ['reliable', 'insufficientData', 'unsafeCurrencyMovement']
+          && request.resource.data.baselineNote is string
+          && request.resource.data.createdAt is timestamp
+          && request.resource.data.updatedAt is timestamp;
+        allow update: if request.auth != null
+          && request.auth.uid == userId
+          && request.resource.data.monthStart == resource.data.monthStart
+          && request.resource.data.monthKey == resource.data.monthKey
+          && request.resource.data.currencyCode == resource.data.currencyCode
+          && request.resource.data.openingBalance == resource.data.openingBalance
+          && request.resource.data.baselineState == resource.data.baselineState
+          && request.resource.data.baselineNote == resource.data.baselineNote
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.updatedAt is timestamp
+          && request.resource.data.latestCalculation is map;
+        allow delete: if false;
+      }
+
       match /savingsGoals/{goalId} {
         allow read, delete: if request.auth != null && request.auth.uid == userId;
         // No currencyCode field here at all, unlike accounts/budgets — a

@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-29T00:00:00.000Z",
+  "platforms": [
+    {
+      "platform": "android",
+      "displayName": "Android",
+      "availability": "coming_soon",
+      "statusLabel": "Preparing verified release",
+      "actionLabel": "Coming soon",
+      "availabilityMessage": "The signed Android download will appear here after publication checks finish."
+    },
+    {
+      "platform": "ios",
+      "displayName": "iOS",
+      "availability": "coming_soon",
+      "statusLabel": "Coming soon",
+      "actionLabel": "Coming soon",
+      "availabilityMessage": "iOS support is coming soon."
+    },
+    {
+      "platform": "windows",
+      "displayName": "Windows",
+      "availability": "coming_soon",
+      "statusLabel": "Coming soon",
+      "actionLabel": "Coming soon",
+      "availabilityMessage": "Windows support is coming soon."
+    },
+    {
+      "platform": "mac",
+      "displayName": "Mac",
+      "availability": "coming_soon",
+      "statusLabel": "Coming soon",
+      "actionLabel": "Coming soon",
+      "availabilityMessage": "Mac support is coming soon."
+    }
+  ]
+}

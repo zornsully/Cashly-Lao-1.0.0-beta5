@@ -78,10 +78,7 @@ void main() {
   });
 
   test('quotes and escapes a category name containing a comma', () {
-    final giftsAndDonations = category(
-      id: 'gifts',
-      name: 'Gifts, Donations',
-    );
+    final giftsAndDonations = category(id: 'gifts', name: 'Gifts, Donations');
     final report = MonthlyReport(
       month: DateTime(2026, 3, 1),
       totalIncomeByCurrency: const {},

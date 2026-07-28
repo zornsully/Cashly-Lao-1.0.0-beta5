@@ -6,7 +6,9 @@ import '../../../../core/error/exceptions.dart';
 import '../models/exchange_rates_model.dart';
 
 abstract interface class ExchangeRateRemoteDataSource {
-  Future<ExchangeRatesModel> fetchLatestRates({required String baseCurrencyCode});
+  Future<ExchangeRatesModel> fetchLatestRates({
+    required String baseCurrencyCode,
+  });
 }
 
 /// Backed by ExchangeRate-API's free, no-API-key "open access" endpoint —

@@ -17,9 +17,7 @@ final exchangeRateRemoteDataSourceProvider =
       );
     });
 
-final exchangeRateRepositoryProvider = Provider<ExchangeRateRepository>((
-  ref,
-) {
+final exchangeRateRepositoryProvider = Provider<ExchangeRateRepository>((ref) {
   return ExchangeRateRepositoryImpl(
     ref.watch(exchangeRateRemoteDataSourceProvider),
   );
@@ -38,7 +36,7 @@ const _rollupBaseCurrencyCode = 'USD';
 /// session means re-visiting Reports doesn't re-hit the network.
 final latestExchangeRatesProvider =
     FutureProvider<Either<Failure, ExchangeRates>>((ref) {
-      return ref.watch(exchangeRateRepositoryProvider).getLatestRates(
-        baseCurrencyCode: _rollupBaseCurrencyCode,
-      );
+      return ref
+          .watch(exchangeRateRepositoryProvider)
+          .getLatestRates(baseCurrencyCode: _rollupBaseCurrencyCode);
     });

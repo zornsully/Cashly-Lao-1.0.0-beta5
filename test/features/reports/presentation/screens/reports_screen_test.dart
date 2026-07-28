@@ -146,10 +146,7 @@ void main() {
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
       final currency = SupportedCurrencies.byCode('USD');
       expect(find.text(l10n.incomeExpenseTrendSectionTitle), findsOneWidget);
-      expect(
-        find.text(CurrencyFormatter.format(80, currency)),
-        findsWidgets,
-      );
+      expect(find.text(CurrencyFormatter.format(80, currency)), findsWidgets);
     },
   );
 
@@ -200,9 +197,7 @@ void main() {
       ).thenAnswer((_) => Stream.value([category]));
       when(
         () => transactionRepository.watchTransactionsForMonth(any()),
-      ).thenAnswer(
-        (_) => Stream.value([expenseTransaction, lakExpense]),
-      );
+      ).thenAnswer((_) => Stream.value([expenseTransaction, lakExpense]));
       when(
         () => transactionRepository.watchTransactionsInRange(
           start: any(named: 'start'),

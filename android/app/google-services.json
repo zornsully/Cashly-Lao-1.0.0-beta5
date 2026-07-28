@@ -30,6 +30,14 @@
           }
         },
         {
+          "client_id": "406428434702-rlca0tiu24neuvfap2gp32bt9ksi3obf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cashlylao.app",
+            "certificate_hash": "6b1c58556569054b3ffc5d264e39ea6e2af10bff"
+          }
+        },
+        {
           "client_id": "406428434702-hmq4kb427bsvhcehc4452mr4oct42il3.apps.googleusercontent.com",
           "client_type": 3
         }

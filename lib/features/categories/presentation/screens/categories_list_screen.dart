@@ -238,10 +238,7 @@ class _CategoryTypeList extends ConsumerWidget {
                       ),
                     ),
                     if (!category.isDefault)
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Text(l10n.delete),
-                      ),
+                      PopupMenuItem(value: 'delete', child: Text(l10n.delete)),
                   ],
                 ),
               );

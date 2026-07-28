@@ -5,7 +5,9 @@ import '../../../../core/error/repository_guard.dart';
 import '../../domain/repositories/fcm_token_repository.dart';
 import '../datasources/fcm_token_remote_datasource.dart';
 
-class FcmTokenRepositoryImpl with RepositoryGuard implements FcmTokenRepository {
+class FcmTokenRepositoryImpl
+    with RepositoryGuard
+    implements FcmTokenRepository {
   const FcmTokenRepositoryImpl(this._remoteDataSource);
 
   final FcmTokenRemoteDataSource _remoteDataSource;

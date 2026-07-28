@@ -74,59 +74,51 @@ void main() {
     },
   );
 
-  testWidgets(
-    'submits the entered credentials and shows no error on success',
-    (tester) async {
-      when(
-        () => repository.login(
-          email: 'user@example.com',
-          password: 'Str0ngPass',
-        ),
-      ).thenAnswer((_) async => Right(user));
+  testWidgets('submits the entered credentials and shows no error on success', (
+    tester,
+  ) async {
+    when(
+      () => repository.login(email: 'user@example.com', password: 'Str0ngPass'),
+    ).thenAnswer((_) async => Right(user));
 
-      await pumpLoginScreen(tester);
+    await pumpLoginScreen(tester);
 
-      await tester.enterText(
-        find.byType(TextFormField).at(0),
-        'user@example.com',
-      );
-      await tester.enterText(find.byType(TextFormField).at(1), 'Str0ngPass');
-      await tester.tap(find.widgetWithText(ElevatedButton, 'Sign in'));
-      await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byType(TextFormField).at(0),
+      'user@example.com',
+    );
+    await tester.enterText(find.byType(TextFormField).at(1), 'Str0ngPass');
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Sign in'));
+    await tester.pumpAndSettle();
 
-      verify(
-        () => repository.login(
-          email: 'user@example.com',
-          password: 'Str0ngPass',
-        ),
-      ).called(1);
-      expect(find.byType(SnackBar), findsNothing);
-    },
-  );
+    verify(
+      () => repository.login(email: 'user@example.com', password: 'Str0ngPass'),
+    ).called(1);
+    expect(find.byType(SnackBar), findsNothing);
+  });
 
-  testWidgets(
-    'shows the failure message in a snackbar when login fails',
-    (tester) async {
-      when(
-        () => repository.login(
-          email: any(named: 'email'),
-          password: any(named: 'password'),
-        ),
-      ).thenAnswer(
-        (_) async => const Left(AuthFailure('Incorrect email or password.')),
-      );
+  testWidgets('shows the failure message in a snackbar when login fails', (
+    tester,
+  ) async {
+    when(
+      () => repository.login(
+        email: any(named: 'email'),
+        password: any(named: 'password'),
+      ),
+    ).thenAnswer(
+      (_) async => const Left(AuthFailure('Incorrect email or password.')),
+    );
 
-      await pumpLoginScreen(tester);
+    await pumpLoginScreen(tester);
 
-      await tester.enterText(
-        find.byType(TextFormField).at(0),
-        'user@example.com',
-      );
-      await tester.enterText(find.byType(TextFormField).at(1), 'WrongPass1');
-      await tester.tap(find.widgetWithText(ElevatedButton, 'Sign in'));
-      await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byType(TextFormField).at(0),
+      'user@example.com',
+    );
+    await tester.enterText(find.byType(TextFormField).at(1), 'WrongPass1');
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Sign in'));
+    await tester.pumpAndSettle();
 
-      expect(find.text('Incorrect email or password.'), findsOneWidget);
-    },
-  );
+    expect(find.text('Incorrect email or password.'), findsOneWidget);
+  });
 }

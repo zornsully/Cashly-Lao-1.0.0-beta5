@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../../../core/constants/firestore_paths.dart';
@@ -169,6 +170,7 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
 
   @override
   Future<UserModel> signInWithGoogle() async {
+    if (kIsWeb) return _signInWithGooglePopup();
     if (!_googleSignIn.supportsAuthenticate()) {
       throw const AuthException(
         'Google Sign-In is not supported on this platform.',
@@ -233,6 +235,25 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
       return model;
     } on fb.FirebaseAuthException catch (e) {
       throw _mapAuthException(e);
+    }
+  }
+
+  Future<UserModel> _signInWithGooglePopup() async {
+    try {
+      final userCredential = await _firebaseAuth.signInWithPopup(
+        fb.GoogleAuthProvider(),
+      );
+      final user = userCredential.user;
+      if (user == null) {
+        throw const AuthException('Sign-in did not return a user.');
+      }
+      final model = UserModel.fromFirebaseUser(user);
+      await _repairProfileDocIfMissing(model);
+      return model;
+    } on fb.FirebaseAuthException catch (e) {
+      throw _mapAuthException(e);
+    } on FirebaseException catch (e) {
+      throw _mapGooglePopupFirebaseException(e);
     }
   }
 
@@ -320,42 +341,44 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
           fb.EmailAuthProvider.credential(email: email, password: password),
         );
       } else {
-        // Google-only account: no password to check, so re-prove identity
-        // with a fresh interactive Google sign-in instead.
-        await _ensureGoogleSignInInitialized();
-        final GoogleSignInAccount googleUser;
-        try {
-          googleUser = await _googleSignIn.authenticate();
-        } on GoogleSignInException catch (e) {
-          throw AuthException(
-            e.code == GoogleSignInExceptionCode.canceled
-                ? 'Sign-in was cancelled.'
-                : 'Google sign-in failed. Please try again.',
-            code: e.code == GoogleSignInExceptionCode.canceled
-                ? 'google-sign-in-cancelled'
-                : 'google-sign-in-failed',
+        if (kIsWeb) {
+          await user.reauthenticateWithPopup(fb.GoogleAuthProvider());
+        } else {
+          // Google-only account: no password to check, so re-prove identity
+          // with a fresh interactive Google sign-in instead.
+          await _ensureGoogleSignInInitialized();
+          final GoogleSignInAccount googleUser;
+          try {
+            googleUser = await _googleSignIn.authenticate();
+          } on GoogleSignInException catch (e) {
+            throw AuthException(
+              e.code == GoogleSignInExceptionCode.canceled
+                  ? 'Sign-in was cancelled.'
+                  : 'Google sign-in failed. Please try again.',
+              code: e.code == GoogleSignInExceptionCode.canceled
+                  ? 'google-sign-in-cancelled'
+                  : 'google-sign-in-failed',
+            );
+          }
+          final idToken = googleUser.authentication.idToken;
+          if (idToken == null) {
+            throw const AuthException(
+              'Google did not return an ID token.',
+              code: 'google-sign-in-failed',
+            );
+          }
+          final authorization = await googleUser.authorizationClient
+              .authorizationForScopes(const ['email']);
+          await user.reauthenticateWithCredential(
+            fb.GoogleAuthProvider.credential(
+              idToken: idToken,
+              accessToken: authorization?.accessToken,
+            ),
           );
         }
-        final idToken = googleUser.authentication.idToken;
-        if (idToken == null) {
-          throw const AuthException(
-            'Google did not return an ID token.',
-            code: 'google-sign-in-failed',
-          );
-        }
-        final authorization = await googleUser.authorizationClient
-            .authorizationForScopes(const ['email']);
-        await user.reauthenticateWithCredential(
-          fb.GoogleAuthProvider.credential(
-            idToken: idToken,
-            accessToken: authorization?.accessToken,
-          ),
-        );
       }
 
-      final userDoc = _firestore
-          .collection(FirestorePaths.users)
-          .doc(user.uid);
+      final userDoc = _firestore.collection(FirestorePaths.users).doc(user.uid);
 
       // Deleted first, and as its own commit — separate from the
       // subcollection deletes below — because Firestore security rules
@@ -434,12 +457,34 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
       'invalid-credential' => 'Incorrect email or password.',
       'email-already-in-use' => 'An account already exists with this email.',
       'weak-password' => 'Please choose a stronger password.',
-      'operation-not-allowed' => 'Email/password sign-in is not enabled.',
+      'operation-not-allowed' => 'This sign-in method is not enabled yet.',
+      'invalid-api-key' || 'api-key-not-valid' =>
+        'The app sign-in configuration needs an update. Please try again shortly.',
+      'unauthorized-domain' =>
+        'This website is not authorized for Google Sign-In yet.',
+      'popup-blocked' =>
+        'Your browser blocked the Google sign-in window. Allow pop-ups for Cashly Lao and try again.',
+      'popup-closed-by-user' => 'Google sign-in was closed before it finished.',
+      'cancelled-popup-request' =>
+        'Another Google sign-in window is already open. Please finish or close it first.',
       'too-many-requests' => 'Too many attempts. Please try again later.',
       'network-request-failed' => 'No internet connection. Please try again.',
       'requires-recent-login' =>
         'Please sign in again to complete this action.',
-      _ => e.message ?? 'Authentication failed. Please try again.',
+      _ => 'Authentication failed. Please try again.',
+    };
+    return AuthException(message, code: e.code);
+  }
+
+  AuthException _mapGooglePopupFirebaseException(FirebaseException e) {
+    final message = switch (e.code) {
+      'invalid-api-key' || 'api-key-not-valid' || 'app-registration-failed' =>
+        'The app sign-in configuration needs an update. Please try again shortly.',
+      'web-storage-unsupported' =>
+        'Your browser is blocking the storage needed for sign-in. Allow site data for Cashly Lao and try again.',
+      'operation-not-supported-in-this-environment' =>
+        'Google sign-in is not supported in this browser. Please use a standard browser and try again.',
+      _ => 'Google sign-in could not start. Please try again.',
     };
     return AuthException(message, code: e.code);
   }

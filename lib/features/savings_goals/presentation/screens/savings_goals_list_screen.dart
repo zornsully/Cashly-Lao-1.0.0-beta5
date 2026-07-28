@@ -69,8 +69,7 @@ class SavingsGoalsListScreen extends ConsumerWidget {
                 AppSpacing.xxl,
               ),
               itemCount: progressList.length,
-              separatorBuilder: (_, _) =>
-                  const SizedBox(height: AppSpacing.sm),
+              separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
               itemBuilder: (context, index) {
                 final progress = progressList[index];
                 return GoalCard(

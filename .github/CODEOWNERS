@@ -1,0 +1,14 @@
+# Enable “Require review from Code Owners” in the protected main-branch rule
+# for these entries to take effect. zornsully is the current repository owner.
+/.github/workflows/** @zornsully
+/.github/CODEOWNERS @zornsully
+/tool/** @zornsully
+/android/app/build.gradle.kts @zornsully
+/firebase.json @zornsully
+/.firebaserc @zornsully
+/assets/release/** @zornsully
+/lib/features/landing/** @zornsully
+/docs/RELEASE_*.md @zornsully
+/docs/PRODUCTION_ENVIRONMENT.md @zornsully
+/docs/REPOSITORY_HARDENING.md @zornsully
+/docs/ROLLBACK.md @zornsully

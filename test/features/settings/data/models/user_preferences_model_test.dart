@@ -34,37 +34,31 @@ void main() {
     },
   );
 
-  test(
-    'defaults to system theme, LAK, English, and both toggles off when '
-    'fields are absent',
-    () async {
-      final ref = firestore.collection('users').doc('uid-1');
-      await ref.set({'email': 'a@b.com'});
-      final doc = await ref.get();
+  test('defaults to system theme, LAK, English, and both toggles off when '
+      'fields are absent', () async {
+    final ref = firestore.collection('users').doc('uid-1');
+    await ref.set({'email': 'a@b.com'});
+    final doc = await ref.get();
 
-      final model = UserPreferencesModel.fromFirestore(doc);
+    final model = UserPreferencesModel.fromFirestore(doc);
 
-      expect(model.themeMode, AppThemeModePreference.system);
-      expect(model.defaultCurrencyCode, 'LAK');
-      expect(model.language, AppLanguage.english);
-      expect(model.appLockEnabled, isFalse);
-      expect(model.notificationsEnabled, isFalse);
-    },
-  );
+    expect(model.themeMode, AppThemeModePreference.system);
+    expect(model.defaultCurrencyCode, 'LAK');
+    expect(model.language, AppLanguage.english);
+    expect(model.appLockEnabled, isFalse);
+    expect(model.notificationsEnabled, isFalse);
+  });
 
-  test(
-    'defaults to system theme, LAK, English, and both toggles off when the '
-    'document does not exist',
-    () async {
-      final doc = await firestore.collection('users').doc('missing').get();
+  test('defaults to system theme, LAK, English, and both toggles off when the '
+      'document does not exist', () async {
+    final doc = await firestore.collection('users').doc('missing').get();
 
-      final model = UserPreferencesModel.fromFirestore(doc);
+    final model = UserPreferencesModel.fromFirestore(doc);
 
-      expect(model.themeMode, AppThemeModePreference.system);
-      expect(model.defaultCurrencyCode, 'LAK');
-      expect(model.language, AppLanguage.english);
-      expect(model.appLockEnabled, isFalse);
-      expect(model.notificationsEnabled, isFalse);
-    },
-  );
+    expect(model.themeMode, AppThemeModePreference.system);
+    expect(model.defaultCurrencyCode, 'LAK');
+    expect(model.language, AppLanguage.english);
+    expect(model.appLockEnabled, isFalse);
+    expect(model.notificationsEnabled, isFalse);
+  });
 }

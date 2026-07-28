@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/firebase_providers.dart';
@@ -73,6 +74,7 @@ final updateAppLockEnabledUseCaseProvider =
 /// disable the toggle rather than let a user turn on a lock they'd
 /// immediately be unable to pass.
 final isAppLockSupportedProvider = FutureProvider<bool>((ref) {
+  if (kIsWeb) return Future.value(false);
   return ref.watch(localAuthenticationProvider).isDeviceSupported();
 });
 

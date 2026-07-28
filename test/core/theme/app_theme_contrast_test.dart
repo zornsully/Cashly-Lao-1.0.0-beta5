@@ -69,16 +69,13 @@ void main() {
       );
     });
 
-    test(
-      '$label: AppSemanticColors.primaryForeground as text on surface '
-      '(Reports net figure)',
-      () {
-        expect(
-          _contrastRatio(semantic.primaryForeground, colors.surface),
-          greaterThanOrEqualTo(normalTextMin),
-        );
-      },
-    );
+    test('$label: AppSemanticColors.primaryForeground as text on surface '
+        '(Reports net figure)', () {
+      expect(
+        _contrastRatio(semantic.primaryForeground, colors.surface),
+        greaterThanOrEqualTo(normalTextMin),
+      );
+    });
 
     test('$label: error as button fill (onError on error)', () {
       expect(
@@ -87,27 +84,21 @@ void main() {
       );
     });
 
-    test(
-      '$label: error as icon/border/progress-bar color on surface '
-      '(non-text)',
-      () {
-        expect(
-          _contrastRatio(colors.error, colors.surface),
-          greaterThanOrEqualTo(largeTextOrIconMin),
-        );
-      },
-    );
+    test('$label: error as icon/border/progress-bar color on surface '
+        '(non-text)', () {
+      expect(
+        _contrastRatio(colors.error, colors.surface),
+        greaterThanOrEqualTo(largeTextOrIconMin),
+      );
+    });
 
-    test(
-      '$label: AppSemanticColors.negativeForeground as text on surface '
-      '(expense figures, DestructiveButton)',
-      () {
-        expect(
-          _contrastRatio(semantic.negativeForeground, colors.surface),
-          greaterThanOrEqualTo(normalTextMin),
-        );
-      },
-    );
+    test('$label: AppSemanticColors.negativeForeground as text on surface '
+        '(expense figures, DestructiveButton)', () {
+      expect(
+        _contrastRatio(semantic.negativeForeground, colors.surface),
+        greaterThanOrEqualTo(normalTextMin),
+      );
+    });
 
     test('$label: tertiary as button/badge fill (onTertiary on tertiary)', () {
       expect(
@@ -116,26 +107,20 @@ void main() {
       );
     });
 
-    test(
-      '$label: tertiaryContainer as SyncStatusBanner fill '
-      '(onTertiaryContainer on tertiaryContainer)',
-      () {
-        expect(
-          _contrastRatio(colors.onTertiaryContainer, colors.tertiaryContainer),
-          greaterThanOrEqualTo(normalTextMin),
-        );
-      },
-    );
+    test('$label: tertiaryContainer as SyncStatusBanner fill '
+        '(onTertiaryContainer on tertiaryContainer)', () {
+      expect(
+        _contrastRatio(colors.onTertiaryContainer, colors.tertiaryContainer),
+        greaterThanOrEqualTo(normalTextMin),
+      );
+    });
 
-    test(
-      '$label: AppSemanticColors.positiveForeground as text on surface '
-      '(income figures)',
-      () {
-        expect(
-          _contrastRatio(semantic.positiveForeground, colors.surface),
-          greaterThanOrEqualTo(normalTextMin),
-        );
-      },
-    );
+    test('$label: AppSemanticColors.positiveForeground as text on surface '
+        '(income figures)', () {
+      expect(
+        _contrastRatio(semantic.positiveForeground, colors.surface),
+        greaterThanOrEqualTo(normalTextMin),
+      );
+    });
   }
 }

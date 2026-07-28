@@ -8,15 +8,21 @@ void main() {
   // behavior-preserving — an already-shipped budget/account/goal alert's
   // tray notification ID must not change out from under it.
   test('matches the original inline hashCode expressions exactly', () {
-    expect(notificationIdFor('budget', 'cat1_2026-07'), 'budget-cat1_2026-07'.hashCode);
+    expect(
+      notificationIdFor('budget', 'cat1_2026-07'),
+      'budget-cat1_2026-07'.hashCode,
+    );
     expect(notificationIdFor('account', 'acc1'), 'account-acc1'.hashCode);
     expect(notificationIdFor('goal', 'goal1'), 'goal-goal1'.hashCode);
   });
 
-  test('different types with the same id produce different notification ids', () {
-    expect(
-      notificationIdFor('budget', 'shared-id'),
-      isNot(notificationIdFor('account', 'shared-id')),
-    );
-  });
+  test(
+    'different types with the same id produce different notification ids',
+    () {
+      expect(
+        notificationIdFor('budget', 'shared-id'),
+        isNot(notificationIdFor('account', 'shared-id')),
+      );
+    },
+  );
 }

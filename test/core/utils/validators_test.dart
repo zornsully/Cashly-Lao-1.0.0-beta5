@@ -50,9 +50,7 @@ void main() {
       expect(Validators.password(context, ''), isNotNull);
     });
 
-    testWidgets('rejects passwords shorter than 8 characters', (
-      tester,
-    ) async {
+    testWidgets('rejects passwords shorter than 8 characters', (tester) async {
       final context = await _pumpContext(tester);
       expect(Validators.password(context, 'Ab1'), isNotNull);
     });
@@ -78,10 +76,7 @@ void main() {
   group('Validators.confirmPassword', () {
     testWidgets('rejects empty input', (tester) async {
       final context = await _pumpContext(tester);
-      expect(
-        Validators.confirmPassword(context, '', 'Str0ngPass'),
-        isNotNull,
-      );
+      expect(Validators.confirmPassword(context, '', 'Str0ngPass'), isNotNull);
     });
 
     testWidgets('rejects mismatched passwords', (tester) async {

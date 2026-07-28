@@ -149,13 +149,13 @@ const _convertReportTotals = ConvertReportTotalsUseCase();
 /// `null` while loading, on a single-currency report, or if rates can't be
 /// fetched — callers should treat all three the same way: don't show the
 /// rollup card, never block the rest of Reports on it.
-final convertedMonthlyTotalsProvider = Provider<ConvertedMonthlyTotals?>((
-  ref,
-) {
+final convertedMonthlyTotalsProvider = Provider<ConvertedMonthlyTotals?>((ref) {
   final report = ref.watch(monthlyReportProvider).value;
   if (report == null || report.currencies.length < 2) return null;
 
-  final targetCurrencyCode = ref.watch(userPreferencesProvider).value
+  final targetCurrencyCode = ref
+      .watch(userPreferencesProvider)
+      .value
       ?.defaultCurrencyCode;
   if (targetCurrencyCode == null) return null;
 

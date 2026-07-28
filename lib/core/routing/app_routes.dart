@@ -1,6 +1,11 @@
 /// Named path constants for every route in the app. Screens navigate with
 /// `context.go(AppRoutes.login)` rather than hardcoded path strings.
 abstract final class AppRoutes {
+  /// Public product site. This stays outside the authenticated app shell.
+  static const String landing = '/';
+  static const String privacy = '/privacy';
+  static const String terms = '/terms';
+
   static const String splash = '/splash';
   static const String login = '/login';
   static const String register = '/register';

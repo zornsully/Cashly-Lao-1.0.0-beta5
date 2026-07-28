@@ -27,8 +27,7 @@ class ExportReportToCsvUseCase {
 
   String call(MonthlyReport report) {
     final rows = report.toExportRows();
-    final buffer = StringBuffer()
-      ..writeln(_columnOrder.map(_escape).join(','));
+    final buffer = StringBuffer()..writeln(_columnOrder.map(_escape).join(','));
 
     for (final row in rows) {
       buffer.writeln(

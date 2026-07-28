@@ -23,7 +23,10 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(
-      EmailAuthProvider.credential(email: 'fallback@example.com', password: 'x'),
+      EmailAuthProvider.credential(
+        email: 'fallback@example.com',
+        password: 'x',
+      ),
     );
   });
 
@@ -87,28 +90,25 @@ void main() {
       expect(doc.data()?['email'], 'test@example.com');
     });
 
-    test(
-      'leaves an existing profile doc untouched — does not re-stamp '
-      'createdAt or clobber fields set elsewhere (e.g. Settings)',
-      () async {
-        final userDoc = firestore.collection('users').doc('uid-1');
-        await userDoc.set({
-          'uid': 'uid-1',
-          'email': 'test@example.com',
-          'createdAt': Timestamp.fromDate(DateTime(2020, 1, 1)),
-          'themeMode': 'dark',
-        });
+    test('leaves an existing profile doc untouched — does not re-stamp '
+        'createdAt or clobber fields set elsewhere (e.g. Settings)', () async {
+      final userDoc = firestore.collection('users').doc('uid-1');
+      await userDoc.set({
+        'uid': 'uid-1',
+        'email': 'test@example.com',
+        'createdAt': Timestamp.fromDate(DateTime(2020, 1, 1)),
+        'themeMode': 'dark',
+      });
 
-        await dataSource.login(
-          email: 'test@example.com',
-          password: 'correct-password',
-        );
+      await dataSource.login(
+        email: 'test@example.com',
+        password: 'correct-password',
+      );
 
-        final data = (await userDoc.get()).data();
-        expect(data?['createdAt'], Timestamp.fromDate(DateTime(2020, 1, 1)));
-        expect(data?['themeMode'], 'dark');
-      },
-    );
+      final data = (await userDoc.get()).data();
+      expect(data?['createdAt'], Timestamp.fromDate(DateTime(2020, 1, 1)));
+      expect(data?['themeMode'], 'dark');
+    });
   });
 
   group('deleteAccount', () {
@@ -138,40 +138,35 @@ void main() {
       await userDoc.collection('budgets').add({'limitAmount': 100});
     }
 
-    test(
-      'reauthenticates, then deletes the profile doc, every subcollection, '
-      'and the Firebase user — in that order',
-      () async {
-        await seed();
+    test('reauthenticates, then deletes the profile doc, every subcollection, '
+        'and the Firebase user — in that order', () async {
+      await seed();
 
-        await dataSource.deleteAccount(password: 'correct-password');
+      await dataSource.deleteAccount(password: 'correct-password');
 
-        verify(
-          () => user.reauthenticateWithCredential(any()),
-        ).called(1);
+      verify(() => user.reauthenticateWithCredential(any())).called(1);
 
-        final userDoc = firestore.collection('users').doc('uid-1');
-        expect((await userDoc.get()).exists, isFalse);
-        for (final name in [
-          'accounts',
-          'categories',
-          'transactions',
-          'budgets',
-        ]) {
-          expect((await userDoc.collection(name).get()).docs, isEmpty);
-        }
+      final userDoc = firestore.collection('users').doc('uid-1');
+      expect((await userDoc.get()).exists, isFalse);
+      for (final name in [
+        'accounts',
+        'categories',
+        'transactions',
+        'budgets',
+      ]) {
+        expect((await userDoc.collection(name).get()).docs, isEmpty);
+      }
 
-        verify(() => user.delete()).called(1);
-      },
-    );
+      verify(() => user.delete()).called(1);
+    });
 
     test(
       'throws AuthException and deletes nothing when reauthentication fails',
       () async {
         await seed();
-        when(() => user.reauthenticateWithCredential(any())).thenThrow(
-          FirebaseAuthException(code: 'wrong-password'),
-        );
+        when(
+          () => user.reauthenticateWithCredential(any()),
+        ).thenThrow(FirebaseAuthException(code: 'wrong-password'));
 
         await expectLater(
           dataSource.deleteAccount(password: 'wrong-password'),

@@ -1,0 +1,160 @@
+name: Web preview
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Pull requests only receive read-only checks and a review artifact. The
+# optional staging deploy is restricted to trusted pushes to main.
+permissions:
+  contents: read
+
+concurrency:
+  group: cashly-web-preview-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build web preview
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Restore Dart dependencies and generated code
+        run: |
+          flutter pub get
+          flutter gen-l10n
+
+      - name: Check formatting, analysis, and tests
+        run: |
+          dart format --output=none --set-exit-if-changed lib test tool
+          flutter analyze
+          flutter test
+
+      - name: Build web preview
+        run: flutter build web --release
+
+      - name: Upload review-only web artifact
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
+        with:
+          name: cashly-lao-web-preview-${{ github.sha }}
+          path: build/web
+          if-no-files-found: error
+          retention-days: 7
+
+  preview_status:
+    name: Report preview deployment status
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Explain the safe default
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PREVIEW_ENABLED: ${{ vars.CASHLY_ENABLE_STAGING_PREVIEW }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT_NAME" == 'push' && "$PREVIEW_ENABLED" == 'true' ]]; then
+            echo "A trusted main-branch staging preview is enabled and will run in the next job." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "A review-only web artifact was created. No Firebase environment, production secret, or hosting site was changed." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  deploy_staging_preview:
+    name: Deploy trusted main preview
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.CASHLY_ENABLE_STAGING_PREVIEW == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: staging
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out trusted Hosting configuration
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Download trusted web artifact
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
+        with:
+          name: cashly-lao-web-preview-${{ github.sha }}
+          path: build/web
+
+      - name: Verify staging deployment configuration
+        shell: bash
+        env:
+          GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          for name in GCP_WORKLOAD_IDENTITY_PROVIDER GCP_SERVICE_ACCOUNT FIREBASE_PROJECT_ID; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "The staging environment is missing $name." >&2
+              exit 1
+            fi
+          done
+          if [[ "$FIREBASE_PROJECT_ID" != 'cashly-lao' ]]; then
+            echo 'FIREBASE_PROJECT_ID must be cashly-lao so the configured Hosting target and preview URL cannot diverge.' >&2
+            exit 1
+          fi
+
+      - name: Authenticate to Firebase with Workload Identity
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          create_credentials_file: true
+
+      # `auth` exports Application Default Credentials. Set up the Cloud SDK
+      # explicitly before asking gcloud for a short-lived REST API token.
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+
+      - name: Deploy isolated Firebase preview channel
+        shell: bash
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_TOOLS_VERSION: '13.35.1'
+        run: |
+          set -euo pipefail
+          channel="main-${GITHUB_SHA::12}"
+          npx --yes "firebase-tools@${FIREBASE_TOOLS_VERSION}" hosting:channel:deploy "$channel" \
+            --expires 7d \
+            --only hosting:cashly-lao \
+            --project "$FIREBASE_PROJECT_ID" \
+            --non-interactive
+
+          # Firebase creates a hash-qualified channel hostname. Query the
+          # Hosting REST API for its exact URL instead of guessing one.
+          access_token="$(gcloud auth print-access-token)"
+          test -n "$access_token"
+          preview_channel_json="$(curl --fail --silent --show-error \
+            --header "Authorization: Bearer $access_token" \
+            "https://firebasehosting.googleapis.com/v1beta1/sites/${FIREBASE_PROJECT_ID}/channels/${channel}")"
+          preview_url="$(jq -r '.url // empty' <<< "$preview_channel_json")"
+          preview_url="${preview_url%/}"
+          if [[ "$preview_url" != https://${FIREBASE_PROJECT_ID}--${channel}-*.web.app ]]; then
+            echo "Firebase returned an unexpected staging preview origin: $preview_url" >&2
+            exit 1
+          fi
+          curl --fail --silent --show-error --retry 4 --retry-delay 4 --max-time 30 "$preview_url/" > /dev/null
+          echo "Staging preview: $preview_url" >> "$GITHUB_STEP_SUMMARY"

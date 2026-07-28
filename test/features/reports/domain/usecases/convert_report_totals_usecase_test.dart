@@ -47,10 +47,7 @@ void main() {
   });
 
   test('skips a currency the rates snapshot does not cover', () {
-    final report = reportWith(
-      income: {'USD': 100, 'EUR': 50},
-      expense: {},
-    );
+    final report = reportWith(income: {'USD': 100, 'EUR': 50}, expense: {});
 
     final result = useCase(
       report: report,

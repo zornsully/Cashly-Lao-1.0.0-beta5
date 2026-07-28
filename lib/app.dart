@@ -66,7 +66,7 @@ class _CashlyAppState extends ConsumerState<CashlyApp>
     }
 
     return MaterialApp.router(
-      title: 'Cashly',
+      title: 'Cashly Lao',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),

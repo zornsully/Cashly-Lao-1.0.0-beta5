@@ -16,16 +16,19 @@ void main() {
     useCase = RegisterFcmTokenUseCase(repository);
   });
 
-  test('delegates to the repository with the given token and platform', () async {
-    when(
-      () => repository.registerToken(token: 'token-a', platform: 'android'),
-    ).thenAnswer((_) async => const Right(unit));
+  test(
+    'delegates to the repository with the given token and platform',
+    () async {
+      when(
+        () => repository.registerToken(token: 'token-a', platform: 'android'),
+      ).thenAnswer((_) async => const Right(unit));
 
-    final result = await useCase(token: 'token-a', platform: 'android');
+      final result = await useCase(token: 'token-a', platform: 'android');
 
-    expect(result, const Right<Failure, Unit>(unit));
-    verify(
-      () => repository.registerToken(token: 'token-a', platform: 'android'),
-    ).called(1);
-  });
+      expect(result, const Right<Failure, Unit>(unit));
+      verify(
+        () => repository.registerToken(token: 'token-a', platform: 'android'),
+      ).called(1);
+    },
+  );
 }

@@ -23,6 +23,8 @@ import '../../features/budget/domain/entities/budget_entity.dart';
 import '../../features/budget/presentation/screens/budget_form_screen.dart';
 import '../../features/budget/presentation/screens/budgets_list_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
+import '../../features/landing/presentation/screens/landing_page.dart';
+import '../../features/landing/presentation/screens/legal_document_page.dart';
 import '../../features/reports/presentation/screens/reports_screen.dart';
 import '../../features/savings_goals/domain/entities/savings_goal_entity.dart';
 import '../../features/savings_goals/presentation/screens/savings_goal_detail_screen.dart';
@@ -32,16 +34,27 @@ import '../../features/settings/presentation/screens/lock_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/settings/presentation/providers/settings_providers.dart';
 import '../../features/transactions/domain/entities/transaction_entity.dart';
+import '../../features/transactions/domain/entities/transaction_type.dart';
 import '../../features/transactions/presentation/screens/transaction_form_screen.dart';
 import '../../features/transactions/presentation/screens/transactions_list_screen.dart';
 import '../providers/app_lock_state_provider.dart';
+import '../utils/platform_capabilities.dart';
 import 'app_routes.dart';
 import 'home_shell_screen.dart';
 
 const _publicRoutes = {
+  AppRoutes.landing,
+  AppRoutes.privacy,
+  AppRoutes.terms,
   AppRoutes.login,
   AppRoutes.register,
   AppRoutes.forgotPassword,
+};
+
+const _marketingRoutes = {
+  AppRoutes.landing,
+  AppRoutes.privacy,
+  AppRoutes.terms,
 };
 
 const _authOnlyRoutes = {
@@ -78,12 +91,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   ref.onDispose(refreshNotifier.dispose);
 
   return GoRouter(
-    initialLocation: AppRoutes.splash,
+    initialLocation: AppRoutes.landing,
     refreshListenable: refreshNotifier,
-    observers: [FirebaseAnalyticsObserver(analytics: ref.read(analyticsProvider))],
+    observers: [
+      if (AppPlatformCapabilities.supportsFirebaseAnalytics)
+        FirebaseAnalyticsObserver(analytics: ref.read(analyticsProvider)),
+    ],
     redirect: (context, state) {
       final authState = ref.read(authStateChangesProvider);
       final location = state.matchedLocation;
+
+      // The marketing and legal pages must remain reachable before the
+      // Firebase auth stream produces its first value and for signed-in users.
+      if (_marketingRoutes.contains(location)) return null;
 
       if (!authState.hasValue) {
         return location == AppRoutes.splash ? null : AppRoutes.splash;
@@ -101,7 +121,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       final appLockEnabled =
           ref.read(userPreferencesProvider).value?.appLockEnabled ?? false;
-      if (appLockEnabled && !ref.read(isUnlockedProvider)) {
+      if (!kIsWeb && appLockEnabled && !ref.read(isUnlockedProvider)) {
         return location == AppRoutes.lock ? null : AppRoutes.lock;
       }
       if (location == AppRoutes.lock) {
@@ -111,6 +131,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       return _authOnlyRoutes.contains(location) ? AppRoutes.home : null;
     },
     routes: [
+      GoRoute(
+        path: AppRoutes.landing,
+        builder: (context, state) => const LandingPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.privacy,
+        builder: (context, state) => const LegalDocumentPage.privacy(),
+      ),
+      GoRoute(
+        path: AppRoutes.terms,
+        builder: (context, state) => const LegalDocumentPage.terms(),
+      ),
       GoRoute(
         path: AppRoutes.splash,
         builder: (context, state) => const SplashScreen(),
@@ -210,7 +242,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.transactionNew,
-        builder: (context, state) => const TransactionFormScreen(),
+        builder: (context, state) => TransactionFormScreen(
+          initialType: state.extra is TransactionType
+              ? state.extra as TransactionType
+              : null,
+        ),
       ),
       GoRoute(
         path: AppRoutes.transactionEdit,
@@ -254,9 +290,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.savingsGoalDetail,
-        builder: (context, state) => SavingsGoalDetailScreen(
-          goalId: state.pathParameters['id']!,
-        ),
+        builder: (context, state) =>
+            SavingsGoalDetailScreen(goalId: state.pathParameters['id']!),
       ),
     ],
   );

@@ -15,10 +15,9 @@ import '../repositories/savings_goal_repository.dart';
 /// so the next reminder is computed correctly.
 class ContributeToGoalUseCase {
   const ContributeToGoalUseCase({
-    required CreateTransactionUseCase createTransaction,
-    required SavingsGoalRepository goalRepository,
-  }) : _createTransaction = createTransaction, // ignore: prefer_initializing_formals
-       _goalRepository = goalRepository; // ignore: prefer_initializing_formals
+    required this._createTransaction,
+    required this._goalRepository,
+  });
 
   final CreateTransactionUseCase _createTransaction;
   final SavingsGoalRepository _goalRepository;

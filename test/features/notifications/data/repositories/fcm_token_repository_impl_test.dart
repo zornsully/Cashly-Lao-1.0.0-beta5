@@ -49,7 +49,9 @@ void main() {
 
     expect(
       result,
-      const Left<Failure, Unit>(ServerFailure('Could not register this device.')),
+      const Left<Failure, Unit>(
+        ServerFailure('Could not register this device.'),
+      ),
     );
   });
 

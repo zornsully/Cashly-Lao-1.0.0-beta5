@@ -61,29 +61,26 @@ void main() {
     },
   );
 
-  test(
-    'fromFirestore normalizes an absent toAccountId to null for '
-    'income/expense',
-    () async {
-      final firestore = FakeFirebaseFirestore();
-      final docRef = firestore.collection('transactions').doc('txn-income');
+  test('fromFirestore normalizes an absent toAccountId to null for '
+      'income/expense', () async {
+    final firestore = FakeFirebaseFirestore();
+    final docRef = firestore.collection('transactions').doc('txn-income');
 
-      await docRef.set({
-        'accountId': 'acc-1',
-        'categoryId': 'cat-1',
-        'type': 'income',
-        'amount': 30,
-        'date': Timestamp.fromDate(DateTime(2026, 3, 15)),
-        'note': '',
-      });
+    await docRef.set({
+      'accountId': 'acc-1',
+      'categoryId': 'cat-1',
+      'type': 'income',
+      'amount': 30,
+      'date': Timestamp.fromDate(DateTime(2026, 3, 15)),
+      'note': '',
+    });
 
-      final snapshot = await docRef.get();
-      final model = TransactionModel.fromFirestore(snapshot);
+    final snapshot = await docRef.get();
+    final model = TransactionModel.fromFirestore(snapshot);
 
-      expect(model.categoryId, 'cat-1');
-      expect(model.toAccountId, isNull);
-    },
-  );
+    expect(model.categoryId, 'cat-1');
+    expect(model.toAccountId, isNull);
+  });
 
   test('defaults note to empty string when absent', () async {
     final firestore = FakeFirebaseFirestore();
