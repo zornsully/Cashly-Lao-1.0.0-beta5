@@ -1,4 +1,5 @@
 import '../entities/financial_insight.dart';
+import '../entities/financial_insight_message.dart';
 import '../entities/smart_money_score.dart';
 import 'financial_insight_engine.dart';
 import 'short_horizon_balance_movement_calculator.dart';
@@ -31,47 +32,88 @@ class RuleBasedFinancialInsightEngine implements FinancialInsightEngine {
     final primaryScore = monthScore;
 
     var narrativeTone = FinancialInsightTone.positive;
-    var headline = 'Your spending is looking steady today.';
-    var explanation =
-        'Keep logging transactions and Cashly will make each insight more personal.';
+    var headline = const FinancialInsightMessage(
+      FinancialInsightMessageKey.steadySpendingHeadline,
+    );
+    var explanation = const FinancialInsightMessage(
+      FinancialInsightMessageKey.steadySpendingExplanation,
+    );
     final actions = <FinancialInsightAction>[];
 
     if (signals.balance.isNegative) {
       narrativeTone = FinancialInsightTone.critical;
-      headline = 'Your total balance is below zero.';
-      explanation =
-          'Your total ${snapshot.currencyCode} balance is ${_amount(snapshot.balance.totalBalance, snapshot.currencyCode)}. Bringing that shortfall above zero is the clearest next step.';
+      headline = const FinancialInsightMessage(
+        FinancialInsightMessageKey.negativeBalanceHeadline,
+      );
+      explanation = FinancialInsightMessage(
+        FinancialInsightMessageKey.negativeBalanceExplanation,
+        {
+          'currency': snapshot.currencyCode,
+          'amount': _amount(
+            snapshot.balance.totalBalance,
+            snapshot.currencyCode,
+          ),
+        },
+      );
       actions.add(
         const FinancialInsightAction(
-          title: 'Plan the next essential expense first',
-          detail:
-              'Focusing on one necessary expense at a time can help rebuild a positive buffer without judging past choices.',
+          title: FinancialInsightMessage(
+            FinancialInsightMessageKey.planEssentialExpenseTitle,
+          ),
+          detail: FinancialInsightMessage(
+            FinancialInsightMessageKey.planEssentialExpenseDetail,
+          ),
         ),
       );
     } else if (signals.overBudget != null) {
       final budget = signals.overBudget!;
       narrativeTone = FinancialInsightTone.critical;
-      headline = '${budget.categoryName} is over its monthly budget.';
-      explanation =
-          'You have spent ${_amount(budget.spent, snapshot.currencyCode)} against a ${_amount(budget.limit, snapshot.currencyCode)} plan.';
+      headline = FinancialInsightMessage(
+        FinancialInsightMessageKey.categoryOverBudgetHeadline,
+        {'category': budget.categoryName},
+      );
+      explanation = FinancialInsightMessage(
+        FinancialInsightMessageKey.categoryOverBudgetExplanation,
+        {
+          'spent': _amount(budget.spent, snapshot.currencyCode),
+          'limit': _amount(budget.limit, snapshot.currencyCode),
+        },
+      );
       actions.add(
         FinancialInsightAction(
-          title: 'Pause ${budget.categoryName} spending for today',
-          detail:
-              'A short pause protects the rest of this month\'s plan without judging past choices.',
+          title: FinancialInsightMessage(
+            FinancialInsightMessageKey.pauseCategorySpendingTitle,
+            {'category': budget.categoryName},
+          ),
+          detail: const FinancialInsightMessage(
+            FinancialInsightMessageKey.pauseCategorySpendingDetail,
+          ),
         ),
       );
     } else if (signals.nearBudget != null || signals.pacedBudget != null) {
       final budget = signals.nearBudget ?? signals.pacedBudget!;
       narrativeTone = FinancialInsightTone.caution;
-      headline = '${budget.categoryName} needs a little room this month.';
-      explanation =
-          'You have used ${_percent(budget.usage)} of its ${_amount(budget.limit, snapshot.currencyCode)} budget.';
+      headline = FinancialInsightMessage(
+        FinancialInsightMessageKey.categoryNeedsRoomHeadline,
+        {'category': budget.categoryName},
+      );
+      explanation = FinancialInsightMessage(
+        FinancialInsightMessageKey.categoryNeedsRoomExplanation,
+        {
+          'percent': _percent(budget.usage),
+          'limit': _amount(budget.limit, snapshot.currencyCode),
+        },
+      );
       actions.add(
         FinancialInsightAction(
-          title: 'Set a rest-of-month limit for ${budget.categoryName}',
-          detail:
-              'Keeping the next purchases within ${_amount(budget.remaining, snapshot.currencyCode)} will keep this budget on track.',
+          title: FinancialInsightMessage(
+            FinancialInsightMessageKey.setRestOfMonthLimitTitle,
+            {'category': budget.categoryName},
+          ),
+          detail: FinancialInsightMessage(
+            FinancialInsightMessageKey.setRestOfMonthLimitDetail,
+            {'remaining': _amount(budget.remaining, snapshot.currencyCode)},
+          ),
         ),
       );
     }
@@ -80,29 +122,44 @@ class RuleBasedFinancialInsightEngine implements FinancialInsightEngine {
       final spike = signals.weeklyCategorySpike!;
       if (narrativeTone == FinancialInsightTone.positive) {
         narrativeTone = FinancialInsightTone.watch;
-        headline = '${spike.categoryName} is higher than your usual pace.';
-        explanation =
-            'It is ${_changePercent(spike.changePercent!)} above the comparable period, so it is worth a quick check-in.';
+        headline = FinancialInsightMessage(
+          FinancialInsightMessageKey.categoryHigherThanUsualHeadline,
+          {'category': spike.categoryName},
+        );
+        explanation = FinancialInsightMessage(
+          FinancialInsightMessageKey.categoryHigherThanUsualExplanation,
+          {'changePercent': _changePercent(spike.changePercent!)},
+        );
       }
       actions.add(
         FinancialInsightAction(
-          title: 'Review your next ${spike.categoryName} purchase',
-          detail:
-              'A small swap or delay can soften this increase while you decide whether it was a one-off.',
+          title: FinancialInsightMessage(
+            FinancialInsightMessageKey.reviewNextCategoryPurchaseTitle,
+            {'category': spike.categoryName},
+          ),
+          detail: const FinancialInsightMessage(
+            FinancialInsightMessageKey.reviewNextCategoryPurchaseDetail,
+          ),
         ),
       );
     } else if (signals.todaySpike) {
       if (narrativeTone == FinancialInsightTone.positive) {
         narrativeTone = FinancialInsightTone.watch;
-        headline = 'Today is spending faster than this week\'s pace.';
-        explanation =
-            'That can happen - one intentional check before another purchase keeps the day in your control.';
+        headline = const FinancialInsightMessage(
+          FinancialInsightMessageKey.todaySpendingFasterHeadline,
+        );
+        explanation = const FinancialInsightMessage(
+          FinancialInsightMessageKey.todaySpendingFasterExplanation,
+        );
       }
       actions.add(
         const FinancialInsightAction(
-          title: 'Check the next expense before you buy',
-          detail:
-              'A quick pause can keep today closer to your usual pace without changing what has already happened.',
+          title: FinancialInsightMessage(
+            FinancialInsightMessageKey.checkNextExpenseTitle,
+          ),
+          detail: FinancialInsightMessage(
+            FinancialInsightMessageKey.checkNextExpenseDetail,
+          ),
         ),
       );
     }
@@ -110,15 +167,21 @@ class RuleBasedFinancialInsightEngine implements FinancialInsightEngine {
     if (signals.spendingOverIncome) {
       if (narrativeTone == FinancialInsightTone.positive) {
         narrativeTone = FinancialInsightTone.watch;
-        headline = 'This month\'s spending is ahead of income so far.';
-        explanation =
-            'This is a trend to watch, not a verdict - one or two intentional choices can still change the month.';
+        headline = const FinancialInsightMessage(
+          FinancialInsightMessageKey.spendingAheadOfIncomeHeadline,
+        );
+        explanation = const FinancialInsightMessage(
+          FinancialInsightMessageKey.spendingAheadOfIncomeExplanation,
+        );
       }
       actions.add(
         const FinancialInsightAction(
-          title: 'Choose one low-priority expense to delay',
-          detail:
-              'Focus on the next choice only; reducing one flexible cost can bring the month closer to balance.',
+          title: FinancialInsightMessage(
+            FinancialInsightMessageKey.chooseLowPriorityExpenseTitle,
+          ),
+          detail: FinancialInsightMessage(
+            FinancialInsightMessageKey.chooseLowPriorityExpenseDetail,
+          ),
         ),
       );
     }
@@ -139,9 +202,12 @@ class RuleBasedFinancialInsightEngine implements FinancialInsightEngine {
     if (actions.isEmpty) {
       actions.add(
         const FinancialInsightAction(
-          title: 'Keep your next expense intentional',
-          detail:
-              'Your current pace is healthy. A quick check before a purchase helps it stay that way.',
+          title: FinancialInsightMessage(
+            FinancialInsightMessageKey.keepExpenseIntentionalTitle,
+          ),
+          detail: FinancialInsightMessage(
+            FinancialInsightMessageKey.keepExpenseIntentionalPaceDetail,
+          ),
         ),
       );
     }
@@ -172,7 +238,7 @@ class RuleBasedFinancialInsightEngine implements FinancialInsightEngine {
     _InsightSignals signals,
   ) {
     var score = 100;
-    final reasons = <String>[];
+    final reasons = <FinancialInsightMessage>[];
     final balanceMovement = _shortHorizonBalanceMovement.calculate(
       snapshot: snapshot,
       period: FinancialWindowKind.today,
@@ -187,33 +253,56 @@ class RuleBasedFinancialInsightEngine implements FinancialInsightEngine {
     if (signals.overBudget != null) {
       score -= 28;
       reasons.add(
-        '${signals.overBudget!.categoryName} is already over its monthly budget.',
+        FinancialInsightMessage(
+          FinancialInsightMessageKey.categoryOverBudgetReasonToday,
+          {'category': signals.overBudget!.categoryName},
+        ),
       );
     } else if (signals.nearBudget != null) {
       score -= 12;
       reasons.add(
-        '${signals.nearBudget!.categoryName} has little budget room left this month.',
+        FinancialInsightMessage(
+          FinancialInsightMessageKey.categoryNearBudgetReasonToday,
+          {'category': signals.nearBudget!.categoryName},
+        ),
       );
     }
 
     if (signals.todaySpike) {
       score -= 20;
       reasons.add(
-        'Today\'s spending is more than twice your earlier daily pace this week.',
+        const FinancialInsightMessage(
+          FinancialInsightMessageKey.todaySpikeReason,
+        ),
       );
     } else if (_isComparableIncrease(snapshot.today, 0.6)) {
       score -= 12;
       reasons.add(
-        'Today\'s spending is ${_changePercent(snapshot.today.expenseChangePercent!)} above yesterday\'s comparable total.',
+        FinancialInsightMessage(
+          FinancialInsightMessageKey.todayComparableIncreaseReason,
+          {
+            'changePercent': _changePercent(
+              snapshot.today.expenseChangePercent!,
+            ),
+          },
+        ),
       );
     }
 
     if (snapshot.today.expense == 0 && snapshot.today.income == 0) {
-      reasons.add('No income or expense has been recorded today.');
+      reasons.add(
+        const FinancialInsightMessage(
+          FinancialInsightMessageKey.noActivityTodayReason,
+        ),
+      );
     } else if (snapshot.today.income >= snapshot.today.expense &&
         snapshot.today.income > 0) {
       score += 2;
-      reasons.add('Today\'s recorded income covers today\'s spending.');
+      reasons.add(
+        const FinancialInsightMessage(
+          FinancialInsightMessageKey.incomeCoversTodayReason,
+        ),
+      );
     }
 
     // Balance movement is intentionally modest for a short horizon. It can
@@ -236,7 +325,7 @@ class RuleBasedFinancialInsightEngine implements FinancialInsightEngine {
     _InsightSignals signals,
   ) {
     var score = 100;
-    final reasons = <String>[];
+    final reasons = <FinancialInsightMessage>[];
     final balanceMovement = _shortHorizonBalanceMovement.calculate(
       snapshot: snapshot,
       period: FinancialWindowKind.week,
@@ -251,17 +340,26 @@ class RuleBasedFinancialInsightEngine implements FinancialInsightEngine {
     if (signals.overBudget != null) {
       score -= 22;
       reasons.add(
-        '${signals.overBudget!.categoryName} is over budget, so this week needs a gentler pace.',
+        FinancialInsightMessage(
+          FinancialInsightMessageKey.categoryOverBudgetReasonWeek,
+          {'category': signals.overBudget!.categoryName},
+        ),
       );
     } else if (signals.nearBudget != null) {
       score -= 14;
       reasons.add(
-        '${signals.nearBudget!.categoryName} is close to its monthly limit.',
+        FinancialInsightMessage(
+          FinancialInsightMessageKey.categoryNearBudgetReasonWeek,
+          {'category': signals.nearBudget!.categoryName},
+        ),
       );
     } else if (signals.pacedBudget != null) {
       score -= 9;
       reasons.add(
-        '${signals.pacedBudget!.categoryName} is ahead of its expected monthly pace.',
+        FinancialInsightMessage(
+          FinancialInsightMessageKey.categoryPacedBudgetReasonWeek,
+          {'category': signals.pacedBudget!.categoryName},
+        ),
       );
     }
 
@@ -269,19 +367,34 @@ class RuleBasedFinancialInsightEngine implements FinancialInsightEngine {
       final spike = signals.weeklyCategorySpike!;
       score -= 18;
       reasons.add(
-        '${spike.categoryName} is ${_changePercent(spike.changePercent!)} above the comparable week.',
+        FinancialInsightMessage(
+          FinancialInsightMessageKey.weeklyCategorySpikeReason,
+          {
+            'category': spike.categoryName,
+            'changePercent': _changePercent(spike.changePercent!),
+          },
+        ),
       );
     }
 
     if (_isComparableIncrease(snapshot.week, 0.6)) {
       score -= 16;
       reasons.add(
-        'This week\'s spending is ${_changePercent(snapshot.week.expenseChangePercent!)} above last week\'s comparable total.',
+        FinancialInsightMessage(
+          FinancialInsightMessageKey.weekComparableIncreaseReason,
+          {
+            'changePercent': _changePercent(
+              snapshot.week.expenseChangePercent!,
+            ),
+          },
+        ),
       );
     } else if (_isComparableDecrease(snapshot.week, 0.1)) {
       score += 3;
       reasons.add(
-        'This week is spending less than the comparable previous week.',
+        const FinancialInsightMessage(
+          FinancialInsightMessageKey.weekComparableDecreaseReason,
+        ),
       );
     }
 
@@ -311,12 +424,18 @@ class RuleBasedFinancialInsightEngine implements FinancialInsightEngine {
         period: FinancialWindowKind.month,
         value: lifecycleCalculation.score,
         tone: _monthlyToneFor(lifecycleCalculation),
-        reasons: lifecycleCalculation.reasons,
+        // The persisted calculation's reasons are an auditable historical
+        // record kept in English by design (see CLAUDE.md's Phase 2a entry)
+        // — rendered verbatim via the `literal` passthrough rather than
+        // mapped onto a localizable key.
+        reasons: lifecycleCalculation.reasons
+            .map(FinancialInsightMessage.literal)
+            .toList(),
       );
     }
 
     var score = 100;
-    final reasons = <String>[];
+    final reasons = <FinancialInsightMessage>[];
     final balanceImpact = signals.balance.impactFor(
       FinancialWindowKind.month,
       snapshot.currencyCode,
@@ -327,40 +446,77 @@ class RuleBasedFinancialInsightEngine implements FinancialInsightEngine {
     if (signals.overBudget != null) {
       score -= 38;
       reasons.add(
-        '${signals.overBudget!.categoryName} is ${_percent(signals.overBudget!.usage - 1)} over budget.',
+        FinancialInsightMessage(
+          FinancialInsightMessageKey.categoryOverBudgetReasonMonth,
+          {
+            'category': signals.overBudget!.categoryName,
+            'percent': _percent(signals.overBudget!.usage - 1),
+          },
+        ),
       );
     } else if (signals.nearBudget != null) {
       score -= 20;
       reasons.add(
-        '${signals.nearBudget!.categoryName} has ${_amount(signals.nearBudget!.remaining, snapshot.currencyCode)} remaining.',
+        FinancialInsightMessage(
+          FinancialInsightMessageKey.categoryNearBudgetReasonMonth,
+          {
+            'category': signals.nearBudget!.categoryName,
+            'remaining': _amount(
+              signals.nearBudget!.remaining,
+              snapshot.currencyCode,
+            ),
+          },
+        ),
       );
     } else if (signals.pacedBudget != null) {
       score -= 12;
       reasons.add(
-        '${signals.pacedBudget!.categoryName} is spending faster than its monthly plan.',
+        FinancialInsightMessage(
+          FinancialInsightMessageKey.categoryPacedBudgetReasonMonth,
+          {'category': signals.pacedBudget!.categoryName},
+        ),
       );
     }
 
     if (signals.spendingOverIncome) {
       score -= 18;
       reasons.add(
-        'Month-to-date spending is ${_amount(snapshot.month.expense, snapshot.currencyCode)} versus ${_amount(snapshot.month.income, snapshot.currencyCode)} income.',
+        FinancialInsightMessage(
+          FinancialInsightMessageKey.spendingOverIncomeReasonMonth,
+          {
+            'expense': _amount(snapshot.month.expense, snapshot.currencyCode),
+            'income': _amount(snapshot.month.income, snapshot.currencyCode),
+          },
+        ),
       );
     } else if (snapshot.month.income >= snapshot.month.expense &&
         snapshot.month.income > 0) {
       score += 3;
-      reasons.add('Income currently covers this month\'s recorded spending.');
+      reasons.add(
+        const FinancialInsightMessage(
+          FinancialInsightMessageKey.incomeCoversMonthReason,
+        ),
+      );
     }
 
     if (_isComparableIncrease(snapshot.month, 0.4)) {
       score -= 12;
       reasons.add(
-        'Month-to-date spending is ${_changePercent(snapshot.month.expenseChangePercent!)} above the comparable previous month.',
+        FinancialInsightMessage(
+          FinancialInsightMessageKey.monthComparableIncreaseReason,
+          {
+            'changePercent': _changePercent(
+              snapshot.month.expenseChangePercent!,
+            ),
+          },
+        ),
       );
     } else if (_isComparableDecrease(snapshot.month, 0.1)) {
       score += 4;
       reasons.add(
-        'Month-to-date spending is lower than the comparable previous period.',
+        const FinancialInsightMessage(
+          FinancialInsightMessageKey.monthComparableDecreaseReason,
+        ),
       );
     }
 
@@ -375,7 +531,7 @@ class RuleBasedFinancialInsightEngine implements FinancialInsightEngine {
   FinancialPeriodScore _periodScore({
     required FinancialWindowKind period,
     required int score,
-    required List<String> reasons,
+    required List<FinancialInsightMessage> reasons,
     required bool forceCritical,
   }) {
     final maximum = period == FinancialWindowKind.month ? 150 : 100;
@@ -385,7 +541,7 @@ class RuleBasedFinancialInsightEngine implements FinancialInsightEngine {
       value: value,
       tone: forceCritical ? FinancialInsightTone.critical : _toneFor(value),
       reasons: reasons.isEmpty
-          ? [_steadyReason(period)]
+          ? [FinancialInsightMessage(_steadyReasonKey(period))]
           : reasons.take(3).toList(),
     );
   }
@@ -447,43 +603,61 @@ class RuleBasedFinancialInsightEngine implements FinancialInsightEngine {
   }
 
   FinancialInsight _emptyInsight(FinancialInsightSnapshot snapshot) {
-    FinancialPeriodScore emptyScore(FinancialWindowKind period) {
+    FinancialPeriodScore emptyScore(
+      FinancialWindowKind period,
+      FinancialInsightMessageKey reasonKey,
+    ) {
       return FinancialPeriodScore(
         period: period,
         value: 75,
         tone: FinancialInsightTone.watch,
-        reasons: [
-          'There is not enough recent activity to score this ${_periodLabel(period).toLowerCase()} trend yet.',
-        ],
+        reasons: [FinancialInsightMessage(reasonKey)],
       );
     }
 
-    final todayScore = emptyScore(FinancialWindowKind.today);
+    final todayScore = emptyScore(
+      FinancialWindowKind.today,
+      FinancialInsightMessageKey.notEnoughActivityTodayReason,
+    );
     final lifecycleCalculation = snapshot.monthlyScoreCalculation;
     final monthScore = lifecycleCalculation == null
-        ? emptyScore(FinancialWindowKind.month)
+        ? emptyScore(
+            FinancialWindowKind.month,
+            FinancialInsightMessageKey.notEnoughActivityMonthReason,
+          )
         : FinancialPeriodScore(
             period: FinancialWindowKind.month,
             value: lifecycleCalculation.score,
             tone: _monthlyToneFor(lifecycleCalculation),
-            reasons: lifecycleCalculation.reasons,
+            reasons: lifecycleCalculation.reasons
+                .map(FinancialInsightMessage.literal)
+                .toList(),
           );
     return FinancialInsight(
       currencyCode: snapshot.currencyCode,
       totalBalance: snapshot.balance.totalBalance,
       todayScore: todayScore,
-      weekScore: emptyScore(FinancialWindowKind.week),
+      weekScore: emptyScore(
+        FinancialWindowKind.week,
+        FinancialInsightMessageKey.notEnoughActivityWeekReason,
+      ),
       monthScore: monthScore,
       tone: FinancialInsightTone.watch,
-      headline: 'Let\'s build your first spending pattern.',
-      explanation:
-          'Add a few income or expense entries and Cashly will turn them into personal daily, weekly, and monthly check-ins.',
+      headline: const FinancialInsightMessage(
+        FinancialInsightMessageKey.onboardingHeadline,
+      ),
+      explanation: const FinancialInsightMessage(
+        FinancialInsightMessageKey.onboardingExplanation,
+      ),
       scoreReasons: monthScore.reasons,
       actions: const [
         FinancialInsightAction(
-          title: 'Log your next expense',
-          detail:
-              'Even a small everyday purchase gives the assistant a better starting point.',
+          title: FinancialInsightMessage(
+            FinancialInsightMessageKey.logNextExpenseTitle,
+          ),
+          detail: FinancialInsightMessage(
+            FinancialInsightMessageKey.logNextExpenseDetail,
+          ),
         ),
       ],
       today: snapshot.today,
@@ -555,18 +729,12 @@ class RuleBasedFinancialInsightEngine implements FinancialInsightEngine {
     };
   }
 
-  String _steadyReason(FinancialWindowKind period) => switch (period) {
-    FinancialWindowKind.today => 'Today is within a healthy spending pace.',
-    FinancialWindowKind.week =>
-      'This week is tracking close to your recent pace.',
-    FinancialWindowKind.month =>
-      'This month is within the plan recorded in Cashly.',
-  };
-
-  String _periodLabel(FinancialWindowKind period) => switch (period) {
-    FinancialWindowKind.today => 'Today',
-    FinancialWindowKind.week => 'Week',
-    FinancialWindowKind.month => 'Month',
+  FinancialInsightMessageKey _steadyReasonKey(
+    FinancialWindowKind period,
+  ) => switch (period) {
+    FinancialWindowKind.today => FinancialInsightMessageKey.steadyReasonToday,
+    FinancialWindowKind.week => FinancialInsightMessageKey.steadyReasonWeek,
+    FinancialWindowKind.month => FinancialInsightMessageKey.steadyReasonMonth,
   };
 
   String _amount(double value, String currencyCode) =>
@@ -652,43 +820,73 @@ class _BalanceBuffer {
     _ => FinancialInsightTone.positive,
   };
 
-  String get attentionHeadline => switch (health) {
-    _BalanceHealth.empty => 'Your available balance is at zero.',
-    _BalanceHealth.thin => 'Your balance buffer is getting tight.',
-    _BalanceHealth.limited => 'Your balance could use a little more room.',
-    _ => 'Your balance is looking steady.',
+  FinancialInsightMessage get attentionHeadline => switch (health) {
+    _BalanceHealth.empty => const FinancialInsightMessage(
+      FinancialInsightMessageKey.balanceZeroHeadline,
+    ),
+    _BalanceHealth.thin => const FinancialInsightMessage(
+      FinancialInsightMessageKey.balanceThinHeadline,
+    ),
+    _BalanceHealth.limited => const FinancialInsightMessage(
+      FinancialInsightMessageKey.balanceLimitedHeadline,
+    ),
+    _ => const FinancialInsightMessage(
+      FinancialInsightMessageKey.balanceSteadyHeadline,
+    ),
   };
 
-  String attentionExplanation(String currencyCode) => switch (health) {
-    _BalanceHealth.empty =>
-      'There is no $currencyCode buffer left after recent activity. Choosing the next expense carefully can help create room again.',
-    _BalanceHealth.thin =>
-      'At your recent spending pace, this $currencyCode balance covers about $_wholeDays days. Protecting one essential expense first can help.',
-    _BalanceHealth.limited =>
-      'At your recent spending pace, this $currencyCode balance covers about $_wholeDays days. A small rest-of-week plan can preserve that room.',
-    _ => 'Your balance is supporting your current pace.',
-  };
+  FinancialInsightMessage attentionExplanation(String currencyCode) =>
+      switch (health) {
+        _BalanceHealth.empty => FinancialInsightMessage(
+          FinancialInsightMessageKey.balanceZeroExplanation,
+          {'currency': currencyCode},
+        ),
+        _BalanceHealth.thin => FinancialInsightMessage(
+          FinancialInsightMessageKey.balanceThinExplanation,
+          {'currency': currencyCode, 'days': _wholeDays},
+        ),
+        _BalanceHealth.limited => FinancialInsightMessage(
+          FinancialInsightMessageKey.balanceLimitedExplanation,
+          {'currency': currencyCode, 'days': _wholeDays},
+        ),
+        _ => const FinancialInsightMessage(
+          FinancialInsightMessageKey.balanceSteadyExplanation,
+        ),
+      };
 
   FinancialInsightAction get practicalAction => switch (health) {
     _BalanceHealth.empty => const FinancialInsightAction(
-      title: 'Protect the next essential expense',
-      detail:
-          'Choosing the next necessary cost first can help create space before adding anything optional.',
+      title: FinancialInsightMessage(
+        FinancialInsightMessageKey.protectEssentialExpenseTitle,
+      ),
+      detail: FinancialInsightMessage(
+        FinancialInsightMessageKey.protectEssentialExpenseDetail,
+      ),
     ),
     _BalanceHealth.thin => FinancialInsightAction(
-      title: 'Reserve the next $_wholeDays days of essentials',
-      detail:
-          'Keeping that small buffer for needs first gives your balance more room to recover.',
+      title: FinancialInsightMessage(
+        FinancialInsightMessageKey.reserveNextDaysTitle,
+        {'days': _wholeDays},
+      ),
+      detail: const FinancialInsightMessage(
+        FinancialInsightMessageKey.reserveNextDaysDetail,
+      ),
     ),
     _BalanceHealth.limited => const FinancialInsightAction(
-      title: 'Set a short rest-of-week limit',
-      detail:
-          'A small limit for flexible spending can keep your current balance working for longer.',
+      title: FinancialInsightMessage(
+        FinancialInsightMessageKey.setShortRestOfWeekLimitTitle,
+      ),
+      detail: FinancialInsightMessage(
+        FinancialInsightMessageKey.setShortRestOfWeekLimitDetail,
+      ),
     ),
     _ => const FinancialInsightAction(
-      title: 'Keep your next expense intentional',
-      detail:
-          'Your balance is supporting the current pace. A quick check before spending helps it stay that way.',
+      title: FinancialInsightMessage(
+        FinancialInsightMessageKey.keepExpenseIntentionalTitle,
+      ),
+      detail: FinancialInsightMessage(
+        FinancialInsightMessageKey.keepExpenseIntentionalBalanceDetail,
+      ),
     ),
   };
 
@@ -726,16 +924,26 @@ class _BalanceBuffer {
     };
 
     final reason = switch (health) {
-      _BalanceHealth.negative =>
-        'Your total $currencyCode balance is below zero, so rebuilding a positive buffer is the priority.',
-      _BalanceHealth.empty =>
-        'Your active $currencyCode balance is at zero after recent activity.',
-      _BalanceHealth.thin =>
-        'Your total $currencyCode balance covers about $_wholeDays days at your recent spending pace.',
-      _BalanceHealth.limited =>
-        'Your total $currencyCode balance covers about $_wholeDays days at your recent spending pace.',
-      _BalanceHealth.healthy =>
-        'Your total $currencyCode balance covers more than a month at your recent spending pace.',
+      _BalanceHealth.negative => FinancialInsightMessage(
+        FinancialInsightMessageKey.balanceImpactNegativeReason,
+        {'currency': currencyCode},
+      ),
+      _BalanceHealth.empty => FinancialInsightMessage(
+        FinancialInsightMessageKey.balanceImpactEmptyReason,
+        {'currency': currencyCode},
+      ),
+      _BalanceHealth.thin => FinancialInsightMessage(
+        FinancialInsightMessageKey.balanceImpactLowReason,
+        {'currency': currencyCode, 'days': _wholeDays},
+      ),
+      _BalanceHealth.limited => FinancialInsightMessage(
+        FinancialInsightMessageKey.balanceImpactLowReason,
+        {'currency': currencyCode, 'days': _wholeDays},
+      ),
+      _BalanceHealth.healthy => FinancialInsightMessage(
+        FinancialInsightMessageKey.balanceImpactHealthyReason,
+        {'currency': currencyCode},
+      ),
       _ => null,
     };
 
@@ -757,6 +965,6 @@ class _BalanceScoreImpact {
   });
 
   final int points;
-  final String? reason;
+  final FinancialInsightMessage? reason;
   final bool forceCritical;
 }

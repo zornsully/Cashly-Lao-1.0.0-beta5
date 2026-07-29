@@ -1,4 +1,5 @@
 import 'package:cashly_lao/features/financial_insights/domain/entities/financial_insight.dart';
+import 'package:cashly_lao/features/financial_insights/domain/entities/financial_insight_message.dart';
 import 'package:cashly_lao/features/financial_insights/domain/entities/smart_money_score.dart';
 import 'package:cashly_lao/features/financial_insights/domain/services/rule_based_financial_insight_engine.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -60,8 +61,14 @@ void main() {
       expect(result.todayScore.value, 75);
       expect(result.weekScore.value, 75);
       expect(result.monthScore.value, 75);
-      expect(result.headline, contains('first spending pattern'));
-      expect(result.actions.single.title, 'Log your next expense');
+      expect(
+        result.headline.key,
+        FinancialInsightMessageKey.onboardingHeadline,
+      );
+      expect(
+        result.actions.single.title.key,
+        FinancialInsightMessageKey.logNextExpenseTitle,
+      );
     },
   );
 
@@ -82,8 +89,12 @@ void main() {
     expect(result.tone, FinancialInsightTone.critical);
     expect(result.dailyScore, lessThan(75));
     expect(result.monthScore.value, lessThan(result.weekScore.value));
-    expect(result.headline, contains('Food'));
-    expect(result.actions.first.title, contains('Food'));
+    expect(
+      result.headline.key,
+      FinancialInsightMessageKey.categoryOverBudgetHeadline,
+    );
+    expect(result.headline.args['category'], 'Food');
+    expect(result.actions.first.title.args['category'], 'Food');
   });
 
   test(
@@ -110,9 +121,17 @@ void main() {
       );
 
       expect(result.tone, FinancialInsightTone.watch);
-      expect(result.headline, contains('Transport'));
-      expect(result.explanation, contains('220%'));
-      expect(result.actions.first.title, contains('Transport'));
+      expect(
+        result.headline.key,
+        FinancialInsightMessageKey.categoryHigherThanUsualHeadline,
+      );
+      expect(result.headline.args['category'], 'Transport');
+      expect(
+        result.explanation.key,
+        FinancialInsightMessageKey.categoryHigherThanUsualExplanation,
+      );
+      expect(result.explanation.args['changePercent'], '220%');
+      expect(result.actions.first.title.args['category'], 'Transport');
       expect(result.primaryScore.period, FinancialWindowKind.month);
     },
   );
@@ -139,7 +158,15 @@ void main() {
 
       expect(result.todayScore.period, FinancialWindowKind.today);
       expect(result.todayScore.value, lessThan(result.weekScore.value));
-      expect(result.todayScore.reasons.join(' '), contains('Today'));
+      expect(
+        result.todayScore.reasons.map((r) => r.key),
+        anyElement(
+          anyOf(
+            FinancialInsightMessageKey.todaySpikeReason,
+            FinancialInsightMessageKey.todayComparableIncreaseReason,
+          ),
+        ),
+      );
     },
   );
 
@@ -175,7 +202,16 @@ void main() {
 
     expect(result.monthScore.period, FinancialWindowKind.month);
     expect(result.monthScore.value, lessThan(result.todayScore.value));
-    expect(result.monthScore.reasons.join(' '), contains('Month-to-date'));
+    expect(
+      result.monthScore.reasons.map((r) => r.key),
+      anyElement(
+        anyOf(
+          FinancialInsightMessageKey.spendingOverIncomeReasonMonth,
+          FinancialInsightMessageKey.monthComparableIncreaseReason,
+          FinancialInsightMessageKey.monthComparableDecreaseReason,
+        ),
+      ),
+    );
   });
 
   test(
@@ -189,8 +225,14 @@ void main() {
       expect(result.todayScore.value, lessThan(75));
       expect(result.weekScore.value, lessThan(75));
       expect(result.monthScore.value, lessThan(75));
-      expect(result.headline, contains('below zero'));
-      expect(result.scoreReasons.join(' '), contains('below zero'));
+      expect(
+        result.headline.key,
+        FinancialInsightMessageKey.negativeBalanceHeadline,
+      );
+      expect(
+        result.scoreReasons.map((r) => r.key),
+        anyElement(FinancialInsightMessageKey.balanceImpactNegativeReason),
+      );
     },
   );
 
@@ -233,8 +275,8 @@ void main() {
         greaterThan(thinBuffer.monthScore.value),
       );
       expect(
-        healthyBuffer.monthScore.reasons.join(' '),
-        contains('more than a month'),
+        healthyBuffer.monthScore.reasons.map((r) => r.key),
+        anyElement(FinancialInsightMessageKey.balanceImpactHealthyReason),
       );
     },
   );
@@ -264,7 +306,14 @@ void main() {
       expect(result.monthScore.value, 115);
       expect(result.monthScore.maximum, 150);
       expect(result.primaryScore, result.monthScore);
-      expect(result.scoreReasons.single, contains('increased by 10%'));
+      expect(
+        result.scoreReasons.single.key,
+        FinancialInsightMessageKey.literal,
+      );
+      expect(
+        result.scoreReasons.single.args['text'],
+        contains('increased by 10%'),
+      );
     },
   );
 
@@ -311,12 +360,12 @@ void main() {
       expect(unsafe.todayScore.value, greaterThan(safe.todayScore.value));
       expect(unsafe.weekScore.value, greaterThan(safe.weekScore.value));
       expect(
-        unsafe.todayScore.reasons.join(' '),
-        contains('transfer between currencies'),
+        unsafe.todayScore.reasons.map((r) => r.key),
+        anyElement(FinancialInsightMessageKey.shortHorizonCrossCurrencyToday),
       );
       expect(
-        unsafe.weekScore.reasons.join(' '),
-        contains('transfer between currencies'),
+        unsafe.weekScore.reasons.map((r) => r.key),
+        anyElement(FinancialInsightMessageKey.shortHorizonCrossCurrencyWeek),
       );
     },
   );

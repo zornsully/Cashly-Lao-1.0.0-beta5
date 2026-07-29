@@ -2273,6 +2273,596 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Monthly score = clamp(0–150, 100 + balance change % + financial behaviour modifier).'**
   String get smartMoneyScoreFormulaFootnote;
+
+  /// No description provided for @financialInsightMsgSteadySpendingHeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Your spending is looking steady today.'**
+  String get financialInsightMsgSteadySpendingHeadline;
+
+  /// No description provided for @financialInsightMsgSteadySpendingExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep logging transactions and Cashly will make each insight more personal.'**
+  String get financialInsightMsgSteadySpendingExplanation;
+
+  /// No description provided for @financialInsightMsgNegativeBalanceHeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Your total balance is below zero.'**
+  String get financialInsightMsgNegativeBalanceHeadline;
+
+  /// No description provided for @financialInsightMsgNegativeBalanceExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Your total {currency} balance is {amount}. Bringing that shortfall above zero is the clearest next step.'**
+  String financialInsightMsgNegativeBalanceExplanation(
+    String currency,
+    String amount,
+  );
+
+  /// No description provided for @financialInsightMsgPlanEssentialExpenseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan the next essential expense first'**
+  String get financialInsightMsgPlanEssentialExpenseTitle;
+
+  /// No description provided for @financialInsightMsgPlanEssentialExpenseDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Focusing on one necessary expense at a time can help rebuild a positive buffer without judging past choices.'**
+  String get financialInsightMsgPlanEssentialExpenseDetail;
+
+  /// No description provided for @financialInsightMsgCategoryOverBudgetHeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'{category} is over its monthly budget.'**
+  String financialInsightMsgCategoryOverBudgetHeadline(String category);
+
+  /// No description provided for @financialInsightMsgCategoryOverBudgetExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'You have spent {spent} against a {limit} plan.'**
+  String financialInsightMsgCategoryOverBudgetExplanation(
+    String spent,
+    String limit,
+  );
+
+  /// No description provided for @financialInsightMsgPauseCategorySpendingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause {category} spending for today'**
+  String financialInsightMsgPauseCategorySpendingTitle(String category);
+
+  /// No description provided for @financialInsightMsgPauseCategorySpendingDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'A short pause protects the rest of this month\'s plan without judging past choices.'**
+  String get financialInsightMsgPauseCategorySpendingDetail;
+
+  /// No description provided for @financialInsightMsgCategoryNeedsRoomHeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'{category} needs a little room this month.'**
+  String financialInsightMsgCategoryNeedsRoomHeadline(String category);
+
+  /// No description provided for @financialInsightMsgCategoryNeedsRoomExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'You have used {percent} of its {limit} budget.'**
+  String financialInsightMsgCategoryNeedsRoomExplanation(
+    String percent,
+    String limit,
+  );
+
+  /// No description provided for @financialInsightMsgSetRestOfMonthLimitTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a rest-of-month limit for {category}'**
+  String financialInsightMsgSetRestOfMonthLimitTitle(String category);
+
+  /// No description provided for @financialInsightMsgSetRestOfMonthLimitDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Keeping the next purchases within {remaining} will keep this budget on track.'**
+  String financialInsightMsgSetRestOfMonthLimitDetail(String remaining);
+
+  /// No description provided for @financialInsightMsgCategoryHigherThanUsualHeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'{category} is higher than your usual pace.'**
+  String financialInsightMsgCategoryHigherThanUsualHeadline(String category);
+
+  /// No description provided for @financialInsightMsgCategoryHigherThanUsualExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'It is {changePercent} above the comparable period, so it is worth a quick check-in.'**
+  String financialInsightMsgCategoryHigherThanUsualExplanation(
+    String changePercent,
+  );
+
+  /// No description provided for @financialInsightMsgReviewNextCategoryPurchaseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review your next {category} purchase'**
+  String financialInsightMsgReviewNextCategoryPurchaseTitle(String category);
+
+  /// No description provided for @financialInsightMsgReviewNextCategoryPurchaseDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'A small swap or delay can soften this increase while you decide whether it was a one-off.'**
+  String get financialInsightMsgReviewNextCategoryPurchaseDetail;
+
+  /// No description provided for @financialInsightMsgTodaySpendingFasterHeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Today is spending faster than this week\'s pace.'**
+  String get financialInsightMsgTodaySpendingFasterHeadline;
+
+  /// No description provided for @financialInsightMsgTodaySpendingFasterExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'That can happen — one intentional check before another purchase keeps the day in your control.'**
+  String get financialInsightMsgTodaySpendingFasterExplanation;
+
+  /// No description provided for @financialInsightMsgCheckNextExpenseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the next expense before you buy'**
+  String get financialInsightMsgCheckNextExpenseTitle;
+
+  /// No description provided for @financialInsightMsgCheckNextExpenseDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'A quick pause can keep today closer to your usual pace without changing what has already happened.'**
+  String get financialInsightMsgCheckNextExpenseDetail;
+
+  /// No description provided for @financialInsightMsgSpendingAheadOfIncomeHeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'This month\'s spending is ahead of income so far.'**
+  String get financialInsightMsgSpendingAheadOfIncomeHeadline;
+
+  /// No description provided for @financialInsightMsgSpendingAheadOfIncomeExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'This is a trend to watch, not a verdict — one or two intentional choices can still change the month.'**
+  String get financialInsightMsgSpendingAheadOfIncomeExplanation;
+
+  /// No description provided for @financialInsightMsgChooseLowPriorityExpenseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose one low-priority expense to delay'**
+  String get financialInsightMsgChooseLowPriorityExpenseTitle;
+
+  /// No description provided for @financialInsightMsgChooseLowPriorityExpenseDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus on the next choice only; reducing one flexible cost can bring the month closer to balance.'**
+  String get financialInsightMsgChooseLowPriorityExpenseDetail;
+
+  /// No description provided for @financialInsightMsgBalanceZeroHeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Your available balance is at zero.'**
+  String get financialInsightMsgBalanceZeroHeadline;
+
+  /// No description provided for @financialInsightMsgBalanceThinHeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Your balance buffer is getting tight.'**
+  String get financialInsightMsgBalanceThinHeadline;
+
+  /// No description provided for @financialInsightMsgBalanceLimitedHeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Your balance could use a little more room.'**
+  String get financialInsightMsgBalanceLimitedHeadline;
+
+  /// No description provided for @financialInsightMsgBalanceSteadyHeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Your balance is looking steady.'**
+  String get financialInsightMsgBalanceSteadyHeadline;
+
+  /// No description provided for @financialInsightMsgBalanceZeroExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'There is no {currency} buffer left after recent activity. Choosing the next expense carefully can help create room again.'**
+  String financialInsightMsgBalanceZeroExplanation(String currency);
+
+  /// No description provided for @financialInsightMsgBalanceThinExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'At your recent spending pace, this {currency} balance covers about {days} days. Protecting one essential expense first can help.'**
+  String financialInsightMsgBalanceThinExplanation(String currency, int days);
+
+  /// No description provided for @financialInsightMsgBalanceLimitedExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'At your recent spending pace, this {currency} balance covers about {days} days. A small rest-of-week plan can preserve that room.'**
+  String financialInsightMsgBalanceLimitedExplanation(
+    String currency,
+    int days,
+  );
+
+  /// No description provided for @financialInsightMsgBalanceSteadyExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Your balance is supporting your current pace.'**
+  String get financialInsightMsgBalanceSteadyExplanation;
+
+  /// No description provided for @financialInsightMsgProtectEssentialExpenseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Protect the next essential expense'**
+  String get financialInsightMsgProtectEssentialExpenseTitle;
+
+  /// No description provided for @financialInsightMsgProtectEssentialExpenseDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Choosing the next necessary cost first can help create space before adding anything optional.'**
+  String get financialInsightMsgProtectEssentialExpenseDetail;
+
+  /// No description provided for @financialInsightMsgReserveNextDaysTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reserve the next {days} days of essentials'**
+  String financialInsightMsgReserveNextDaysTitle(int days);
+
+  /// No description provided for @financialInsightMsgReserveNextDaysDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Keeping that small buffer for needs first gives your balance more room to recover.'**
+  String get financialInsightMsgReserveNextDaysDetail;
+
+  /// No description provided for @financialInsightMsgSetShortRestOfWeekLimitTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a short rest-of-week limit'**
+  String get financialInsightMsgSetShortRestOfWeekLimitTitle;
+
+  /// No description provided for @financialInsightMsgSetShortRestOfWeekLimitDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'A small limit for flexible spending can keep your current balance working for longer.'**
+  String get financialInsightMsgSetShortRestOfWeekLimitDetail;
+
+  /// No description provided for @financialInsightMsgKeepExpenseIntentionalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep your next expense intentional'**
+  String get financialInsightMsgKeepExpenseIntentionalTitle;
+
+  /// No description provided for @financialInsightMsgKeepExpenseIntentionalBalanceDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Your balance is supporting the current pace. A quick check before spending helps it stay that way.'**
+  String get financialInsightMsgKeepExpenseIntentionalBalanceDetail;
+
+  /// No description provided for @financialInsightMsgKeepExpenseIntentionalPaceDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Your current pace is healthy. A quick check before a purchase helps it stay that way.'**
+  String get financialInsightMsgKeepExpenseIntentionalPaceDetail;
+
+  /// No description provided for @financialInsightMsgOnboardingHeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Let\'s build your first spending pattern.'**
+  String get financialInsightMsgOnboardingHeadline;
+
+  /// No description provided for @financialInsightMsgOnboardingExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a few income or expense entries and Cashly will turn them into personal daily, weekly, and monthly check-ins.'**
+  String get financialInsightMsgOnboardingExplanation;
+
+  /// No description provided for @financialInsightMsgLogNextExpenseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Log your next expense'**
+  String get financialInsightMsgLogNextExpenseTitle;
+
+  /// No description provided for @financialInsightMsgLogNextExpenseDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Even a small everyday purchase gives the assistant a better starting point.'**
+  String get financialInsightMsgLogNextExpenseDetail;
+
+  /// No description provided for @financialInsightMsgNotEnoughActivityTodayReason.
+  ///
+  /// In en, this message translates to:
+  /// **'There is not enough recent activity to score today\'s trend yet.'**
+  String get financialInsightMsgNotEnoughActivityTodayReason;
+
+  /// No description provided for @financialInsightMsgNotEnoughActivityWeekReason.
+  ///
+  /// In en, this message translates to:
+  /// **'There is not enough recent activity to score this week\'s trend yet.'**
+  String get financialInsightMsgNotEnoughActivityWeekReason;
+
+  /// No description provided for @financialInsightMsgNotEnoughActivityMonthReason.
+  ///
+  /// In en, this message translates to:
+  /// **'There is not enough recent activity to score this month\'s trend yet.'**
+  String get financialInsightMsgNotEnoughActivityMonthReason;
+
+  /// No description provided for @financialInsightMsgBalanceImpactNegativeReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Your total {currency} balance is below zero, so rebuilding a positive buffer is the priority.'**
+  String financialInsightMsgBalanceImpactNegativeReason(String currency);
+
+  /// No description provided for @financialInsightMsgBalanceImpactEmptyReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Your active {currency} balance is at zero after recent activity.'**
+  String financialInsightMsgBalanceImpactEmptyReason(String currency);
+
+  /// No description provided for @financialInsightMsgBalanceImpactLowReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Your total {currency} balance covers about {days} days at your recent spending pace.'**
+  String financialInsightMsgBalanceImpactLowReason(String currency, int days);
+
+  /// No description provided for @financialInsightMsgBalanceImpactHealthyReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Your total {currency} balance covers more than a month at your recent spending pace.'**
+  String financialInsightMsgBalanceImpactHealthyReason(String currency);
+
+  /// No description provided for @financialInsightMsgCategoryOverBudgetReasonToday.
+  ///
+  /// In en, this message translates to:
+  /// **'{category} is already over its monthly budget.'**
+  String financialInsightMsgCategoryOverBudgetReasonToday(String category);
+
+  /// No description provided for @financialInsightMsgCategoryNearBudgetReasonToday.
+  ///
+  /// In en, this message translates to:
+  /// **'{category} has little budget room left this month.'**
+  String financialInsightMsgCategoryNearBudgetReasonToday(String category);
+
+  /// No description provided for @financialInsightMsgTodaySpikeReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s spending is more than twice your earlier daily pace this week.'**
+  String get financialInsightMsgTodaySpikeReason;
+
+  /// No description provided for @financialInsightMsgTodayComparableIncreaseReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s spending is {changePercent} above yesterday\'s comparable total.'**
+  String financialInsightMsgTodayComparableIncreaseReason(String changePercent);
+
+  /// No description provided for @financialInsightMsgNoActivityTodayReason.
+  ///
+  /// In en, this message translates to:
+  /// **'No income or expense has been recorded today.'**
+  String get financialInsightMsgNoActivityTodayReason;
+
+  /// No description provided for @financialInsightMsgIncomeCoversTodayReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s recorded income covers today\'s spending.'**
+  String get financialInsightMsgIncomeCoversTodayReason;
+
+  /// No description provided for @financialInsightMsgCategoryOverBudgetReasonWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'{category} is over budget, so this week needs a gentler pace.'**
+  String financialInsightMsgCategoryOverBudgetReasonWeek(String category);
+
+  /// No description provided for @financialInsightMsgCategoryNearBudgetReasonWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'{category} is close to its monthly limit.'**
+  String financialInsightMsgCategoryNearBudgetReasonWeek(String category);
+
+  /// No description provided for @financialInsightMsgCategoryPacedBudgetReasonWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'{category} is ahead of its expected monthly pace.'**
+  String financialInsightMsgCategoryPacedBudgetReasonWeek(String category);
+
+  /// No description provided for @financialInsightMsgWeeklyCategorySpikeReason.
+  ///
+  /// In en, this message translates to:
+  /// **'{category} is {changePercent} above the comparable week.'**
+  String financialInsightMsgWeeklyCategorySpikeReason(
+    String category,
+    String changePercent,
+  );
+
+  /// No description provided for @financialInsightMsgWeekComparableIncreaseReason.
+  ///
+  /// In en, this message translates to:
+  /// **'This week\'s spending is {changePercent} above last week\'s comparable total.'**
+  String financialInsightMsgWeekComparableIncreaseReason(String changePercent);
+
+  /// No description provided for @financialInsightMsgWeekComparableDecreaseReason.
+  ///
+  /// In en, this message translates to:
+  /// **'This week is spending less than the comparable previous week.'**
+  String get financialInsightMsgWeekComparableDecreaseReason;
+
+  /// No description provided for @financialInsightMsgCategoryOverBudgetReasonMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'{category} is {percent} over budget.'**
+  String financialInsightMsgCategoryOverBudgetReasonMonth(
+    String category,
+    String percent,
+  );
+
+  /// No description provided for @financialInsightMsgCategoryNearBudgetReasonMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'{category} has {remaining} remaining.'**
+  String financialInsightMsgCategoryNearBudgetReasonMonth(
+    String category,
+    String remaining,
+  );
+
+  /// No description provided for @financialInsightMsgCategoryPacedBudgetReasonMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'{category} is spending faster than its monthly plan.'**
+  String financialInsightMsgCategoryPacedBudgetReasonMonth(String category);
+
+  /// No description provided for @financialInsightMsgSpendingOverIncomeReasonMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Month-to-date spending is {expense} versus {income} income.'**
+  String financialInsightMsgSpendingOverIncomeReasonMonth(
+    String expense,
+    String income,
+  );
+
+  /// No description provided for @financialInsightMsgIncomeCoversMonthReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Income currently covers this month\'s recorded spending.'**
+  String get financialInsightMsgIncomeCoversMonthReason;
+
+  /// No description provided for @financialInsightMsgMonthComparableIncreaseReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Month-to-date spending is {changePercent} above the comparable previous month.'**
+  String financialInsightMsgMonthComparableIncreaseReason(String changePercent);
+
+  /// No description provided for @financialInsightMsgMonthComparableDecreaseReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Month-to-date spending is lower than the comparable previous period.'**
+  String get financialInsightMsgMonthComparableDecreaseReason;
+
+  /// No description provided for @financialInsightMsgSteadyReasonToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today is within a healthy spending pace.'**
+  String get financialInsightMsgSteadyReasonToday;
+
+  /// No description provided for @financialInsightMsgSteadyReasonWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'This week is tracking close to your recent pace.'**
+  String get financialInsightMsgSteadyReasonWeek;
+
+  /// No description provided for @financialInsightMsgSteadyReasonMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This month is within the plan recorded in Cashly.'**
+  String get financialInsightMsgSteadyReasonMonth;
+
+  /// No description provided for @financialInsightMsgShortHorizonNoActiveAccountToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today has no active account balance to compare yet, so Cashly is using current balance, budget, and spending signals.'**
+  String get financialInsightMsgShortHorizonNoActiveAccountToday;
+
+  /// No description provided for @financialInsightMsgShortHorizonNoActiveAccountWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'This week has no active account balance to compare yet, so Cashly is using current balance, budget, and spending signals.'**
+  String get financialInsightMsgShortHorizonNoActiveAccountWeek;
+
+  /// No description provided for @financialInsightMsgShortHorizonCrossCurrencyToday.
+  ///
+  /// In en, this message translates to:
+  /// **'A transfer between currencies occurred today. Cashly is keeping its balance comparison neutral until an exchange-rate basis is available.'**
+  String get financialInsightMsgShortHorizonCrossCurrencyToday;
+
+  /// No description provided for @financialInsightMsgShortHorizonCrossCurrencyWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'A transfer between currencies occurred this week. Cashly is keeping its balance comparison neutral until an exchange-rate basis is available.'**
+  String get financialInsightMsgShortHorizonCrossCurrencyWeek;
+
+  /// No description provided for @financialInsightMsgShortHorizonAccountAddedToday.
+  ///
+  /// In en, this message translates to:
+  /// **'An account was added today, so Cashly cannot safely reconstruct that opening balance yet.'**
+  String get financialInsightMsgShortHorizonAccountAddedToday;
+
+  /// No description provided for @financialInsightMsgShortHorizonAccountAddedWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'An account was added this week, so Cashly cannot safely reconstruct that opening balance yet.'**
+  String get financialInsightMsgShortHorizonAccountAddedWeek;
+
+  /// No description provided for @financialInsightMsgShortHorizonUnverifiableToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Cashly could not verify the balance values for today, so its balance comparison is neutral.'**
+  String get financialInsightMsgShortHorizonUnverifiableToday;
+
+  /// No description provided for @financialInsightMsgShortHorizonUnverifiableWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Cashly could not verify the balance values for this week, so its balance comparison is neutral.'**
+  String get financialInsightMsgShortHorizonUnverifiableWeek;
+
+  /// No description provided for @financialInsightMsgShortHorizonZeroOpeningToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today began at zero with no recorded income or expense, so Cashly is using current balance, budget, and spending signals.'**
+  String get financialInsightMsgShortHorizonZeroOpeningToday;
+
+  /// No description provided for @financialInsightMsgShortHorizonZeroOpeningWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'This week began at zero with no recorded income or expense, so Cashly is using current balance, budget, and spending signals.'**
+  String get financialInsightMsgShortHorizonZeroOpeningWeek;
+
+  /// No description provided for @financialInsightMsgShortHorizonIncreasedToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s balance increased by {percent}, contributing {points} to the score alongside budget and spending signals.'**
+  String financialInsightMsgShortHorizonIncreasedToday(
+    String percent,
+    String points,
+  );
+
+  /// No description provided for @financialInsightMsgShortHorizonIncreasedWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'This week\'s balance increased by {percent}, contributing {points} to the score alongside budget and spending signals.'**
+  String financialInsightMsgShortHorizonIncreasedWeek(
+    String percent,
+    String points,
+  );
+
+  /// No description provided for @financialInsightMsgShortHorizonDecreasedToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s balance decreased by {percent}, contributing {points} to the score alongside budget and spending signals.'**
+  String financialInsightMsgShortHorizonDecreasedToday(
+    String percent,
+    String points,
+  );
+
+  /// No description provided for @financialInsightMsgShortHorizonDecreasedWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'This week\'s balance decreased by {percent}, contributing {points} to the score alongside budget and spending signals.'**
+  String financialInsightMsgShortHorizonDecreasedWeek(
+    String percent,
+    String points,
+  );
+
+  /// No description provided for @financialInsightMsgShortHorizonStayedLevelToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s balance stayed level, contributing {points} to the score alongside budget and spending signals.'**
+  String financialInsightMsgShortHorizonStayedLevelToday(String points);
+
+  /// No description provided for @financialInsightMsgShortHorizonStayedLevelWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'This week\'s balance stayed level, contributing {points} to the score alongside budget and spending signals.'**
+  String financialInsightMsgShortHorizonStayedLevelWeek(String points);
 }
 
 class _AppLocalizationsDelegate

@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import 'financial_insight_message.dart';
 import 'smart_money_score.dart';
 
 /// The attention level of an insight. It informs presentation only; the
@@ -26,7 +27,7 @@ class FinancialPeriodScore extends Equatable {
   final FinancialWindowKind period;
   final int value;
   final FinancialInsightTone tone;
-  final List<String> reasons;
+  final List<FinancialInsightMessage> reasons;
 
   /// Today and week are short-horizon health scores. The monthly score is a
   /// balance-growth score and intentionally has room above 100.
@@ -256,8 +257,8 @@ class FinancialInsightSnapshot extends Equatable {
 class FinancialInsightAction extends Equatable {
   const FinancialInsightAction({required this.title, required this.detail});
 
-  final String title;
-  final String detail;
+  final FinancialInsightMessage title;
+  final FinancialInsightMessage detail;
 
   @override
   List<Object?> get props => [title, detail];
@@ -289,9 +290,9 @@ class FinancialInsight extends Equatable {
   final FinancialPeriodScore weekScore;
   final FinancialPeriodScore monthScore;
   final FinancialInsightTone tone;
-  final String headline;
-  final String explanation;
-  final List<String> scoreReasons;
+  final FinancialInsightMessage headline;
+  final FinancialInsightMessage explanation;
+  final List<FinancialInsightMessage> scoreReasons;
   final List<FinancialInsightAction> actions;
   final FinancialSpendingWindow today;
   final FinancialSpendingWindow week;
@@ -318,9 +319,9 @@ class FinancialInsight extends Equatable {
     FinancialPeriodScore? weekScore,
     FinancialPeriodScore? monthScore,
     FinancialInsightTone? tone,
-    String? headline,
-    String? explanation,
-    List<String>? scoreReasons,
+    FinancialInsightMessage? headline,
+    FinancialInsightMessage? explanation,
+    List<FinancialInsightMessage>? scoreReasons,
     List<FinancialInsightAction>? actions,
     SmartMoneyScoreCalculation? monthlyScoreCalculation,
     List<FinancialBudgetStatus>? budgets,

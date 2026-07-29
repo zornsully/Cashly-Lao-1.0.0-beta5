@@ -5,6 +5,7 @@ import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/financial_insight.dart';
+import '../../domain/entities/financial_insight_message.dart';
 import '../../domain/entities/smart_money_score.dart';
 
 /// An explainable, balance-led check-in that stays useful on every layout.
@@ -83,14 +84,14 @@ class FinancialInsightCard extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.md),
               Text(
-                insight.headline,
+                _formatFinancialInsightMessage(insight.headline, l10n),
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                insight.explanation,
+                _formatFinancialInsightMessage(insight.explanation, l10n),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: colors.onSurfaceVariant,
                   height: 1.4,
@@ -107,7 +108,10 @@ class FinancialInsightCard extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 for (final reason in insight.scoreReasons.take(2))
-                  _ReasonLine(reason: reason, color: monthlyStatus.color),
+                  _ReasonLine(
+                    reason: _formatFinancialInsightMessage(reason, l10n),
+                    color: monthlyStatus.color,
+                  ),
               ],
               const SizedBox(height: AppSpacing.md),
               Text(
@@ -140,12 +144,18 @@ class FinancialInsightCard extends StatelessWidget {
                                 ),
                             children: [
                               TextSpan(
-                                text: '${action.title}. ',
+                                text:
+                                    '${_formatFinancialInsightMessage(action.title, l10n)}. ',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w800,
                                 ),
                               ),
-                              TextSpan(text: action.detail),
+                              TextSpan(
+                                text: _formatFinancialInsightMessage(
+                                  action.detail,
+                                  l10n,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -340,7 +350,9 @@ class _PeriodScoreTile extends StatelessWidget {
     final status = _statusFor(score, colors, l10n, calculation: calculation);
     final isMonth = score.period == FinancialWindowKind.month;
     return Tooltip(
-      message: score.reasons.join('\n'),
+      message: score.reasons
+          .map((reason) => _formatFinancialInsightMessage(reason, l10n))
+          .join('\n'),
       child: Container(
         constraints: const BoxConstraints(minHeight: 82),
         padding: const EdgeInsets.symmetric(
@@ -1162,4 +1174,292 @@ String _expenseComparisonLabel(
   final change = month.expenseChangePercent;
   if (change == null) return l10n.smartMoneyScoreValueNoComparisonYet;
   return l10n.smartMoneyScoreMetricExpensesChange(_signedPercent(change));
+}
+
+/// Renders a domain-layer [FinancialInsightMessage] into localized display
+/// text. [FinancialInsightMessageKey.literal] is the one deliberate
+/// exception — it renders the persisted Smart Money Score calculation's
+/// own (English-only, auditable) reason text verbatim; see this file's
+/// `CLAUDE.md` Phase 2a/2b entries for why.
+String _formatFinancialInsightMessage(
+  FinancialInsightMessage message,
+  AppLocalizations l10n,
+) {
+  final args = message.args;
+  switch (message.key) {
+    case FinancialInsightMessageKey.literal:
+      return args['text']! as String;
+    case FinancialInsightMessageKey.steadySpendingHeadline:
+      return l10n.financialInsightMsgSteadySpendingHeadline;
+    case FinancialInsightMessageKey.steadySpendingExplanation:
+      return l10n.financialInsightMsgSteadySpendingExplanation;
+    case FinancialInsightMessageKey.negativeBalanceHeadline:
+      return l10n.financialInsightMsgNegativeBalanceHeadline;
+    case FinancialInsightMessageKey.negativeBalanceExplanation:
+      return l10n.financialInsightMsgNegativeBalanceExplanation(
+        args['currency']! as String,
+        args['amount']! as String,
+      );
+    case FinancialInsightMessageKey.planEssentialExpenseTitle:
+      return l10n.financialInsightMsgPlanEssentialExpenseTitle;
+    case FinancialInsightMessageKey.planEssentialExpenseDetail:
+      return l10n.financialInsightMsgPlanEssentialExpenseDetail;
+    case FinancialInsightMessageKey.categoryOverBudgetHeadline:
+      return l10n.financialInsightMsgCategoryOverBudgetHeadline(
+        args['category']! as String,
+      );
+    case FinancialInsightMessageKey.categoryOverBudgetExplanation:
+      return l10n.financialInsightMsgCategoryOverBudgetExplanation(
+        args['spent']! as String,
+        args['limit']! as String,
+      );
+    case FinancialInsightMessageKey.pauseCategorySpendingTitle:
+      return l10n.financialInsightMsgPauseCategorySpendingTitle(
+        args['category']! as String,
+      );
+    case FinancialInsightMessageKey.pauseCategorySpendingDetail:
+      return l10n.financialInsightMsgPauseCategorySpendingDetail;
+    case FinancialInsightMessageKey.categoryNeedsRoomHeadline:
+      return l10n.financialInsightMsgCategoryNeedsRoomHeadline(
+        args['category']! as String,
+      );
+    case FinancialInsightMessageKey.categoryNeedsRoomExplanation:
+      return l10n.financialInsightMsgCategoryNeedsRoomExplanation(
+        args['percent']! as String,
+        args['limit']! as String,
+      );
+    case FinancialInsightMessageKey.setRestOfMonthLimitTitle:
+      return l10n.financialInsightMsgSetRestOfMonthLimitTitle(
+        args['category']! as String,
+      );
+    case FinancialInsightMessageKey.setRestOfMonthLimitDetail:
+      return l10n.financialInsightMsgSetRestOfMonthLimitDetail(
+        args['remaining']! as String,
+      );
+    case FinancialInsightMessageKey.categoryHigherThanUsualHeadline:
+      return l10n.financialInsightMsgCategoryHigherThanUsualHeadline(
+        args['category']! as String,
+      );
+    case FinancialInsightMessageKey.categoryHigherThanUsualExplanation:
+      return l10n.financialInsightMsgCategoryHigherThanUsualExplanation(
+        args['changePercent']! as String,
+      );
+    case FinancialInsightMessageKey.reviewNextCategoryPurchaseTitle:
+      return l10n.financialInsightMsgReviewNextCategoryPurchaseTitle(
+        args['category']! as String,
+      );
+    case FinancialInsightMessageKey.reviewNextCategoryPurchaseDetail:
+      return l10n.financialInsightMsgReviewNextCategoryPurchaseDetail;
+    case FinancialInsightMessageKey.todaySpendingFasterHeadline:
+      return l10n.financialInsightMsgTodaySpendingFasterHeadline;
+    case FinancialInsightMessageKey.todaySpendingFasterExplanation:
+      return l10n.financialInsightMsgTodaySpendingFasterExplanation;
+    case FinancialInsightMessageKey.checkNextExpenseTitle:
+      return l10n.financialInsightMsgCheckNextExpenseTitle;
+    case FinancialInsightMessageKey.checkNextExpenseDetail:
+      return l10n.financialInsightMsgCheckNextExpenseDetail;
+    case FinancialInsightMessageKey.spendingAheadOfIncomeHeadline:
+      return l10n.financialInsightMsgSpendingAheadOfIncomeHeadline;
+    case FinancialInsightMessageKey.spendingAheadOfIncomeExplanation:
+      return l10n.financialInsightMsgSpendingAheadOfIncomeExplanation;
+    case FinancialInsightMessageKey.chooseLowPriorityExpenseTitle:
+      return l10n.financialInsightMsgChooseLowPriorityExpenseTitle;
+    case FinancialInsightMessageKey.chooseLowPriorityExpenseDetail:
+      return l10n.financialInsightMsgChooseLowPriorityExpenseDetail;
+    case FinancialInsightMessageKey.balanceZeroHeadline:
+      return l10n.financialInsightMsgBalanceZeroHeadline;
+    case FinancialInsightMessageKey.balanceThinHeadline:
+      return l10n.financialInsightMsgBalanceThinHeadline;
+    case FinancialInsightMessageKey.balanceLimitedHeadline:
+      return l10n.financialInsightMsgBalanceLimitedHeadline;
+    case FinancialInsightMessageKey.balanceSteadyHeadline:
+      return l10n.financialInsightMsgBalanceSteadyHeadline;
+    case FinancialInsightMessageKey.balanceZeroExplanation:
+      return l10n.financialInsightMsgBalanceZeroExplanation(
+        args['currency']! as String,
+      );
+    case FinancialInsightMessageKey.balanceThinExplanation:
+      return l10n.financialInsightMsgBalanceThinExplanation(
+        args['currency']! as String,
+        args['days']! as int,
+      );
+    case FinancialInsightMessageKey.balanceLimitedExplanation:
+      return l10n.financialInsightMsgBalanceLimitedExplanation(
+        args['currency']! as String,
+        args['days']! as int,
+      );
+    case FinancialInsightMessageKey.balanceSteadyExplanation:
+      return l10n.financialInsightMsgBalanceSteadyExplanation;
+    case FinancialInsightMessageKey.protectEssentialExpenseTitle:
+      return l10n.financialInsightMsgProtectEssentialExpenseTitle;
+    case FinancialInsightMessageKey.protectEssentialExpenseDetail:
+      return l10n.financialInsightMsgProtectEssentialExpenseDetail;
+    case FinancialInsightMessageKey.reserveNextDaysTitle:
+      return l10n.financialInsightMsgReserveNextDaysTitle(args['days']! as int);
+    case FinancialInsightMessageKey.reserveNextDaysDetail:
+      return l10n.financialInsightMsgReserveNextDaysDetail;
+    case FinancialInsightMessageKey.setShortRestOfWeekLimitTitle:
+      return l10n.financialInsightMsgSetShortRestOfWeekLimitTitle;
+    case FinancialInsightMessageKey.setShortRestOfWeekLimitDetail:
+      return l10n.financialInsightMsgSetShortRestOfWeekLimitDetail;
+    case FinancialInsightMessageKey.keepExpenseIntentionalTitle:
+      return l10n.financialInsightMsgKeepExpenseIntentionalTitle;
+    case FinancialInsightMessageKey.keepExpenseIntentionalBalanceDetail:
+      return l10n.financialInsightMsgKeepExpenseIntentionalBalanceDetail;
+    case FinancialInsightMessageKey.keepExpenseIntentionalPaceDetail:
+      return l10n.financialInsightMsgKeepExpenseIntentionalPaceDetail;
+    case FinancialInsightMessageKey.onboardingHeadline:
+      return l10n.financialInsightMsgOnboardingHeadline;
+    case FinancialInsightMessageKey.onboardingExplanation:
+      return l10n.financialInsightMsgOnboardingExplanation;
+    case FinancialInsightMessageKey.logNextExpenseTitle:
+      return l10n.financialInsightMsgLogNextExpenseTitle;
+    case FinancialInsightMessageKey.logNextExpenseDetail:
+      return l10n.financialInsightMsgLogNextExpenseDetail;
+    case FinancialInsightMessageKey.notEnoughActivityTodayReason:
+      return l10n.financialInsightMsgNotEnoughActivityTodayReason;
+    case FinancialInsightMessageKey.notEnoughActivityWeekReason:
+      return l10n.financialInsightMsgNotEnoughActivityWeekReason;
+    case FinancialInsightMessageKey.notEnoughActivityMonthReason:
+      return l10n.financialInsightMsgNotEnoughActivityMonthReason;
+    case FinancialInsightMessageKey.balanceImpactNegativeReason:
+      return l10n.financialInsightMsgBalanceImpactNegativeReason(
+        args['currency']! as String,
+      );
+    case FinancialInsightMessageKey.balanceImpactEmptyReason:
+      return l10n.financialInsightMsgBalanceImpactEmptyReason(
+        args['currency']! as String,
+      );
+    case FinancialInsightMessageKey.balanceImpactLowReason:
+      return l10n.financialInsightMsgBalanceImpactLowReason(
+        args['currency']! as String,
+        args['days']! as int,
+      );
+    case FinancialInsightMessageKey.balanceImpactHealthyReason:
+      return l10n.financialInsightMsgBalanceImpactHealthyReason(
+        args['currency']! as String,
+      );
+    case FinancialInsightMessageKey.categoryOverBudgetReasonToday:
+      return l10n.financialInsightMsgCategoryOverBudgetReasonToday(
+        args['category']! as String,
+      );
+    case FinancialInsightMessageKey.categoryNearBudgetReasonToday:
+      return l10n.financialInsightMsgCategoryNearBudgetReasonToday(
+        args['category']! as String,
+      );
+    case FinancialInsightMessageKey.todaySpikeReason:
+      return l10n.financialInsightMsgTodaySpikeReason;
+    case FinancialInsightMessageKey.todayComparableIncreaseReason:
+      return l10n.financialInsightMsgTodayComparableIncreaseReason(
+        args['changePercent']! as String,
+      );
+    case FinancialInsightMessageKey.noActivityTodayReason:
+      return l10n.financialInsightMsgNoActivityTodayReason;
+    case FinancialInsightMessageKey.incomeCoversTodayReason:
+      return l10n.financialInsightMsgIncomeCoversTodayReason;
+    case FinancialInsightMessageKey.categoryOverBudgetReasonWeek:
+      return l10n.financialInsightMsgCategoryOverBudgetReasonWeek(
+        args['category']! as String,
+      );
+    case FinancialInsightMessageKey.categoryNearBudgetReasonWeek:
+      return l10n.financialInsightMsgCategoryNearBudgetReasonWeek(
+        args['category']! as String,
+      );
+    case FinancialInsightMessageKey.categoryPacedBudgetReasonWeek:
+      return l10n.financialInsightMsgCategoryPacedBudgetReasonWeek(
+        args['category']! as String,
+      );
+    case FinancialInsightMessageKey.weeklyCategorySpikeReason:
+      return l10n.financialInsightMsgWeeklyCategorySpikeReason(
+        args['category']! as String,
+        args['changePercent']! as String,
+      );
+    case FinancialInsightMessageKey.weekComparableIncreaseReason:
+      return l10n.financialInsightMsgWeekComparableIncreaseReason(
+        args['changePercent']! as String,
+      );
+    case FinancialInsightMessageKey.weekComparableDecreaseReason:
+      return l10n.financialInsightMsgWeekComparableDecreaseReason;
+    case FinancialInsightMessageKey.categoryOverBudgetReasonMonth:
+      return l10n.financialInsightMsgCategoryOverBudgetReasonMonth(
+        args['category']! as String,
+        args['percent']! as String,
+      );
+    case FinancialInsightMessageKey.categoryNearBudgetReasonMonth:
+      return l10n.financialInsightMsgCategoryNearBudgetReasonMonth(
+        args['category']! as String,
+        args['remaining']! as String,
+      );
+    case FinancialInsightMessageKey.categoryPacedBudgetReasonMonth:
+      return l10n.financialInsightMsgCategoryPacedBudgetReasonMonth(
+        args['category']! as String,
+      );
+    case FinancialInsightMessageKey.spendingOverIncomeReasonMonth:
+      return l10n.financialInsightMsgSpendingOverIncomeReasonMonth(
+        args['expense']! as String,
+        args['income']! as String,
+      );
+    case FinancialInsightMessageKey.incomeCoversMonthReason:
+      return l10n.financialInsightMsgIncomeCoversMonthReason;
+    case FinancialInsightMessageKey.monthComparableIncreaseReason:
+      return l10n.financialInsightMsgMonthComparableIncreaseReason(
+        args['changePercent']! as String,
+      );
+    case FinancialInsightMessageKey.monthComparableDecreaseReason:
+      return l10n.financialInsightMsgMonthComparableDecreaseReason;
+    case FinancialInsightMessageKey.steadyReasonToday:
+      return l10n.financialInsightMsgSteadyReasonToday;
+    case FinancialInsightMessageKey.steadyReasonWeek:
+      return l10n.financialInsightMsgSteadyReasonWeek;
+    case FinancialInsightMessageKey.steadyReasonMonth:
+      return l10n.financialInsightMsgSteadyReasonMonth;
+    case FinancialInsightMessageKey.shortHorizonNoActiveAccountToday:
+      return l10n.financialInsightMsgShortHorizonNoActiveAccountToday;
+    case FinancialInsightMessageKey.shortHorizonNoActiveAccountWeek:
+      return l10n.financialInsightMsgShortHorizonNoActiveAccountWeek;
+    case FinancialInsightMessageKey.shortHorizonCrossCurrencyToday:
+      return l10n.financialInsightMsgShortHorizonCrossCurrencyToday;
+    case FinancialInsightMessageKey.shortHorizonCrossCurrencyWeek:
+      return l10n.financialInsightMsgShortHorizonCrossCurrencyWeek;
+    case FinancialInsightMessageKey.shortHorizonAccountAddedToday:
+      return l10n.financialInsightMsgShortHorizonAccountAddedToday;
+    case FinancialInsightMessageKey.shortHorizonAccountAddedWeek:
+      return l10n.financialInsightMsgShortHorizonAccountAddedWeek;
+    case FinancialInsightMessageKey.shortHorizonUnverifiableToday:
+      return l10n.financialInsightMsgShortHorizonUnverifiableToday;
+    case FinancialInsightMessageKey.shortHorizonUnverifiableWeek:
+      return l10n.financialInsightMsgShortHorizonUnverifiableWeek;
+    case FinancialInsightMessageKey.shortHorizonZeroOpeningToday:
+      return l10n.financialInsightMsgShortHorizonZeroOpeningToday;
+    case FinancialInsightMessageKey.shortHorizonZeroOpeningWeek:
+      return l10n.financialInsightMsgShortHorizonZeroOpeningWeek;
+    case FinancialInsightMessageKey.shortHorizonIncreasedToday:
+      return l10n.financialInsightMsgShortHorizonIncreasedToday(
+        args['percent']! as String,
+        args['points']! as String,
+      );
+    case FinancialInsightMessageKey.shortHorizonIncreasedWeek:
+      return l10n.financialInsightMsgShortHorizonIncreasedWeek(
+        args['percent']! as String,
+        args['points']! as String,
+      );
+    case FinancialInsightMessageKey.shortHorizonDecreasedToday:
+      return l10n.financialInsightMsgShortHorizonDecreasedToday(
+        args['percent']! as String,
+        args['points']! as String,
+      );
+    case FinancialInsightMessageKey.shortHorizonDecreasedWeek:
+      return l10n.financialInsightMsgShortHorizonDecreasedWeek(
+        args['percent']! as String,
+        args['points']! as String,
+      );
+    case FinancialInsightMessageKey.shortHorizonStayedLevelToday:
+      return l10n.financialInsightMsgShortHorizonStayedLevelToday(
+        args['points']! as String,
+      );
+    case FinancialInsightMessageKey.shortHorizonStayedLevelWeek:
+      return l10n.financialInsightMsgShortHorizonStayedLevelWeek(
+        args['points']! as String,
+      );
+  }
 }

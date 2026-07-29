@@ -1,16 +1,14 @@
 {
   "@@locale": "en",
-
   "appName": "Cashly",
-  "@appName": {"description": "The app's name, shown on the splash screen."},
-
+  "@appName": {
+    "description": "The app's name, shown on the splash screen."
+  },
   "errorGenericTitle": "Something went wrong",
   "retry": "Retry",
   "cancel": "Cancel",
   "delete": "Delete",
-
   "splashTimeoutMessage": "This is taking longer than expected. Check your device's network connection and try again.",
-
   "loginTitle": "Welcome back",
   "loginSubtitle": "Sign in to keep track of your money.",
   "emailLabel": "Email",
@@ -24,7 +22,6 @@
   "orDividerLabel": "Or",
   "continueWithGoogle": "Continue with Google",
   "googleSignInFailedMessage": "Could not sign in with Google. Please try again.",
-
   "registerTitle": "Create your account",
   "registerSubtitle": "Start budgeting smarter in a couple of minutes.",
   "fullNameLabel": "Full name",
@@ -32,7 +29,6 @@
   "createAccountButton": "Create account",
   "registerFailedMessage": "Could not create your account. Please try again.",
   "haveAccountPrompt": "Already have an account?",
-
   "forgotPasswordTitle": "Reset your password",
   "forgotPasswordSubtitle": "Enter your email and we'll send you a reset link.",
   "sendResetLinkButton": "Send reset link",
@@ -40,26 +36,36 @@
   "checkEmailTitle": "Check your email",
   "checkEmailSubtitle": "We've sent a password reset link to {email}.",
   "@checkEmailSubtitle": {
-    "placeholders": {"email": {"type": "String"}}
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
   },
   "backToSignInButton": "Back to sign in",
-
   "verifyEmailTitle": "Verify your email",
   "verifyEmailSubtitle": "We've sent a verification link to {email}. Click it, then continue below.",
   "@verifyEmailSubtitle": {
-    "placeholders": {"email": {"type": "String"}}
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
   },
   "verifiedButton": "I've verified my email",
   "resendEmailButton": "Resend email",
   "resendEmailCountdownButton": "Resend email ({seconds}s)",
   "@resendEmailCountdownButton": {
-    "placeholders": {"seconds": {"type": "int"}}
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
   },
   "verificationEmailSentMessage": "Verification email sent.",
   "resendFailedMessage": "Could not resend the email. Please try again.",
   "notVerifiedYetMessage": "We couldn't confirm verification yet.",
   "signOutButton": "Sign out",
-
   "dashboardTitle": "Dashboard",
   "offlineBannerMessage": "Offline — changes will sync when you're back online",
   "reportsTooltip": "Reports",
@@ -82,16 +88,18 @@
   "seeAll": "See all",
   "totalBalanceLabel": "Total Balance ({currencyCode})",
   "@totalBalanceLabel": {
-    "placeholders": {"currencyCode": {"type": "String"}}
+    "placeholders": {
+      "currencyCode": {
+        "type": "String"
+      }
+    }
   },
   "incomeMonthLabel": "Income (month)",
   "expenseMonthLabel": "Expense (month)",
-
   "languageSectionTitle": "Language",
   "languageEnglish": "English",
   "languageLao": "ລາວ",
   "languageUpdateFailedMessage": "Could not update your language.",
-
   "emailRequiredError": "Email is required.",
   "emailInvalidError": "Enter a valid email address.",
   "passwordTooShortError": "Password must be at least 8 characters.",
@@ -103,12 +111,15 @@
   "nameTooShortError": "Name must be at least 2 characters.",
   "fieldRequiredError": "{label} is required.",
   "@fieldRequiredError": {
-    "placeholders": {"label": {"type": "String"}}
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
   },
   "amountRequiredError": "Amount is required.",
   "amountInvalidError": "Enter a valid number.",
   "amountMustBePositiveError": "Amount must be greater than zero.",
-
   "incomeLabel": "Income",
   "expenseLabel": "Expense",
   "transferLabel": "Transfer",
@@ -119,15 +130,17 @@
   "hideArchivedTooltip": "Hide archived",
   "showArchivedTooltip": "Show archived",
   "saveChangesButton": "Save changes",
-
   "accountsTitle": "Accounts",
   "noAccountsYetTitle": "No accounts yet",
   "noAccountsYetMessage": "Add a cash, wallet, bank, credit card, or savings account to start tracking your money.",
-  "addAccountButton": "Add account",
   "deleteAccountTitle": "Delete account?",
   "deleteAccountMessage": "This permanently deletes \"{name}\". This cannot be undone.",
   "@deleteAccountMessage": {
-    "placeholders": {"name": {"type": "String"}}
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
   "deleteAccountFailedMessage": "Could not delete the account.",
   "updateAccountFailedMessage": "Could not update the account.",
@@ -144,7 +157,6 @@
   "accountTypeBankLabel": "Bank",
   "accountTypeCreditCardLabel": "Credit Card",
   "accountTypeSavingsLabel": "Savings",
-
   "categoriesTitle": "Categories",
   "noExpenseCategoriesYetTitle": "No expense categories yet",
   "noIncomeCategoriesYetTitle": "No income categories yet",
@@ -153,7 +165,11 @@
   "deleteCategoryTitle": "Delete category?",
   "deleteCategoryMessage": "This permanently deletes \"{name}\". This cannot be undone.",
   "@deleteCategoryMessage": {
-    "placeholders": {"name": {"type": "String"}}
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
   "deleteCategoryFailedMessage": "Could not delete the category.",
   "updateCategoryFailedMessage": "Could not update the category.",
@@ -162,12 +178,15 @@
   "categoryNameLabel": "Category name",
   "categoryTypeLabel": "Type",
   "saveCategoryFailedMessage": "Could not save the category. Please try again.",
-
   "budgetTitle": "Budget",
   "deleteBudgetTitle": "Delete budget?",
   "deleteBudgetMessage": "This removes the budget for \"{name}\" this month. This cannot be undone.",
   "@deleteBudgetMessage": {
-    "placeholders": {"name": {"type": "String"}}
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
   "deleteBudgetFailedMessage": "Could not delete the budget.",
   "addExpenseCategoryFirstMessage": "Add an expense category first, then set a budget for it.",
@@ -180,14 +199,21 @@
   "deleteBudgetTooltip": "Delete budget",
   "overspentByMessage": "Over by {amount}",
   "@overspentByMessage": {
-    "placeholders": {"amount": {"type": "String"}}
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
   },
   "remainingAmountMessage": "{amount} remaining",
   "@remainingAmountMessage": {
-    "placeholders": {"amount": {"type": "String"}}
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
   },
   "saveBudgetFailedMessage": "Could not save the budget. Please try again.",
-
   "savingsGoalsTitle": "Savings Goals",
   "savingsGoalsTooltip": "Savings goals",
   "noSavingsGoalsYetTitle": "No savings goals yet",
@@ -219,17 +245,29 @@
   "contributionFailedMessage": "Could not save the contribution. Please try again.",
   "contributionDueBannerMessage": "Your {amount} contribution is due.",
   "@contributionDueBannerMessage": {
-    "placeholders": {"amount": {"type": "String"}}
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
   },
   "goalCompletedBadgeLabel": "Completed",
   "goalDueBadgeLabel": "Due",
   "estimatedCompletionScheduledMessage": "On track to finish by {date}",
   "@estimatedCompletionScheduledMessage": {
-    "placeholders": {"date": {"type": "String"}}
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
   },
   "estimatedCompletionTrailingAverageMessage": "Estimated to finish around {date} at your recent pace",
   "@estimatedCompletionTrailingAverageMessage": {
-    "placeholders": {"date": {"type": "String"}}
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
   },
   "estimatedCompletionInsufficientDataMessage": "Add a few contributions to see an estimated finish date.",
   "estimatedCompletionCompletedMessage": "You've reached your goal.",
@@ -238,19 +276,23 @@
   "goalCelebrationTitle": "Goal reached!",
   "goalCelebrationMessage": "You've hit your \"{goalName}\" goal.",
   "@goalCelebrationMessage": {
-    "placeholders": {"goalName": {"type": "String"}}
+    "placeholders": {
+      "goalName": {
+        "type": "String"
+      }
+    }
   },
   "goalNotFoundMessage": "This goal no longer exists.",
   "linkedAccountArchivedMessage": "This goal's linked account is archived.",
-
   "transactionsTitle": "Transactions",
   "transactionsTabLabel": "Transactions",
-  "deleteTransactionTitle": "Delete transaction?",
-  "deleteTransactionMessage": "This permanently deletes the transaction and reverses its effect on the account's balance. This cannot be undone.",
-  "deleteTransactionFailedMessage": "Could not delete the transaction.",
   "noTransactionsInMonthTitle": "No transactions in {month}",
   "@noTransactionsInMonthTitle": {
-    "placeholders": {"month": {"type": "String"}}
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
   },
   "addFirstTransactionMessage": "Add your first income or expense for this month.",
   "addTransactionButton": "Add transaction",
@@ -275,11 +317,19 @@
   "noMatchingTransactionsMessage": "Try adjusting your search or filters.",
   "transferToLabel": "Transfer to {account}",
   "@transferToLabel": {
-    "placeholders": {"account": {"type": "String"}}
+    "placeholders": {
+      "account": {
+        "type": "String"
+      }
+    }
   },
   "transferFromLabel": "From {account}",
   "@transferFromLabel": {
-    "placeholders": {"account": {"type": "String"}}
+    "placeholders": {
+      "account": {
+        "type": "String"
+      }
+    }
   },
   "unknownAccountLabel": "Unknown account",
   "uncategorizedLabel": "Uncategorized",
@@ -303,24 +353,39 @@
   "saveTransactionFailedMessage": "Could not save the transaction. Please try again.",
   "archivedSuffixFormat": "{name} (Archived)",
   "@archivedSuffixFormat": {
-    "placeholders": {"name": {"type": "String"}}
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
-
   "reportsTitle": "Reports",
   "exportReportTooltip": "Export as CSV",
   "exportReportSubject": "Cashly report — {month}",
   "@exportReportSubject": {
-    "placeholders": {"month": {"type": "String"}}
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
   },
   "exportReportFailedMessage": "Could not export the report. Please try again.",
   "convertedTotalsCardTitle": "Converted total",
   "convertedTotalsCaption": "Approximate total across all your currencies, shown in {currency}.",
   "@convertedTotalsCaption": {
-    "placeholders": {"currency": {"type": "String"}}
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      }
+    }
   },
   "convertedTotalsRatesAsOf": "Rates as of {date} · Rates by ExchangeRate-API",
   "@convertedTotalsRatesAsOf": {
-    "placeholders": {"date": {"type": "String"}}
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
   },
   "nothingToReportYetTitle": "Nothing to report yet",
   "nothingToReportYetMessage": "Once you record income or expenses for this month, you'll see monthly summaries, spending breakdowns, and trends here.",
@@ -333,14 +398,18 @@
   "monthIncomeExpenseSummaryMessage": "{month} — Income {income}, Expense {expense}",
   "@monthIncomeExpenseSummaryMessage": {
     "placeholders": {
-      "month": {"type": "String"},
-      "income": {"type": "String"},
-      "expense": {"type": "String"}
+      "month": {
+        "type": "String"
+      },
+      "income": {
+        "type": "String"
+      },
+      "expense": {
+        "type": "String"
+      }
     }
   },
-
   "save": "Save",
-
   "settingsTitle": "Settings",
   "appearanceSectionTitle": "Appearance",
   "themeLabel": "Theme",
@@ -366,19 +435,31 @@
   "budgetExceededNotificationTitle": "Budget exceeded",
   "budgetExceededNotificationBody": "You've gone over your {category} budget for this month.",
   "@budgetExceededNotificationBody": {
-    "placeholders": {"category": {"type": "String"}}
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
   },
   "negativeBalanceNotificationTitle": "Account balance negative",
   "negativeBalanceNotificationBody": "Your {account} balance has gone negative.",
   "@negativeBalanceNotificationBody": {
-    "placeholders": {"account": {"type": "String"}}
+    "placeholders": {
+      "account": {
+        "type": "String"
+      }
+    }
   },
   "goalReminderNotificationTitle": "Savings goal reminder",
   "goalReminderNotificationBody": "Time for your {frequency} contribution to \"{goalName}\".",
   "@goalReminderNotificationBody": {
     "placeholders": {
-      "frequency": {"type": "String"},
-      "goalName": {"type": "String"}
+      "frequency": {
+        "type": "String"
+      },
+      "goalName": {
+        "type": "String"
+      }
     }
   },
   "defaultsSectionTitle": "Defaults",
@@ -388,14 +469,16 @@
   "currencyDisplayFormat": "{code} — {name}",
   "@currencyDisplayFormat": {
     "placeholders": {
-      "code": {"type": "String"},
-      "name": {"type": "String"}
+      "code": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
     }
   },
-
   "profileTitle": "Profile",
   "editNameDialogTitle": "Edit name",
-  "fullNameLabel": "Full name",
   "nameUpdatedMessage": "Name updated.",
   "nameUpdateFailedMessage": "Could not update your name.",
   "deleteUserAccountTitle": "Delete account?",
@@ -408,12 +491,9 @@
   "emailVerifiedLabel": "Email verified",
   "notVerifiedLabel": "Not verified",
   "memberSinceLabel": "Member since",
-  "signOutButton": "Sign out",
   "deleteAccountButtonLabel": "Delete account",
-
   "iconLabel": "Icon",
   "colorLabel": "Color",
-
   "smartMoneyScoreCardTitle": "Cashly Smart Money Score",
   "smartMoneyScoreCardSubtitle": "Balance movement leads. Habits provide the context.",
   "smartMoneyScoreWhatIsShapingLabel": "What is shaping this month",
@@ -423,7 +503,11 @@
   "smartMoneyScoreNeutralBaseline": "Using a neutral baseline until enough data is available",
   "smartMoneyScoreMonthlyHeroLabel": "MONTHLY SCORE · / {max}",
   "@smartMoneyScoreMonthlyHeroLabel": {
-    "placeholders": {"max": {"type": "int"}}
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
   },
   "smartMoneyScoreStatusNotEnoughData": "Not enough data",
   "smartMoneyScoreStatusExcellentGrowth": "Excellent Growth",
@@ -441,11 +525,19 @@
   "smartMoneyScoreBudgetNoneSet": "No budgets set",
   "smartMoneyScoreBudgetOverCount": "{count} over budget",
   "@smartMoneyScoreBudgetOverCount": {
-    "placeholders": {"count": {"type": "int"}}
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "smartMoneyScoreBudgetNearlyFullCount": "{count} nearly full",
   "@smartMoneyScoreBudgetNearlyFullCount": {
-    "placeholders": {"count": {"type": "int"}}
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "smartMoneyScoreBudgetOnTrack": "On track",
   "smartMoneyScoreBreakdownSheetDescription": "The monthly score is calculated from the same synced financial data shown in your dashboard. Balance movement is always the main factor.",
@@ -470,11 +562,19 @@
   "smartMoneyScoreValueNeutralUntilBaseline": "Neutral until a baseline is available",
   "smartMoneyScoreValueBehaviourModifierPoints": "{points} points (capped at ±10)",
   "@smartMoneyScoreValueBehaviourModifierPoints": {
-    "placeholders": {"points": {"type": "String"}}
+    "placeholders": {
+      "points": {
+        "type": "String"
+      }
+    }
   },
   "smartMoneyScorePointsSuffix": "{points} points",
   "@smartMoneyScorePointsSuffix": {
-    "placeholders": {"points": {"type": "String"}}
+    "placeholders": {
+      "points": {
+        "type": "String"
+      }
+    }
   },
   "smartMoneyScoreValueNoComparisonYet": "No comparison yet",
   "smartMoneyScoreImpactIncomePositive": "Income is ahead of expenses.",
@@ -494,7 +594,411 @@
   "smartMoneyScoreMetricComparedLastMonth": "Compared with last month",
   "smartMoneyScoreMetricExpensesChange": "{percent} expenses",
   "@smartMoneyScoreMetricExpensesChange": {
-    "placeholders": {"percent": {"type": "String"}}
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
   },
-  "smartMoneyScoreFormulaFootnote": "Monthly score = clamp(0–150, 100 + balance change % + financial behaviour modifier)."
+  "smartMoneyScoreFormulaFootnote": "Monthly score = clamp(0–150, 100 + balance change % + financial behaviour modifier).",
+  "financialInsightMsgSteadySpendingHeadline": "Your spending is looking steady today.",
+  "financialInsightMsgSteadySpendingExplanation": "Keep logging transactions and Cashly will make each insight more personal.",
+  "financialInsightMsgNegativeBalanceHeadline": "Your total balance is below zero.",
+  "financialInsightMsgNegativeBalanceExplanation": "Your total {currency} balance is {amount}. Bringing that shortfall above zero is the clearest next step.",
+  "@financialInsightMsgNegativeBalanceExplanation": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgPlanEssentialExpenseTitle": "Plan the next essential expense first",
+  "financialInsightMsgPlanEssentialExpenseDetail": "Focusing on one necessary expense at a time can help rebuild a positive buffer without judging past choices.",
+  "financialInsightMsgCategoryOverBudgetHeadline": "{category} is over its monthly budget.",
+  "@financialInsightMsgCategoryOverBudgetHeadline": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgCategoryOverBudgetExplanation": "You have spent {spent} against a {limit} plan.",
+  "@financialInsightMsgCategoryOverBudgetExplanation": {
+    "placeholders": {
+      "spent": {
+        "type": "String"
+      },
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgPauseCategorySpendingTitle": "Pause {category} spending for today",
+  "@financialInsightMsgPauseCategorySpendingTitle": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgPauseCategorySpendingDetail": "A short pause protects the rest of this month's plan without judging past choices.",
+  "financialInsightMsgCategoryNeedsRoomHeadline": "{category} needs a little room this month.",
+  "@financialInsightMsgCategoryNeedsRoomHeadline": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgCategoryNeedsRoomExplanation": "You have used {percent} of its {limit} budget.",
+  "@financialInsightMsgCategoryNeedsRoomExplanation": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      },
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgSetRestOfMonthLimitTitle": "Set a rest-of-month limit for {category}",
+  "@financialInsightMsgSetRestOfMonthLimitTitle": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgSetRestOfMonthLimitDetail": "Keeping the next purchases within {remaining} will keep this budget on track.",
+  "@financialInsightMsgSetRestOfMonthLimitDetail": {
+    "placeholders": {
+      "remaining": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgCategoryHigherThanUsualHeadline": "{category} is higher than your usual pace.",
+  "@financialInsightMsgCategoryHigherThanUsualHeadline": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgCategoryHigherThanUsualExplanation": "It is {changePercent} above the comparable period, so it is worth a quick check-in.",
+  "@financialInsightMsgCategoryHigherThanUsualExplanation": {
+    "placeholders": {
+      "changePercent": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgReviewNextCategoryPurchaseTitle": "Review your next {category} purchase",
+  "@financialInsightMsgReviewNextCategoryPurchaseTitle": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgReviewNextCategoryPurchaseDetail": "A small swap or delay can soften this increase while you decide whether it was a one-off.",
+  "financialInsightMsgTodaySpendingFasterHeadline": "Today is spending faster than this week's pace.",
+  "financialInsightMsgTodaySpendingFasterExplanation": "That can happen — one intentional check before another purchase keeps the day in your control.",
+  "financialInsightMsgCheckNextExpenseTitle": "Check the next expense before you buy",
+  "financialInsightMsgCheckNextExpenseDetail": "A quick pause can keep today closer to your usual pace without changing what has already happened.",
+  "financialInsightMsgSpendingAheadOfIncomeHeadline": "This month's spending is ahead of income so far.",
+  "financialInsightMsgSpendingAheadOfIncomeExplanation": "This is a trend to watch, not a verdict — one or two intentional choices can still change the month.",
+  "financialInsightMsgChooseLowPriorityExpenseTitle": "Choose one low-priority expense to delay",
+  "financialInsightMsgChooseLowPriorityExpenseDetail": "Focus on the next choice only; reducing one flexible cost can bring the month closer to balance.",
+  "financialInsightMsgBalanceZeroHeadline": "Your available balance is at zero.",
+  "financialInsightMsgBalanceThinHeadline": "Your balance buffer is getting tight.",
+  "financialInsightMsgBalanceLimitedHeadline": "Your balance could use a little more room.",
+  "financialInsightMsgBalanceSteadyHeadline": "Your balance is looking steady.",
+  "financialInsightMsgBalanceZeroExplanation": "There is no {currency} buffer left after recent activity. Choosing the next expense carefully can help create room again.",
+  "@financialInsightMsgBalanceZeroExplanation": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgBalanceThinExplanation": "At your recent spending pace, this {currency} balance covers about {days} days. Protecting one essential expense first can help.",
+  "@financialInsightMsgBalanceThinExplanation": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "financialInsightMsgBalanceLimitedExplanation": "At your recent spending pace, this {currency} balance covers about {days} days. A small rest-of-week plan can preserve that room.",
+  "@financialInsightMsgBalanceLimitedExplanation": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "financialInsightMsgBalanceSteadyExplanation": "Your balance is supporting your current pace.",
+  "financialInsightMsgProtectEssentialExpenseTitle": "Protect the next essential expense",
+  "financialInsightMsgProtectEssentialExpenseDetail": "Choosing the next necessary cost first can help create space before adding anything optional.",
+  "financialInsightMsgReserveNextDaysTitle": "Reserve the next {days} days of essentials",
+  "@financialInsightMsgReserveNextDaysTitle": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "financialInsightMsgReserveNextDaysDetail": "Keeping that small buffer for needs first gives your balance more room to recover.",
+  "financialInsightMsgSetShortRestOfWeekLimitTitle": "Set a short rest-of-week limit",
+  "financialInsightMsgSetShortRestOfWeekLimitDetail": "A small limit for flexible spending can keep your current balance working for longer.",
+  "financialInsightMsgKeepExpenseIntentionalTitle": "Keep your next expense intentional",
+  "financialInsightMsgKeepExpenseIntentionalBalanceDetail": "Your balance is supporting the current pace. A quick check before spending helps it stay that way.",
+  "financialInsightMsgKeepExpenseIntentionalPaceDetail": "Your current pace is healthy. A quick check before a purchase helps it stay that way.",
+  "financialInsightMsgOnboardingHeadline": "Let's build your first spending pattern.",
+  "financialInsightMsgOnboardingExplanation": "Add a few income or expense entries and Cashly will turn them into personal daily, weekly, and monthly check-ins.",
+  "financialInsightMsgLogNextExpenseTitle": "Log your next expense",
+  "financialInsightMsgLogNextExpenseDetail": "Even a small everyday purchase gives the assistant a better starting point.",
+  "financialInsightMsgNotEnoughActivityTodayReason": "There is not enough recent activity to score today's trend yet.",
+  "financialInsightMsgNotEnoughActivityWeekReason": "There is not enough recent activity to score this week's trend yet.",
+  "financialInsightMsgNotEnoughActivityMonthReason": "There is not enough recent activity to score this month's trend yet.",
+  "financialInsightMsgBalanceImpactNegativeReason": "Your total {currency} balance is below zero, so rebuilding a positive buffer is the priority.",
+  "@financialInsightMsgBalanceImpactNegativeReason": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgBalanceImpactEmptyReason": "Your active {currency} balance is at zero after recent activity.",
+  "@financialInsightMsgBalanceImpactEmptyReason": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgBalanceImpactLowReason": "Your total {currency} balance covers about {days} days at your recent spending pace.",
+  "@financialInsightMsgBalanceImpactLowReason": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "financialInsightMsgBalanceImpactHealthyReason": "Your total {currency} balance covers more than a month at your recent spending pace.",
+  "@financialInsightMsgBalanceImpactHealthyReason": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgCategoryOverBudgetReasonToday": "{category} is already over its monthly budget.",
+  "@financialInsightMsgCategoryOverBudgetReasonToday": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgCategoryNearBudgetReasonToday": "{category} has little budget room left this month.",
+  "@financialInsightMsgCategoryNearBudgetReasonToday": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgTodaySpikeReason": "Today's spending is more than twice your earlier daily pace this week.",
+  "financialInsightMsgTodayComparableIncreaseReason": "Today's spending is {changePercent} above yesterday's comparable total.",
+  "@financialInsightMsgTodayComparableIncreaseReason": {
+    "placeholders": {
+      "changePercent": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgNoActivityTodayReason": "No income or expense has been recorded today.",
+  "financialInsightMsgIncomeCoversTodayReason": "Today's recorded income covers today's spending.",
+  "financialInsightMsgCategoryOverBudgetReasonWeek": "{category} is over budget, so this week needs a gentler pace.",
+  "@financialInsightMsgCategoryOverBudgetReasonWeek": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgCategoryNearBudgetReasonWeek": "{category} is close to its monthly limit.",
+  "@financialInsightMsgCategoryNearBudgetReasonWeek": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgCategoryPacedBudgetReasonWeek": "{category} is ahead of its expected monthly pace.",
+  "@financialInsightMsgCategoryPacedBudgetReasonWeek": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgWeeklyCategorySpikeReason": "{category} is {changePercent} above the comparable week.",
+  "@financialInsightMsgWeeklyCategorySpikeReason": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      },
+      "changePercent": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgWeekComparableIncreaseReason": "This week's spending is {changePercent} above last week's comparable total.",
+  "@financialInsightMsgWeekComparableIncreaseReason": {
+    "placeholders": {
+      "changePercent": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgWeekComparableDecreaseReason": "This week is spending less than the comparable previous week.",
+  "financialInsightMsgCategoryOverBudgetReasonMonth": "{category} is {percent} over budget.",
+  "@financialInsightMsgCategoryOverBudgetReasonMonth": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgCategoryNearBudgetReasonMonth": "{category} has {remaining} remaining.",
+  "@financialInsightMsgCategoryNearBudgetReasonMonth": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      },
+      "remaining": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgCategoryPacedBudgetReasonMonth": "{category} is spending faster than its monthly plan.",
+  "@financialInsightMsgCategoryPacedBudgetReasonMonth": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgSpendingOverIncomeReasonMonth": "Month-to-date spending is {expense} versus {income} income.",
+  "@financialInsightMsgSpendingOverIncomeReasonMonth": {
+    "placeholders": {
+      "expense": {
+        "type": "String"
+      },
+      "income": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgIncomeCoversMonthReason": "Income currently covers this month's recorded spending.",
+  "financialInsightMsgMonthComparableIncreaseReason": "Month-to-date spending is {changePercent} above the comparable previous month.",
+  "@financialInsightMsgMonthComparableIncreaseReason": {
+    "placeholders": {
+      "changePercent": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgMonthComparableDecreaseReason": "Month-to-date spending is lower than the comparable previous period.",
+  "financialInsightMsgSteadyReasonToday": "Today is within a healthy spending pace.",
+  "financialInsightMsgSteadyReasonWeek": "This week is tracking close to your recent pace.",
+  "financialInsightMsgSteadyReasonMonth": "This month is within the plan recorded in Cashly.",
+  "financialInsightMsgShortHorizonNoActiveAccountToday": "Today has no active account balance to compare yet, so Cashly is using current balance, budget, and spending signals.",
+  "financialInsightMsgShortHorizonNoActiveAccountWeek": "This week has no active account balance to compare yet, so Cashly is using current balance, budget, and spending signals.",
+  "financialInsightMsgShortHorizonCrossCurrencyToday": "A transfer between currencies occurred today. Cashly is keeping its balance comparison neutral until an exchange-rate basis is available.",
+  "financialInsightMsgShortHorizonCrossCurrencyWeek": "A transfer between currencies occurred this week. Cashly is keeping its balance comparison neutral until an exchange-rate basis is available.",
+  "financialInsightMsgShortHorizonAccountAddedToday": "An account was added today, so Cashly cannot safely reconstruct that opening balance yet.",
+  "financialInsightMsgShortHorizonAccountAddedWeek": "An account was added this week, so Cashly cannot safely reconstruct that opening balance yet.",
+  "financialInsightMsgShortHorizonUnverifiableToday": "Cashly could not verify the balance values for today, so its balance comparison is neutral.",
+  "financialInsightMsgShortHorizonUnverifiableWeek": "Cashly could not verify the balance values for this week, so its balance comparison is neutral.",
+  "financialInsightMsgShortHorizonZeroOpeningToday": "Today began at zero with no recorded income or expense, so Cashly is using current balance, budget, and spending signals.",
+  "financialInsightMsgShortHorizonZeroOpeningWeek": "This week began at zero with no recorded income or expense, so Cashly is using current balance, budget, and spending signals.",
+  "financialInsightMsgShortHorizonIncreasedToday": "Today's balance increased by {percent}, contributing {points} to the score alongside budget and spending signals.",
+  "@financialInsightMsgShortHorizonIncreasedToday": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      },
+      "points": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgShortHorizonIncreasedWeek": "This week's balance increased by {percent}, contributing {points} to the score alongside budget and spending signals.",
+  "@financialInsightMsgShortHorizonIncreasedWeek": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      },
+      "points": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgShortHorizonDecreasedToday": "Today's balance decreased by {percent}, contributing {points} to the score alongside budget and spending signals.",
+  "@financialInsightMsgShortHorizonDecreasedToday": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      },
+      "points": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgShortHorizonDecreasedWeek": "This week's balance decreased by {percent}, contributing {points} to the score alongside budget and spending signals.",
+  "@financialInsightMsgShortHorizonDecreasedWeek": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      },
+      "points": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgShortHorizonStayedLevelToday": "Today's balance stayed level, contributing {points} to the score alongside budget and spending signals.",
+  "@financialInsightMsgShortHorizonStayedLevelToday": {
+    "placeholders": {
+      "points": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgShortHorizonStayedLevelWeek": "This week's balance stayed level, contributing {points} to the score alongside budget and spending signals.",
+  "@financialInsightMsgShortHorizonStayedLevelWeek": {
+    "placeholders": {
+      "points": {
+        "type": "String"
+      }
+    }
+  }
 }

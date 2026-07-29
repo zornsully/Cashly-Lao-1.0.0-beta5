@@ -745,6 +745,139 @@ rewrites in `rule_based_financial_insight_engine_test.dart`,
 more architecturally novel change than 2a — get explicit sign-off on
 the structured-message design before starting.
 
+### 2026-07-29 — Post-audit Phase 2b: structured Smart Money Score messages (done)
+
+Summary:
+
+Gave the domain layer the framework-free structured-message type Phase
+2a deferred, and used it to localize every dynamically generated string
+in the rule-based insight engine and the short-horizon balance-movement
+calculator — the headline, explanation, actions, and score reasons that
+2a explicitly left in English. `SmartMoneyScoreCalculation.reasons`/
+`baselineNote` (persisted, auditable) remain untouched, exactly as
+scoped in 2a: they're rendered through a deliberate `literal` passthrough
+key rather than mapped onto a localizable one.
+
+Files created:
+
+- `lib/features/financial_insights/domain/entities/financial_insight_message.dart`
+  — `FinancialInsightMessageKey` (91 template keys + `literal`) and
+  `FinancialInsightMessage` (key + `Map<String, Object> args`), both
+  plain Dart/Equatable, zero Flutter imports. Deliberately an enum +
+  args map rather than 91 sealed subclasses — less boilerplate for a
+  set this large, while staying fully framework-free and testable
+  (domain tests assert on `.key`/`.args`, not rendered text).
+
+Files modified:
+
+- `financial_insight.dart` — `FinancialPeriodScore.reasons`,
+  `FinancialInsight.headline`/`.explanation`/`.scoreReasons`, and
+  `FinancialInsightAction.title`/`.detail` all changed from
+  `String`/`List<String>` to `FinancialInsightMessage`/
+  `List<FinancialInsightMessage>`.
+- `rule_based_financial_insight_engine.dart` — every one of its ~75
+  string templates now constructs a `FinancialInsightMessage(key,
+  args)` instead of a raw string. `_scoreMonth()`'s passthrough of the
+  persisted lifecycle calculation's reasons now wraps each string via
+  `FinancialInsightMessage.literal(...)` rather than assigning it
+  directly, preserving the 2a boundary without a type mismatch.
+- `short_horizon_balance_movement_calculator.dart` —
+  `ShortHorizonBalanceMovement.reason` is now a `FinancialInsightMessage`.
+  Its 16 templates split into explicit Today/Week key pairs (rather than
+  interpolating an English "today"/"this week" noun into one shared
+  template) so every ARB message stays a natural, translatable sentence
+  instead of requiring a nested-formatting step for the period noun.
+  The "increased/decreased/stayed level by X%, contributing Y points"
+  sentence was also reworded slightly to avoid needing English's
+  point/points plural, consistent with the no-ICU-plural convention
+  `smartMoneyScoreBudgetOverCount` already established in 2a.
+- `financial_insight_card.dart` — added
+  `_formatFinancialInsightMessage(message, l10n)`, an exhaustive switch
+  mapping every `FinancialInsightMessageKey` to its `AppLocalizations`
+  call; every call site that read `.headline`/`.explanation`/
+  `.scoreReasons`/`action.title`/`.detail`/`score.reasons` (the card
+  body, the today/week/month tooltip, and the action list) now routes
+  through it.
+- `lib/l10n/app_en.arb` / `app_lo.arb` — 92 new keys (91 templates +
+  parity check; `literal` has no ARB entry, it renders verbatim in
+  code), generated programmatically from a single source-of-truth table
+  (key name, English text, Lao draft, placeholder types) rather than
+  hand-transcribed, specifically to avoid mismatched key names or
+  placeholder order across ~180 hand-written entries. Lao translations
+  are drafts, same unreviewed status as the rest of `app_lo.arb`.
+- Tests: `rule_based_financial_insight_engine_test.dart` and
+  `short_horizon_balance_movement_calculator_test.dart` — every
+  assertion that matched on a substring of English prose now checks
+  `.key` (and `.args` where a specific value like a category name or
+  percentage matters) instead. This is a incidental improvement, not
+  just a forced migration — asserting on semantic key rather than exact
+  wording means a future copy tweak to the English ARB string can't
+  silently break these tests the way a `contains('...')` match could.
+  `financial_insight_card_test.dart` updated to construct its fixture
+  `FinancialInsight` with `FinancialInsightMessage` values.
+  `smart_money_score_calculator_test.dart`,
+  `build_financial_insight_snapshots_usecase_test.dart`, and
+  `derive_smart_money_score_opening_usecase_test.dart` needed no
+  changes — confirms the persisted-calculation boundary was correctly
+  scoped; nothing they test crosses into the new message type.
+
+Implementation decisions:
+
+- Enum + args map over sealed subclasses: with 91 distinct templates, a
+  sealed class per variant would mean 91 boilerplate classes for
+  marginal type-safety gain over a `Map<String, Object>`— this
+  codebase's own "don't design for hypothetical future requirements...
+  three similar lines is better than a premature abstraction" standard
+  argued against it here. `args` losing per-key compile-time shape
+  checking is a real, accepted tradeoff; it's caught at the two
+  boundaries that matter (the engine that builds each message, and the
+  card's exhaustive formatter switch), both of which are covered by
+  tests.
+- Today/Week key pairs over a shared key + interpolated period arg:
+  avoids ever asking a translator to insert a pre-translated English
+  noun mid-sentence, and avoids needing a second, nested
+  message-formatting pass in the card widget just to resolve the period
+  word before interpolating it into the outer sentence.
+- Generated the ARB additions and the card's formatter switch from one
+  Node.js table (not committed — a throwaway script run from the
+  scratchpad) rather than hand-writing ~270 lines of repetitive
+  key/text/case entries, specifically because the earlier manual Phase
+  2a ARB edits are exactly the kind of task where a copy-paste error in
+  a placeholder name silently produces a runtime crash instead of a
+  compile error you'd catch immediately.
+
+Validation:
+
+- `flutter analyze` — 0 issues.
+- `dart format --set-exit-if-changed lib test tool` — clean (CI's format
+  gate rejected unformatted output during Phase 1/2a's PR; formatted
+  proactively this time before validating).
+- `flutter test` — full suite, 371 passing, 0 failing, 0 skipped (same
+  total as 2a: this phase changed *what* several existing tests assert,
+  not how many tests exist).
+
+Known limitations:
+
+- `SmartMoneyScoreCalculation.reasons`/`unavailableReason` and
+  `SmartMoneyScoreOpening.baselineNote` remain English-only,
+  indefinitely, by the same deliberate, documented boundary 2a
+  established — unchanged by this phase.
+- New Lao strings (92 keys) are drafts, not reviewed by a native
+  speaker — same standing item as the rest of `app_lo.arb`.
+- Not verified on-device/emulator this phase — `flutter analyze`/
+  `flutter test` confirm correctness, not visual rendering of the new
+  Lao strings in the actual card layout (text length changes could
+  affect wrapping).
+
+Next recommended step: a native-speaker review pass of `app_lo.arb`
+(now materially larger — 454 keys total across Phases 1, 2a, and 2b)
+is the highest-value remaining localization item; see `TODO.md`.
+Otherwise, the localization work opened by the original audit is
+complete — remaining phases (`Icons.*`→`AppSymbols.*` sweep, report
+currency partial-conversion signal, landing-page design-system
+decision, App Check) are unrelated to Smart Money Score and can be
+picked up independently.
+
 ## Product Roadmap
 
 The full staged roadmap — objectives, features, deliverables,

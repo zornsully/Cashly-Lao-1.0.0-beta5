@@ -1,4 +1,5 @@
 import 'package:cashly_lao/features/financial_insights/domain/entities/financial_insight.dart';
+import 'package:cashly_lao/features/financial_insights/domain/entities/financial_insight_message.dart';
 import 'package:cashly_lao/features/financial_insights/domain/services/short_horizon_balance_movement_calculator.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -92,7 +93,10 @@ void main() {
     expect(movement.isReliable, isFalse);
     expect(movement.balanceChangePercentage, 0);
     expect(movement.moderatedImpact, 0);
-    expect(movement.reason, contains('began at zero'));
+    expect(
+      movement.reason.key,
+      FinancialInsightMessageKey.shortHorizonZeroOpeningToday,
+    );
   });
 
   test('uses a safe cash-flow denominator after zero-opening activity', () {
@@ -131,7 +135,10 @@ void main() {
     expect(week.isReliable, isFalse);
     expect(week.state, ShortHorizonBalanceMovementState.unsafeCurrencyMovement);
     expect(week.moderatedImpact, 0);
-    expect(week.reason, contains('transfer between currencies'));
+    expect(
+      week.reason.key,
+      FinancialInsightMessageKey.shortHorizonCrossCurrencyWeek,
+    );
   });
 
   test('falls back when an account was added inside the score window', () {
@@ -147,6 +154,9 @@ void main() {
     expect(movement.isReliable, isFalse);
     expect(movement.state, ShortHorizonBalanceMovementState.insufficientData);
     expect(movement.moderatedImpact, 0);
-    expect(movement.reason, contains('account was added'));
+    expect(
+      movement.reason.key,
+      FinancialInsightMessageKey.shortHorizonAccountAddedToday,
+    );
   });
 }
