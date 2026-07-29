@@ -857,14 +857,14 @@ class _ScoreBreakdownSheet extends StatelessWidget {
                         ? l10n.smartMoneyScorePointsSuffix('0')
                         : l10n.smartMoneyScoreValueBehaviourModifierPoints(
                             _signedPoints(
-                              calculation.financialBehaviourModifier
-                                  .toDouble(),
+                              calculation.financialBehaviourModifier.toDouble(),
                             ),
                           ),
                   ),
                   _BreakdownRow(
                     label: l10n.smartMoneyScoreRowFinalMonthlyScore,
-                    value: '${insight.monthScore.value} / ${insight.monthScore.maximum}',
+                    value:
+                        '${insight.monthScore.value} / ${insight.monthScore.maximum}',
                     color: status.color,
                   ),
                 ],
