@@ -1,36 +1,57 @@
 import 'package:cashly_lao/features/landing/domain/entities/release_manifest.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+final _approvedPolicy = ReleaseDistributionPolicy.fromJson(const {
+  'schemaVersion': 1,
+  'repository': 'zornsully/Cashly-Lao-Releases',
+});
+
 void main() {
-  group('ReleaseManifest schema v2', () {
-    test('parses a stable published release and selects its latest asset', () {
-      final manifest = ReleaseManifest.fromJson(_validManifest());
+  group('ReleaseManifest public distribution policy', () {
+    test('parses a reviewed public release and selects its latest APK', () {
+      final manifest = _parse(_validManifest());
 
       expect(manifest.schemaVersion, ReleaseManifest.currentSchemaVersion);
+      expect(
+        manifest.release?.distributionRepository,
+        _approvedPolicy.repository,
+      );
       expect(manifest.release?.tag, 'v1.2.3');
-      expect(manifest.release?.commitSha, 'abcdef1234567');
       expect(manifest.isStable, isTrue);
       expect(
-        manifest.latestStableReleaseFor(ReleasePlatform.android)?.artifactName,
-        'Cashly-Lao-Android-1.2.3.apk',
+        manifest
+            .latestStableReleaseFor(ReleasePlatform.android)
+            ?.downloadUrl
+            .toString(),
+        'https://github.com/zornsully/Cashly-Lao-Releases/releases/download/'
+        'v1.2.3/Cashly-Lao-Android-1.2.3.apk',
       );
-      expect(manifest.latestStableReleaseFor(ReleasePlatform.ios), isNull);
     });
 
-    test('keeps schema v1 manifests as a non-downloadable fallback', () {
-      final manifest = ReleaseManifest.fromJson(
-        _validManifest(schemaVersion: 1),
+    test('fails closed when no public distribution repository is approved', () {
+      expect(
+        () => ReleaseManifest.fromJson(_validManifest()),
+        throwsA(isA<FormatException>()),
       );
-
-      expect(manifest.release, isNull);
-      expect(manifest.isStable, isTrue);
-      expect(manifest.latestStableReleaseFor(ReleasePlatform.android), isNull);
     });
+
+    test(
+      'keeps legacy schema manifests informational and non-downloadable',
+      () {
+        final manifest = _parse(_validManifest(schemaVersion: 1));
+
+        expect(manifest.release, isNull);
+        expect(
+          manifest.latestStableReleaseFor(ReleasePlatform.android),
+          isNull,
+        );
+      },
+    );
 
     test(
       'parses prereleases but excludes them from public stable selection',
       () {
-        final manifest = ReleaseManifest.fromJson(
+        final manifest = _parse(
           _validManifest(version: '1.3.0-beta.1', channel: 'prerelease'),
         );
 
@@ -42,270 +63,190 @@ void main() {
       },
     );
 
-    test('rejects duplicate platform entries', () {
+    test('rejects a repository not in the bundled policy', () {
       final source = _validManifest();
-      final platforms = source['platforms']! as List<Map<String, dynamic>>;
-      platforms[1] = Map<String, dynamic>.from(platforms.first);
+      final release = source['release']! as Map<String, dynamic>;
+      release['distributionRepository'] = 'zornsully/Cashly-Lao-1.0.0-beta5';
+      release['releaseUrl'] =
+          'https://github.com/zornsully/Cashly-Lao-1.0.0-beta5/releases/'
+          'tag/v1.2.3';
 
-      expect(
-        () => ReleaseManifest.fromJson(source),
-        throwsA(isA<FormatException>()),
-      );
-    });
-
-    test('rejects a download asset reused by multiple platforms', () {
-      final source = _validManifest();
-      final platforms = source['platforms']! as List<Map<String, dynamic>>;
-      platforms[1] = {
-        ...platforms.first,
-        'platform': 'ios',
-        'displayName': 'iOS',
-        'actionLabel': 'Download for iOS',
-      };
-
-      expect(
-        () => ReleaseManifest.fromJson(source),
-        throwsA(isA<FormatException>()),
-      );
-    });
-
-    test('rejects a non-HTTPS artifact URL', () {
-      final source = _validManifest();
-      final platforms = source['platforms']! as List<Map<String, dynamic>>;
-      platforms.first['downloadUrl'] =
-          'http://example.com/Cashly-Lao-Android-1.2.3.apk';
-
-      expect(
-        () => ReleaseManifest.fromJson(source),
-        throwsA(isA<FormatException>()),
-      );
-    });
-
-    test('rejects an available asset with a missing checksum', () {
-      final source = _validManifest();
-      final platforms = source['platforms']! as List<Map<String, dynamic>>;
-      platforms.first.remove('sha256');
-
-      expect(
-        () => ReleaseManifest.fromJson(source),
-        throwsA(isA<FormatException>()),
-      );
-    });
-
-    test('allows the canonical Firebase Hosting Android asset', () {
-      final source = _validManifest();
-
-      final manifest = ReleaseManifest.fromJson(source);
-
-      expect(manifest.release?.tag, 'v1.2.3');
-      expect(
-        manifest.latestStableReleaseFor(ReleasePlatform.android)?.version,
-        '1.2.3',
-      );
+      expect(() => _parse(source), throwsA(isA<FormatException>()));
     });
 
     test(
-      'rejects Android metadata that disagrees with the release version',
+      'rejects a source-repository APK even with a valid public release',
       () {
         final source = _validManifest();
-        final platforms = source['platforms']! as List<Map<String, dynamic>>;
-        platforms.first['version'] = '1.2.2';
-        platforms.first['artifactName'] = 'Cashly-Lao-Android-1.2.2.apk';
-        platforms.first['downloadUrl'] =
-            'https://cashly-lao.web.app/downloads/'
-            'Cashly-Lao-Android-1.2.2.apk';
+        _android(source)['downloadUrl'] =
+            'https://github.com/zornsully/Cashly-Lao-1.0.0-beta5/releases/'
+            'download/v1.2.3/Cashly-Lao-Android-1.2.3.apk';
 
-        expect(
-          () => ReleaseManifest.fromJson(source),
-          throwsA(isA<FormatException>()),
-        );
+        expect(() => _parse(source), throwsA(isA<FormatException>()));
       },
     );
-
-    test('rejects an unsafe artifact filename and a URL mismatch', () {
-      final source = _validManifest();
-      final platforms = source['platforms']! as List<Map<String, dynamic>>;
-      platforms.first['artifactName'] = '../Cashly-Lao-Android-1.2.3.apk';
-
-      expect(
-        () => ReleaseManifest.fromJson(source),
-        throwsA(isA<FormatException>()),
-      );
-    });
-
-    test('rejects an HTTPS download outside Firebase Hosting', () {
-      final source = _validManifest();
-      final platforms = source['platforms']! as List<Map<String, dynamic>>;
-      platforms.first['downloadUrl'] =
-          'https://example.com/Cashly-Lao-Android-1.2.3.apk';
-
-      expect(
-        () => ReleaseManifest.fromJson(source),
-        throwsA(isA<FormatException>()),
-      );
-    });
-
-    test('rejects a Firebase download with a non-canonical path', () {
-      final source = _validManifest();
-      final platforms = source['platforms']! as List<Map<String, dynamic>>;
-      platforms.first['downloadUrl'] =
-          'https://cashly-lao.web.app/downloads/extra/'
-          'Cashly-Lao-Android-1.2.3.apk';
-
-      expect(
-        () => ReleaseManifest.fromJson(source),
-        throwsA(isA<FormatException>()),
-      );
-    });
 
     for (final suffix in const [
       '?source=landing',
       '#download',
       '?source=landing#download',
+      '/',
     ]) {
-      test('rejects a Firebase Android URL with $suffix', () {
+      test('rejects a GitHub asset URL with $suffix', () {
         final source = _validManifest();
-        final platforms = source['platforms']! as List<Map<String, dynamic>>;
-        platforms.first['downloadUrl'] =
-            'https://cashly-lao.web.app/downloads/'
-            'Cashly-Lao-Android-1.2.3.apk$suffix';
+        _android(source)['downloadUrl'] =
+            'https://github.com/zornsully/Cashly-Lao-Releases/releases/'
+            'download/v1.2.3/Cashly-Lao-Android-1.2.3.apk$suffix';
 
-        expect(
-          () => ReleaseManifest.fromJson(source),
-          throwsA(isA<FormatException>()),
-        );
+        expect(() => _parse(source), throwsA(isA<FormatException>()));
       });
     }
 
     for (final authority in const [
-      'cashly-lao.web.app:443',
-      'trusted@cashly-lao.web.app',
-      'cashly-lao.web.app.evil.example',
+      'github.com:443',
+      'trusted@github.com',
+      'github.com.evil.example',
     ]) {
-      test('rejects a Firebase Android URL with authority $authority', () {
+      test('rejects an APK URL with authority $authority', () {
         final source = _validManifest();
-        final platforms = source['platforms']! as List<Map<String, dynamic>>;
-        platforms.first['downloadUrl'] =
-            'https://$authority/downloads/Cashly-Lao-Android-1.2.3.apk';
+        _android(source)['downloadUrl'] =
+            'https://$authority/zornsully/Cashly-Lao-Releases/releases/'
+            'download/v1.2.3/Cashly-Lao-Android-1.2.3.apk';
 
-        expect(
-          () => ReleaseManifest.fromJson(source),
-          throwsA(isA<FormatException>()),
-        );
+        expect(() => _parse(source), throwsA(isA<FormatException>()));
       });
     }
 
-    test('rejects a Firebase Android URL with an encoded path variant', () {
+    for (final replacement in const [
+      'download/v1.2.2/Cashly-Lao-Android-1.2.3.apk',
+      'download/v1.2.3/Cashly-Lao-Android-1.2.2.apk',
+      'tag/v1.2.3/Cashly-Lao-Android-1.2.3.apk',
+      'download/v1.2.3/Cashly-Lao-Android-1.2.3%2Eapk',
+    ]) {
+      test('rejects an APK URL path variant $replacement', () {
+        final source = _validManifest();
+        _android(source)['downloadUrl'] =
+            'https://github.com/zornsully/Cashly-Lao-Releases/releases/'
+            '$replacement';
+
+        expect(() => _parse(source), throwsA(isA<FormatException>()));
+      });
+    }
+
+    test('rejects a release page from another tag or with a query', () {
       final source = _validManifest();
-      final platforms = source['platforms']! as List<Map<String, dynamic>>;
-      platforms.first['downloadUrl'] =
-          'https://cashly-lao.web.app/downloads/'
-          'Cashly-Lao-Android-1.2.3%2Eapk';
+      final release = source['release']! as Map<String, dynamic>;
+      release['releaseUrl'] =
+          'https://github.com/zornsully/Cashly-Lao-Releases/releases/'
+          'tag/v1.2.2?draft=true';
 
-      expect(
-        () => ReleaseManifest.fromJson(source),
-        throwsA(isA<FormatException>()),
-      );
-    });
-
-    test('rejects a non-Android public artifact in schema v2', () {
-      final source = _validManifest();
-      final platforms = source['platforms']! as List<Map<String, dynamic>>;
-      platforms[1] = {
-        ...platforms.first,
-        'platform': 'ios',
-        'displayName': 'iOS',
-        'artifactName': 'Cashly-Lao-iOS-1.2.3.ipa',
-        'downloadUrl':
-            'https://cashly-lao.web.app/downloads/'
-            'Cashly-Lao-iOS-1.2.3.ipa',
-      };
-
-      expect(
-        () => ReleaseManifest.fromJson(source),
-        throwsA(isA<FormatException>()),
-      );
+      expect(() => _parse(source), throwsA(isA<FormatException>()));
     });
 
     test(
-      'does not enable a manually constructed manifest with a non-canonical URL',
+      'rejects duplicate platforms and duplicate published artifact names',
       () {
-        final timestamp = DateTime.utc(2026, 7, 26);
-        final manifest = ReleaseManifest(
-          schemaVersion: ReleaseManifest.currentSchemaVersion,
-          generatedAt: timestamp,
-          release: ReleaseDescriptor(
-            tag: 'v1.2.3',
-            commitSha: 'abcdef1234567',
-            channel: ReleaseChannel.stable,
-            publishedAt: timestamp,
-            releaseUrl: Uri.parse(
-              'https://github.com/zornsully/Cashly-Lao-1.0.0-beta5/releases/'
-              'tag/v1.2.3',
-            ),
-          ),
-          platforms: [
-            PlatformRelease(
-              platform: ReleasePlatform.android,
-              displayName: 'Android',
-              availability: ReleaseAvailability.available,
-              statusLabel: 'Latest release',
-              actionLabel: 'Download APK',
-              availabilityMessage: 'Android is ready to download.',
-              version: '1.2.3',
-              buildNumber: '3',
-              releaseDate: timestamp,
-              fileSizeBytes: 1048576,
-              minimumOsVersion: 'Android 7.0+',
-              releaseNotes: 'Signed release.',
-              downloadUrl: Uri.parse(
-                'https://cashly-lao.web.app/downloads/'
-                'Cashly-Lao-Android-1.2.3.apk?source=manual',
-              ),
-              packageFormat: 'APK',
-              installationNote: 'Install the signed APK.',
-              sha256: 'A' * 64,
-              artifactName: 'Cashly-Lao-Android-1.2.3.apk',
-            ),
-            _comingSoonRelease(ReleasePlatform.ios, 'iOS'),
-            _comingSoonRelease(ReleasePlatform.windows, 'Windows'),
-            _comingSoonRelease(ReleasePlatform.mac, 'Mac'),
-          ],
+        final duplicatePlatform = _validManifest();
+        final platforms =
+            duplicatePlatform['platforms']! as List<Map<String, dynamic>>;
+        platforms[1] = Map<String, dynamic>.from(platforms.first);
+        expect(
+          () => _parse(duplicatePlatform),
+          throwsA(isA<FormatException>()),
         );
 
-        expect(manifest.isTrustedForPublicDownload, isFalse);
-        expect(
-          manifest.latestStableReleaseFor(ReleasePlatform.android),
-          isNull,
-        );
+        final duplicateAsset = _validManifest();
+        final duplicatePlatforms =
+            duplicateAsset['platforms']! as List<Map<String, dynamic>>;
+        duplicatePlatforms[1] = {
+          ...duplicatePlatforms.first,
+          'platform': 'ios',
+          'displayName': 'iOS',
+        };
+        expect(() => _parse(duplicateAsset), throwsA(isA<FormatException>()));
       },
     );
 
-    test('rejects an implausibly future-dated release manifest', () {
-      final source = _validManifest();
-      source['generatedAt'] = DateTime.now()
+    test('rejects missing checksums and unsafe artifact names', () {
+      final missingChecksum = _validManifest();
+      _android(missingChecksum).remove('sha256');
+      expect(() => _parse(missingChecksum), throwsA(isA<FormatException>()));
+
+      final unsafeName = _validManifest();
+      _android(unsafeName)['artifactName'] = '../Cashly-Lao-Android-1.2.3.apk';
+      expect(() => _parse(unsafeName), throwsA(isA<FormatException>()));
+    });
+
+    test('rejects a manually constructed manifest with an unapproved policy', () {
+      final timestamp = DateTime.utc(2026, 7, 26);
+      final manifest = ReleaseManifest(
+        schemaVersion: ReleaseManifest.currentSchemaVersion,
+        generatedAt: timestamp,
+        release: ReleaseDescriptor(
+          tag: 'v1.2.3',
+          commitSha: 'abcdef1234567',
+          channel: ReleaseChannel.stable,
+          publishedAt: timestamp,
+          distributionRepository: 'zornsully/Cashly-Lao-Releases',
+          releaseUrl: Uri.parse(
+            'https://github.com/zornsully/Cashly-Lao-Releases/releases/tag/v1.2.3',
+          ),
+        ),
+        platforms: [
+          PlatformRelease(
+            platform: ReleasePlatform.android,
+            displayName: 'Android',
+            availability: ReleaseAvailability.available,
+            statusLabel: 'Latest release',
+            actionLabel: 'Download APK',
+            availabilityMessage: 'Android is ready to download.',
+            version: '1.2.3',
+            buildNumber: '3',
+            releaseDate: timestamp,
+            fileSizeBytes: 1048576,
+            minimumOsVersion: 'Android 7.0+',
+            releaseNotes: 'Signed release.',
+            downloadUrl: Uri.parse(
+              'https://github.com/zornsully/Cashly-Lao-Releases/releases/'
+              'download/v1.2.3/Cashly-Lao-Android-1.2.3.apk',
+            ),
+            packageFormat: 'APK',
+            installationNote: 'Install the signed APK.',
+            sha256: 'A' * 64,
+            artifactName: 'Cashly-Lao-Android-1.2.3.apk',
+          ),
+          _comingSoonRelease(ReleasePlatform.ios, 'iOS'),
+          _comingSoonRelease(ReleasePlatform.windows, 'Windows'),
+          _comingSoonRelease(ReleasePlatform.mac, 'Mac'),
+        ],
+      );
+
+      expect(manifest.isTrustedForPublicDownload, isFalse);
+      expect(manifest.latestStableReleaseFor(ReleasePlatform.android), isNull);
+    });
+
+    test('rejects a future-dated manifest and coming-soon latest flag', () {
+      final future = _validManifest();
+      future['generatedAt'] = DateTime.now()
           .toUtc()
           .add(const Duration(days: 2))
           .toIso8601String();
+      expect(() => _parse(future), throwsA(isA<FormatException>()));
 
-      expect(
-        () => ReleaseManifest.fromJson(source),
-        throwsA(isA<FormatException>()),
-      );
-    });
-
-    test('rejects a coming-soon platform marked as the latest release', () {
-      final source = _validManifest();
-      final platforms = source['platforms']! as List<Map<String, dynamic>>;
+      final invalidLatest = _validManifest();
+      final platforms =
+          invalidLatest['platforms']! as List<Map<String, dynamic>>;
       platforms[1]['isLatest'] = true;
-
-      expect(
-        () => ReleaseManifest.fromJson(source),
-        throwsA(isA<FormatException>()),
-      );
+      expect(() => _parse(invalidLatest), throwsA(isA<FormatException>()));
     });
   });
 }
+
+ReleaseManifest _parse(Map<String, dynamic> source) =>
+    ReleaseManifest.fromJson(source, distributionPolicy: _approvedPolicy);
+
+Map<String, dynamic> _android(Map<String, dynamic> source) =>
+    (source['platforms']! as List<Map<String, dynamic>>).first;
 
 PlatformRelease _comingSoonRelease(
   ReleasePlatform platform,
@@ -321,7 +262,7 @@ PlatformRelease _comingSoonRelease(
 );
 
 Map<String, dynamic> _validManifest({
-  int schemaVersion = 2,
+  int schemaVersion = 3,
   String version = '1.2.3',
   String channel = 'stable',
 }) {
@@ -335,8 +276,9 @@ Map<String, dynamic> _validManifest({
         'commitSha': 'abcdef1234567',
         'channel': channel,
         'publishedAt': '2026-07-26T00:00:00Z',
+        'distributionRepository': 'zornsully/Cashly-Lao-Releases',
         'releaseUrl':
-            'https://github.com/zornsully/Cashly-Lao-1.0.0-beta5/releases/'
+            'https://github.com/zornsully/Cashly-Lao-Releases/releases/'
             'tag/v$version',
       },
     'platforms': [
@@ -353,7 +295,9 @@ Map<String, dynamic> _validManifest({
         'fileSizeBytes': 1048576,
         'minimumOsVersion': 'Android 7.0+',
         'releaseNotes': 'Signed release.',
-        'downloadUrl': 'https://cashly-lao.web.app/downloads/$artifactName',
+        'downloadUrl':
+            'https://github.com/zornsully/Cashly-Lao-Releases/releases/'
+            'download/v$version/$artifactName',
         'packageFormat': 'APK',
         'installationNote': 'Install the signed APK.',
         'sha256': 'A' * 64,

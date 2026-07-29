@@ -55,7 +55,6 @@ class AccountController extends AsyncNotifier<void> {
     required String name,
     required AccountType type,
     required double balance,
-    required String currencyCode,
     required AppIconKey icon,
     required AppColorKey color,
   }) {
@@ -67,7 +66,6 @@ class AccountController extends AsyncNotifier<void> {
             name: name,
             type: type,
             balance: balance,
-            currencyCode: currencyCode,
             icon: icon,
             color: color,
           ),

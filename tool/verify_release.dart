@@ -1,8 +1,8 @@
 /// Validates a Cashly Lao release candidate before it is allowed to publish.
 ///
 /// This is intentionally a repository-local tool: it has no credentials and
-/// never uploads, deploys, or changes a release. GitHub Actions uses its JSON
-/// summary as the approval evidence for a protected production deployment.
+/// never uploads, deploys, or changes a release. Its JSON summary is local
+/// approval evidence for the manual free-tier release process.
 library;
 
 import 'dart:convert';
@@ -75,17 +75,45 @@ Future<void> main(List<String> arguments) async {
         File(manifestPath),
         expectedTag: tag,
         expectedRef: ref,
+        distributionPolicy: _readDistributionPolicy(
+          argumentsMap.value('distribution-policy'),
+        ),
       );
     }
 
+    final expectedCertificate = _normalizeCertificateFingerprint(
+      argumentsMap.value('expected-android-certificate-sha256'),
+    );
+    if (expectedCertificate != null &&
+        !argumentsMap.flag('verify-android-signature')) {
+      throw const _UsageException(
+        '--expected-android-certificate-sha256 requires --verify-android-signature.',
+      );
+    }
+
+    final androidCertificates = <String, String>{};
     if (argumentsMap.flag('verify-android-signature')) {
       final androidApks = artifacts.where(
         (artifact) =>
             artifact.platform == 'android' &&
             artifact.artifactExtension == '.apk',
       );
+      if (expectedCertificate != null && androidApks.isEmpty) {
+        throw StateError(
+          'An expected Android signing certificate was provided without an APK artifact.',
+        );
+      }
       for (final artifact in androidApks) {
-        await _verifyAndroidSignature(artifact.file);
+        final certificate = await _verifyAndroidSignature(
+          artifact.file,
+          expectedCertificate: expectedCertificate,
+        );
+        await _verifyAndroidPackage(
+          artifact.file,
+          expectedVersion: pubspec.version,
+          expectedBuildNumber: pubspec.buildNumber,
+        );
+        androidCertificates[artifact.file.path] = certificate;
       }
     }
 
@@ -96,7 +124,13 @@ Future<void> main(List<String> arguments) async {
       'commitSha': ref,
       'channel': isPrerelease ? 'prerelease' : 'stable',
       'validatedAt': DateTime.now().toUtc().toIso8601String(),
-      'artifacts': artifacts.map((artifact) => artifact.toJson()).toList(),
+      'artifacts': artifacts
+          .map(
+            (artifact) => artifact.toJson(
+              signingCertificateSha256: androidCertificates[artifact.file.path],
+            ),
+          )
+          .toList(),
     };
 
     final outputPath = argumentsMap.value('output');
@@ -132,9 +166,12 @@ Options:
   --ref <sha>                   Exact tagged commit SHA.
   --pubspec <path>              pubspec.yaml path (default: pubspec.yaml).
   --manifest <path>             Validate a release manifest JSON document.
+  --distribution-policy <path>  Reviewed policy required for schema-v3 manifest.
   --artifact <platform>=<path>  Verify a candidate artifact; repeatable.
   --require-artifacts            Fail when no artifacts are provided.
   --verify-android-signature     Use apksigner to verify APK signatures.
+  --expected-android-certificate-sha256 <SHA-256>
+                               Require this signing certificate fingerprint.
   --output <path>               Write a machine-readable summary JSON file.
   --help                        Show this help.
 ''';
@@ -223,6 +260,7 @@ void _verifyManifestShape(
   File file, {
   required String expectedTag,
   required String? expectedRef,
+  required landing.ReleaseDistributionPolicy distributionPolicy,
 }) {
   if (!file.existsSync()) {
     throw StateError('Release manifest was not found at ${file.path}.');
@@ -231,7 +269,10 @@ void _verifyManifestShape(
   if (decoded is! Map<String, dynamic>) {
     throw const FormatException('Release manifest root must be a JSON object.');
   }
-  final manifest = landing.ReleaseManifest.fromJson(decoded);
+  final manifest = landing.ReleaseManifest.fromJson(
+    decoded,
+    distributionPolicy: distributionPolicy,
+  );
   if (manifest.schemaVersion == landing.ReleaseManifest.currentSchemaVersion) {
     final release = manifest.release;
     if (release == null || release.tag != expectedTag) {
@@ -247,7 +288,38 @@ void _verifyManifestShape(
   }
 }
 
-Future<void> _verifyAndroidSignature(File apk) async {
+landing.ReleaseDistributionPolicy _readDistributionPolicy(String? path) {
+  if (path == null) return landing.ReleaseDistributionPolicy.unconfigured;
+  final file = File(path);
+  if (!file.existsSync()) {
+    throw StateError(
+      'Release distribution policy was not found at ${file.path}.',
+    );
+  }
+  final decoded = jsonDecode(file.readAsStringSync());
+  if (decoded is! Map<String, dynamic>) {
+    throw const FormatException(
+      'Release distribution policy root must be a JSON object.',
+    );
+  }
+  return landing.ReleaseDistributionPolicy.fromJson(decoded);
+}
+
+String? _normalizeCertificateFingerprint(String? value) {
+  if (value == null) return null;
+  final normalized = value.replaceAll(RegExp(r'[:\s]'), '').toUpperCase();
+  if (!RegExp(r'^[A-F0-9]{64}$').hasMatch(normalized)) {
+    throw const _UsageException(
+      '--expected-android-certificate-sha256 must be a 64-character SHA-256 fingerprint.',
+    );
+  }
+  return normalized;
+}
+
+Future<String> _verifyAndroidSignature(
+  File apk, {
+  String? expectedCertificate,
+}) async {
   final executable = _findApkSigner();
   if (executable == null) {
     throw StateError(
@@ -257,13 +329,61 @@ Future<void> _verifyAndroidSignature(File apk) async {
   final result = await Process.run(executable.path, [
     'verify',
     '--verbose',
+    '--print-certs',
     '--min-sdk-version',
-    '23',
+    '24',
     apk.path,
   ]);
   if (result.exitCode != 0) {
     throw StateError(
       'APK signature verification failed for ${apk.path}: ${result.stderr}',
+    );
+  }
+  final output = result.stdout.toString();
+  final match = RegExp(
+    r'certificate SHA-256 digest:\s*([A-Fa-f0-9:]+)',
+  ).firstMatch(output);
+  final actualCertificate = match?.group(1)?.replaceAll(':', '').toUpperCase();
+  if (actualCertificate == null ||
+      !RegExp(r'^[A-F0-9]{64}$').hasMatch(actualCertificate)) {
+    throw StateError(
+      'APK signature verification did not report a SHA-256 signing certificate for ${apk.path}.',
+    );
+  }
+  if (expectedCertificate != null && actualCertificate != expectedCertificate) {
+    throw StateError(
+      'APK signing certificate does not match the approved fingerprint for ${apk.path}.',
+    );
+  }
+  return actualCertificate;
+}
+
+Future<void> _verifyAndroidPackage(
+  File apk, {
+  required String expectedVersion,
+  required String expectedBuildNumber,
+}) async {
+  final executable = _findAapt();
+  if (executable == null) {
+    throw StateError(
+      'Could not find aapt. Set AAPT_PATH or install Android build-tools.',
+    );
+  }
+  final result = await Process.run(executable.path, [
+    'dump',
+    'badging',
+    apk.path,
+  ]);
+  if (result.exitCode != 0) {
+    throw StateError(
+      'APK package validation failed for ${apk.path}: ${result.stderr}',
+    );
+  }
+  final expectedPackage =
+      "package: name='com.cashlylao.app' versionCode='$expectedBuildNumber' versionName='$expectedVersion'";
+  if (!result.stdout.toString().contains(expectedPackage)) {
+    throw StateError(
+      'APK package ID or version does not match com.cashlylao.app $expectedVersion+$expectedBuildNumber.',
     );
   }
 }
@@ -297,6 +417,34 @@ File? _findApkSigner() {
   return candidates.isEmpty ? null : candidates.first;
 }
 
+File? _findAapt() {
+  final configuredPath = Platform.environment['AAPT_PATH'];
+  if (configuredPath != null && File(configuredPath).existsSync()) {
+    return File(configuredPath);
+  }
+  final androidHome =
+      Platform.environment['ANDROID_HOME'] ??
+      Platform.environment['ANDROID_SDK_ROOT'];
+  if (androidHome == null) return null;
+  final buildTools = Directory(
+    '$androidHome${Platform.pathSeparator}build-tools',
+  );
+  if (!buildTools.existsSync()) return null;
+  final filename = Platform.isWindows ? 'aapt.exe' : 'aapt';
+  final candidates =
+      buildTools
+          .listSync()
+          .whereType<Directory>()
+          .map(
+            (directory) =>
+                File('${directory.path}${Platform.pathSeparator}$filename'),
+          )
+          .where((file) => file.existsSync())
+          .toList()
+        ..sort((a, b) => b.path.compareTo(a.path));
+  return candidates.isEmpty ? null : candidates.first;
+}
+
 class _PubspecVersion {
   const _PubspecVersion(this.version, this.buildNumber);
 
@@ -323,11 +471,12 @@ class _ArtifactSummary {
     return dot == -1 ? '' : filename.substring(dot).toLowerCase();
   }
 
-  Map<String, Object> toJson() => {
+  Map<String, Object> toJson({String? signingCertificateSha256}) => {
     'platform': platform,
     'artifactName': file.uri.pathSegments.last,
     'fileSizeBytes': byteLength,
     'sha256': sha256,
+    'signingCertificateSha256': ?signingCertificateSha256,
   };
 }
 

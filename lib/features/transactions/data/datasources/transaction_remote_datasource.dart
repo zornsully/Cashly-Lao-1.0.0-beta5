@@ -138,6 +138,63 @@ class FirestoreTransactionRemoteDataSource
     }
   }
 
+  /// Defense-in-depth alongside `firestore.rules`' own get()-based check:
+  /// Cashly never converts currency on a transfer, so source and
+  /// destination must already be the same currency. The app form already
+  /// restricts the destination picker to same-currency accounts, but that's
+  /// a client-only convention a direct API write could bypass — this is
+  /// what makes it a real guarantee for the one path (online, atomic
+  /// transaction) that can enforce it against a live read.
+  Future<void> _requireMatchingTransferCurrency(
+    Transaction txn, {
+    required TransactionType type,
+    required String accountId,
+    required String? toAccountId,
+  }) async {
+    if (type != TransactionType.transfer || toAccountId == null) return;
+    final sourceSnap = await txn.get(_accountDoc(accountId));
+    final destSnap = await txn.get(_accountDoc(toAccountId));
+    if (!sourceSnap.exists || !destSnap.exists) {
+      throw const ServerException('That account no longer exists.');
+    }
+    final sourceCurrency = sourceSnap.data()!['currencyCode'];
+    final destCurrency = destSnap.data()!['currencyCode'];
+    if (sourceCurrency != destCurrency) {
+      throw const ServerException(
+        'A transfer requires both accounts to use the same currency.',
+      );
+    }
+  }
+
+  /// Offline counterpart of [_requireMatchingTransferCurrency], reading from
+  /// the device cache the same way [_requireCachedAccounts] does.
+  Future<void> _requireCachedMatchingTransferCurrency({
+    required TransactionType type,
+    required String accountId,
+    required String? toAccountId,
+  }) async {
+    if (type != TransactionType.transfer || toAccountId == null) return;
+    final sourceSnap = await _accountDoc(
+      accountId,
+    ).get(const GetOptions(source: Source.cache));
+    final destSnap = await _accountDoc(
+      toAccountId,
+    ).get(const GetOptions(source: Source.cache));
+    final sourceCurrency = sourceSnap.data()?['currencyCode'];
+    final destCurrency = destSnap.data()?['currencyCode'];
+    if (sourceCurrency == null || destCurrency == null) {
+      throw const ServerException(
+        'This change cannot be queued offline because one of its accounts '
+        'is not stored on this device yet.',
+      );
+    }
+    if (sourceCurrency != destCurrency) {
+      throw const ServerException(
+        'A transfer requires both accounts to use the same currency.',
+      );
+    }
+  }
+
   /// Only fall back for a confirmed unavailable/offline result. In
   /// particular, a timeout is deliberately *not* treated as offline: an
   /// atomic transaction may have reached the server even if a response was
@@ -315,6 +372,11 @@ class FirestoreTransactionRemoteDataSource
     String? categoryId,
     String? toAccountId,
   }) async {
+    await _requireCachedMatchingTransferCurrency(
+      type: type,
+      accountId: accountId,
+      toAccountId: toAccountId,
+    );
     await _requireCachedAccounts(deltas.keys);
 
     final batch = _firestore.batch();
@@ -367,6 +429,11 @@ class FirestoreTransactionRemoteDataSource
       amount: amount,
     );
     final netDeltas = _netDeltas(oldDeltas: oldDeltas, newDeltas: newDeltas);
+    await _requireCachedMatchingTransferCurrency(
+      type: type,
+      accountId: accountId,
+      toAccountId: toAccountId,
+    );
     await _requireCachedAccounts(netDeltas.keys);
 
     final batch = _firestore.batch();
@@ -471,6 +538,12 @@ class FirestoreTransactionRemoteDataSource
 
     try {
       await runAtomicTransaction((txn) async {
+        await _requireMatchingTransferCurrency(
+          txn,
+          type: type,
+          accountId: accountId,
+          toAccountId: toAccountId,
+        );
         await _applyDeltas(txn, deltas, requireExists: true);
         txn.set(
           docRef,
@@ -573,6 +646,12 @@ class FirestoreTransactionRemoteDataSource
           newDeltas: newDeltas,
         );
 
+        await _requireMatchingTransferCurrency(
+          txn,
+          type: type,
+          accountId: accountId,
+          toAccountId: toAccountId,
+        );
         await _applyDeltas(txn, netDeltas, requireExists: true);
 
         txn.update(

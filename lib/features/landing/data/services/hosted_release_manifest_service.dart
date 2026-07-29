@@ -20,6 +20,7 @@ class HostedReleaseManifestService implements ReleaseManifestService {
     AssetBundle? assetBundle,
     ReleaseManifestCache? cache,
     Uri? manifestUri,
+    this._distributionPolicy,
     this.requestTimeout = const Duration(seconds: 8),
   }) : _client = client ?? http.Client(),
        _assetBundle = assetBundle ?? rootBundle,
@@ -30,18 +31,22 @@ class HostedReleaseManifestService implements ReleaseManifestService {
     'https://cashly-lao.web.app/release-manifest.json',
   );
   static const fallbackAssetPath = 'assets/release/release_manifest.json';
+  static const distributionPolicyAssetPath =
+      'assets/release/distribution_policy.json';
 
   final http.Client _client;
   final AssetBundle _assetBundle;
   final ReleaseManifestCache _cache;
   final Uri _manifestUri;
+  final ReleaseDistributionPolicy? _distributionPolicy;
   final Duration requestTimeout;
 
   @override
   Future<ReleaseManifest> loadLatest() async {
-    final cachedManifest = await _loadCachedManifest();
+    final distributionPolicy = await _loadDistributionPolicy();
+    final cachedManifest = await _loadCachedManifest(distributionPolicy);
     try {
-      final networkManifest = await _loadNetworkManifest();
+      final networkManifest = await _loadNetworkManifest(distributionPolicy);
 
       // The verified network channel is authoritative. A cache is recovery
       // only, never an authority that can outrank a fresh rollback or update.
@@ -52,7 +57,7 @@ class HostedReleaseManifestService implements ReleaseManifestService {
         return cachedManifest.withSource(ReleaseManifestSource.persistentCache);
       }
 
-      final bundledManifest = await _loadBundledManifest();
+      final bundledManifest = await _loadBundledManifest(distributionPolicy);
       if (bundledManifest != null) {
         return bundledManifest.withSource(
           ReleaseManifestSource.bundledFallback,
@@ -63,7 +68,9 @@ class HostedReleaseManifestService implements ReleaseManifestService {
     }
   }
 
-  Future<ReleaseManifest> _loadNetworkManifest() async {
+  Future<ReleaseManifest> _loadNetworkManifest(
+    ReleaseDistributionPolicy distributionPolicy,
+  ) async {
     final response = await _client
         .get(
           _manifestUri,
@@ -80,14 +87,18 @@ class HostedReleaseManifestService implements ReleaseManifestService {
       );
     }
 
-    return _requirePublicStableManifest(_decode(response.body));
+    return _requirePublicStableManifest(
+      _decode(response.body, distributionPolicy),
+    );
   }
 
-  Future<ReleaseManifest?> _loadCachedManifest() async {
+  Future<ReleaseManifest?> _loadCachedManifest(
+    ReleaseDistributionPolicy distributionPolicy,
+  ) async {
     try {
       final source = await _cache.read();
       if (source == null || source.trim().isEmpty) return null;
-      return _requirePublicStableManifest(_decode(source));
+      return _requirePublicStableManifest(_decode(source, distributionPolicy));
     } catch (_) {
       // Cached data is an availability optimisation only. It is ignored if it
       // cannot satisfy the same validation as a network response.
@@ -95,13 +106,15 @@ class HostedReleaseManifestService implements ReleaseManifestService {
     }
   }
 
-  Future<ReleaseManifest?> _loadBundledManifest() async {
+  Future<ReleaseManifest?> _loadBundledManifest(
+    ReleaseDistributionPolicy distributionPolicy,
+  ) async {
     try {
       final source = await _assetBundle.loadString(
         fallbackAssetPath,
         cache: false,
       );
-      final manifest = _decode(source);
+      final manifest = _decode(source, distributionPolicy);
 
       // Older bundles remain useful for explaining availability while offline,
       // but only a current-schema document can unlock a public download.
@@ -133,12 +146,40 @@ class HostedReleaseManifestService implements ReleaseManifestService {
     return manifest;
   }
 
-  ReleaseManifest _decode(String source) {
+  Future<ReleaseDistributionPolicy> _loadDistributionPolicy() async {
+    final configured = _distributionPolicy;
+    if (configured != null) return configured;
+    try {
+      final source = await _assetBundle.loadString(
+        distributionPolicyAssetPath,
+        cache: false,
+      );
+      final decoded = jsonDecode(source);
+      if (decoded is! Map<String, dynamic>) {
+        throw const FormatException(
+          'Release distribution policy root must be an object.',
+        );
+      }
+      return ReleaseDistributionPolicy.fromJson(decoded);
+    } catch (_) {
+      // A missing or malformed bundled policy must disable downloads rather
+      // than letting a remote manifest select an arbitrary repository.
+      return ReleaseDistributionPolicy.unconfigured;
+    }
+  }
+
+  ReleaseManifest _decode(
+    String source,
+    ReleaseDistributionPolicy distributionPolicy,
+  ) {
     final decoded = jsonDecode(source);
     if (decoded is! Map<String, dynamic>) {
       throw const FormatException('Release manifest root must be an object.');
     }
-    return ReleaseManifest.fromJson(decoded);
+    return ReleaseManifest.fromJson(
+      decoded,
+      distributionPolicy: distributionPolicy,
+    );
   }
 
   String _encode(ReleaseManifest manifest) {
@@ -159,6 +200,7 @@ class HostedReleaseManifestService implements ReleaseManifestService {
         'commitSha': release.commitSha,
         'channel': release.channel.value,
         'publishedAt': release.publishedAt.toUtc().toIso8601String(),
+        'distributionRepository': release.distributionRepository,
         'releaseUrl': release.releaseUrl.toString(),
       };
     }

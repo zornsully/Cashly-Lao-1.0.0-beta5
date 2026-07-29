@@ -16,7 +16,6 @@ class UpdateAccountUseCase {
     required String name,
     required AccountType type,
     required double balance,
-    required String currencyCode,
     required AppIconKey icon,
     required AppColorKey color,
   }) {
@@ -25,7 +24,6 @@ class UpdateAccountUseCase {
       name: name,
       type: type,
       balance: balance,
-      currencyCode: currencyCode,
       icon: icon,
       color: color,
     );

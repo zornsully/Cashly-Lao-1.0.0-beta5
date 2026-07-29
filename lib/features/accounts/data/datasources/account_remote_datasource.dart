@@ -25,7 +25,6 @@ abstract interface class AccountRemoteDataSource {
     required String name,
     required AccountType type,
     required double balance,
-    required String currencyCode,
     required AppIconKey icon,
     required AppColorKey color,
   });
@@ -114,16 +113,16 @@ class FirestoreAccountRemoteDataSource implements AccountRemoteDataSource {
     required String name,
     required AccountType type,
     required double balance,
-    required String currencyCode,
     required AppIconKey icon,
     required AppColorKey color,
   }) async {
     try {
+      // currencyCode is intentionally absent — it's fixed at creation (see
+      // firestore.rules) and never resent on update.
       await _collection.doc(id).update({
         'name': name,
         'type': type.name,
         'balance': balance,
-        'currencyCode': currencyCode,
         'icon': icon.name,
         'color': color.name,
         'updatedAt': FieldValue.serverTimestamp(),

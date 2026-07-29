@@ -106,6 +106,30 @@ void main() {
     );
   });
 
+  test('updateAccount returns Right(unit) on success', () async {
+    when(
+      () => dataSource.updateAccount(
+        id: any(named: 'id'),
+        name: any(named: 'name'),
+        type: any(named: 'type'),
+        balance: any(named: 'balance'),
+        icon: any(named: 'icon'),
+        color: any(named: 'color'),
+      ),
+    ).thenAnswer((_) async {});
+
+    final result = await repository.updateAccount(
+      id: '1',
+      name: 'Renamed',
+      type: AccountType.cash,
+      balance: 200,
+      icon: AppIconKey.cash,
+      color: AppColorKey.emerald,
+    );
+
+    expect(result, const Right<Failure, Unit>(unit));
+  });
+
   test('deleteAccount returns Right(unit) on success', () async {
     when(() => dataSource.deleteAccount('1')).thenAnswer((_) async {});
 

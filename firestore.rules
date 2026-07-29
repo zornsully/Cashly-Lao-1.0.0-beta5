@@ -40,7 +40,7 @@ service cloud.firestore {
       // enforced by the path itself.
       match /accounts/{accountId} {
         allow read, delete: if request.auth != null && request.auth.uid == userId;
-        allow create, update: if request.auth != null
+        allow create: if request.auth != null
           && request.auth.uid == userId
           && request.resource.data.name is string
           && request.resource.data.name.size() > 0
@@ -48,6 +48,25 @@ service cloud.firestore {
             ['cash', 'wallet', 'bank', 'creditCard', 'savings']
           && request.resource.data.balance is number
           && request.resource.data.currencyCode is string
+          && request.resource.data.currencyCode.size() > 0
+          && request.resource.data.icon is string
+          && request.resource.data.color is string
+          && request.resource.data.isArchived is bool;
+        // currencyCode is fixed at creation: every transaction/budget/
+        // report/Smart-Money-Score figure attributes an amount to a
+        // currency via *this* field (see CLAUDE.md's Coding Standards), so
+        // changing it after the fact would silently reclassify every
+        // already-recorded amount tied to this account into a different
+        // currency with no conversion. Pinned here the same way categories'
+        // isDefault and budgets' categoryId/month already are.
+        allow update: if request.auth != null
+          && request.auth.uid == userId
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.type in
+            ['cash', 'wallet', 'bank', 'creditCard', 'savings']
+          && request.resource.data.balance is number
+          && request.resource.data.currencyCode == resource.data.currencyCode
           && request.resource.data.icon is string
           && request.resource.data.color is string
           && request.resource.data.isArchived is bool;
@@ -113,7 +132,16 @@ service cloud.firestore {
           && (request.resource.data.type == 'transfer'
             ? (request.resource.data.categoryId.size() == 0
               && request.resource.data.toAccountId.size() > 0
-              && request.resource.data.toAccountId != request.resource.data.accountId)
+              && request.resource.data.toAccountId != request.resource.data.accountId
+              // Cashly never converts currency on a transfer (see CLAUDE.md's
+              // Coding Standards) — moving "30" out of one account has to
+              // land as 30 of that same currency, not 30 of whatever the
+              // destination happens to use. The app form already restricts
+              // the destination picker to same-currency accounts; this get()
+              // check is what makes that a real guarantee instead of a
+              // client-only convention a direct API write could bypass.
+              && get(/databases/$(database)/documents/users/$(userId)/accounts/$(request.resource.data.accountId)).data.currencyCode
+                == get(/databases/$(database)/documents/users/$(userId)/accounts/$(request.resource.data.toAccountId)).data.currencyCode)
             : (request.resource.data.categoryId.size() > 0
               && request.resource.data.toAccountId.size() == 0))
           && request.resource.data.amount is number
@@ -186,9 +214,9 @@ service cloud.firestore {
       match /savingsGoals/{goalId} {
         allow read, delete: if request.auth != null && request.auth.uid == userId;
         // No currencyCode field here at all, unlike accounts/budgets — a
-        // goal's currency is always derived live from its linked account
-        // (AccountEntity.currencyCode is user-editable after creation, so
-        // caching a copy here could silently disagree with the account).
+        // goal's currency is always derived live from its linked account,
+        // which stays the single source of truth rather than caching a
+        // second copy here that could drift out of sync with it.
         allow create: if request.auth != null
           && request.auth.uid == userId
           && request.resource.data.name is string

@@ -47,6 +47,7 @@ flutter:
     - assets/logo/cashly_mark.png
     - assets/branding/google_logo.svg
     - assets/release/release_manifest.json
+    - assets/release/distribution_policy.json
     - store_assets/screenshots/
   fonts:
     - family: Manrope

@@ -61,24 +61,73 @@ enum ReleaseChannel {
   }
 }
 
+/// A reviewed public GitHub repository that may distribute Cashly Lao APKs.
+///
+/// The source repository remains private. This policy is bundled with the
+/// website so a remotely served manifest cannot select a new repository by
+/// itself. A null [repository] is intentional during development: every
+/// download remains unavailable until the owner reviews and commits a policy.
+class ReleaseDistributionPolicy {
+  const ReleaseDistributionPolicy._(this.repository);
+
+  static const currentSchemaVersion = 1;
+  static const unconfigured = ReleaseDistributionPolicy._(null);
+
+  /// GitHub `owner/repository`, or null while public distribution is disabled.
+  final String? repository;
+
+  bool get isConfigured => repository != null;
+
+  String? get owner => repository?.split('/').first;
+
+  String? get name => repository?.split('/').last;
+
+  factory ReleaseDistributionPolicy.fromJson(Map<String, dynamic> json) {
+    final schemaVersion = _requiredInt(json, 'schemaVersion');
+    if (schemaVersion != currentSchemaVersion) {
+      throw FormatException(
+        'Unsupported release distribution policy schemaVersion: $schemaVersion.',
+      );
+    }
+
+    final repository = json['repository'];
+    if (repository == null) return unconfigured;
+    if (repository is! String ||
+        !RegExp(
+          r'^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})/[A-Za-z0-9._-]+$',
+        ).hasMatch(repository)) {
+      throw const FormatException(
+        'Release distribution policy repository must use owner/repository syntax.',
+      );
+    }
+    return ReleaseDistributionPolicy._(repository);
+  }
+
+  bool approvesRepository(String candidate) =>
+      repository != null && candidate == repository;
+}
+
 /// The only public artifact channel accepted by Cashly Lao.
 ///
-/// Release provenance remains tied to the private GitHub repository, but the
-/// public Android package is deliberately served from Cashly Lao Firebase
-/// Hosting. Keeping both rules here makes a future ownership or distribution
-/// change explicit and reviewable instead of allowing a manifest to redirect
-/// visitors to an arbitrary HTTPS host.
+/// Firebase Spark hosts the website and manifest only. APKs are accepted only
+/// from the exact public GitHub distribution repository declared by the
+/// bundled [ReleaseDistributionPolicy]. Comparing complete canonical URLs
+/// rejects ports, user info, query strings, fragments, redirects encoded as
+/// path variants, and arbitrary GitHub repositories.
 abstract final class ReleaseManifestTrustPolicy {
   static const githubHost = 'github.com';
-  static const repositoryOwner = 'zornsully';
-  static const repositoryName = 'Cashly-Lao-1.0.0-beta5';
-  static const firebaseHostingHost = 'cashly-lao.web.app';
-  static const _androidDownloadsPath = 'downloads';
 
-  static bool isTrustedReleasePage(Uri uri, String tag, {String? rawUri}) {
+  static bool isTrustedReleasePage(
+    Uri uri,
+    String tag, {
+    required ReleaseDistributionPolicy policy,
+    String? rawUri,
+  }) {
+    final repository = policy.repository;
+    if (repository == null) return false;
+    final segments = repository.split('/');
     return _isTrustedGitHubUri(uri, [
-      repositoryOwner,
-      repositoryName,
+      ...segments,
       'releases',
       'tag',
       tag,
@@ -87,21 +136,26 @@ abstract final class ReleaseManifestTrustPolicy {
 
   static bool isTrustedArtifactDownload(
     Uri uri, {
+    required ReleaseDistributionPolicy policy,
+    required ReleaseDescriptor release,
     required ReleasePlatform platform,
     required String version,
     required String artifactName,
     String? rawUri,
   }) {
-    if (platform != ReleasePlatform.android ||
+    final repository = policy.repository;
+    if (repository == null ||
+        release.distributionRepository != repository ||
+        platform != ReleasePlatform.android ||
         artifactName != androidArtifactName(version)) {
       return false;
     }
 
-    // Compare the complete canonical URI rather than only decoded path
-    // segments. This rejects a default port, user info, query/fragment data,
-    // a trailing slash, or encoded path variants that could otherwise look
-    // equivalent after parsing.
-    final canonicalUri = androidDownloadUri(version).toString();
+    final canonicalUri = androidDownloadUri(
+      repository: repository,
+      tag: release.tag,
+      version: version,
+    ).toString();
     return uri.toString() == canonicalUri &&
         (rawUri == null || rawUri == canonicalUri);
   }
@@ -109,9 +163,13 @@ abstract final class ReleaseManifestTrustPolicy {
   static String androidArtifactName(String version) =>
       'Cashly-Lao-Android-$version.apk';
 
-  static Uri androidDownloadUri(String version) => Uri.https(
-    firebaseHostingHost,
-    '/$_androidDownloadsPath/${androidArtifactName(version)}',
+  static Uri androidDownloadUri({
+    required String repository,
+    required String tag,
+    required String version,
+  }) => Uri.https(
+    githubHost,
+    '/$repository/releases/download/$tag/${androidArtifactName(version)}',
   );
 
   static bool _isTrustedGitHubUri(
@@ -164,6 +222,7 @@ class ReleaseDescriptor {
     required this.commitSha,
     required this.channel,
     required this.publishedAt,
+    required this.distributionRepository,
     required this.releaseUrl,
   });
 
@@ -171,13 +230,17 @@ class ReleaseDescriptor {
   final String commitSha;
   final ReleaseChannel channel;
   final DateTime publishedAt;
+  final String distributionRepository;
   final Uri releaseUrl;
 
   String get version => tag.substring(1);
 
   bool get isStable => channel == ReleaseChannel.stable;
 
-  factory ReleaseDescriptor.fromJson(Map<String, dynamic> json) {
+  factory ReleaseDescriptor.fromJson(
+    Map<String, dynamic> json, {
+    required ReleaseDistributionPolicy distributionPolicy,
+  }) {
     final tag = _requiredString(json, 'tag');
     final version = _versionFromTag(tag);
     final commitSha = _requiredString(json, 'commitSha');
@@ -200,11 +263,22 @@ class ReleaseDescriptor {
       );
     }
 
+    final distributionRepository = _requiredString(
+      json,
+      'distributionRepository',
+    );
+    if (!distributionPolicy.approvesRepository(distributionRepository)) {
+      throw const FormatException(
+        'Release manifest distributionRepository is not approved by the bundled policy.',
+      );
+    }
+
     final rawReleaseUrl = _requiredString(json, 'releaseUrl');
     final releaseUrl = _parseHttpsUri(rawReleaseUrl);
     if (!ReleaseManifestTrustPolicy.isTrustedReleasePage(
       releaseUrl,
       tag,
+      policy: distributionPolicy,
       rawUri: rawReleaseUrl,
     )) {
       throw const FormatException(
@@ -217,6 +291,7 @@ class ReleaseDescriptor {
       commitSha: commitSha,
       channel: channel,
       publishedAt: _requiredTimestamp(json, 'publishedAt'),
+      distributionRepository: distributionRepository,
       releaseUrl: releaseUrl,
     );
   }
@@ -268,9 +343,8 @@ class PlatformRelease {
 
   /// Whether this entry is the verified latest artifact for its platform.
   ///
-  /// A schema v1 document did not carry this field. It is therefore inferred
-  /// as true for its available entry so existing bundled manifests remain
-  /// compatible while schema v2 requires it explicitly.
+  /// Older documents did not carry this field. It is therefore inferred as
+  /// true for their available entries, while schema v3 requires it explicitly.
   final bool isLatest;
 
   bool get isAvailable =>
@@ -297,6 +371,8 @@ class PlatformRelease {
     Map<String, dynamic> json, {
     int schemaVersion = 1,
     ReleaseDescriptor? releaseDescriptor,
+    ReleaseDistributionPolicy distributionPolicy =
+        ReleaseDistributionPolicy.unconfigured,
   }) {
     final rawDownloadUrl = _optionalString(json, 'downloadUrl');
     final availability = ReleaseAvailability.fromValue(
@@ -330,6 +406,7 @@ class PlatformRelease {
       release,
       schemaVersion: schemaVersion,
       releaseDescriptor: releaseDescriptor,
+      distributionPolicy: distributionPolicy,
       rawDownloadUrl: rawDownloadUrl,
     );
     return release;
@@ -343,16 +420,18 @@ class ReleaseManifest {
     required this.generatedAt,
     required this.platforms,
     this.release,
+    this.distributionPolicy = ReleaseDistributionPolicy.unconfigured,
     this.source = ReleaseManifestSource.unknown,
   });
 
-  /// Schema v2 adds a pipeline-verifiable release identity and assets.
-  static const currentSchemaVersion = 2;
+  /// Schema v3 separates private source provenance from public distribution.
+  static const currentSchemaVersion = 3;
 
   final int schemaVersion;
   final DateTime generatedAt;
   final List<PlatformRelease> platforms;
   final ReleaseDescriptor? release;
+  final ReleaseDistributionPolicy distributionPolicy;
   final ReleaseManifestSource source;
 
   bool get isStable => release?.isStable ?? true;
@@ -401,6 +480,7 @@ class ReleaseManifest {
           !ReleaseManifestTrustPolicy.isTrustedReleasePage(
             releaseDescriptor.releaseUrl,
             releaseDescriptor.tag,
+            policy: distributionPolicy,
           )) {
         return false;
       }
@@ -413,6 +493,7 @@ class ReleaseManifest {
           platform,
           schemaVersion: schemaVersion,
           releaseDescriptor: releaseDescriptor,
+          distributionPolicy: distributionPolicy,
         );
         final artifactName = platform.artifactName;
         if (platform.isAvailable &&
@@ -442,13 +523,20 @@ class ReleaseManifest {
       generatedAt: generatedAt,
       platforms: platforms,
       release: release,
+      distributionPolicy: distributionPolicy,
       source: source,
     );
   }
 
-  factory ReleaseManifest.fromJson(Map<String, dynamic> json) {
+  factory ReleaseManifest.fromJson(
+    Map<String, dynamic> json, {
+    ReleaseDistributionPolicy distributionPolicy =
+        ReleaseDistributionPolicy.unconfigured,
+  }) {
     final schemaVersion = _requiredInt(json, 'schemaVersion');
-    if (schemaVersion != 1 && schemaVersion != currentSchemaVersion) {
+    if (schemaVersion != 1 &&
+        schemaVersion != 2 &&
+        schemaVersion != currentSchemaVersion) {
       throw FormatException(
         'Unsupported release manifest schemaVersion: $schemaVersion.',
       );
@@ -460,7 +548,10 @@ class ReleaseManifest {
     }
 
     final release = schemaVersion >= currentSchemaVersion
-        ? ReleaseDescriptor.fromJson(_requiredObject(json, 'release'))
+        ? ReleaseDescriptor.fromJson(
+            _requiredObject(json, 'release'),
+            distributionPolicy: distributionPolicy,
+          )
         : null;
     final platforms = rawPlatforms
         .map((platform) {
@@ -473,6 +564,7 @@ class ReleaseManifest {
             platform,
             schemaVersion: schemaVersion,
             releaseDescriptor: release,
+            distributionPolicy: distributionPolicy,
           );
         })
         .toList(growable: false);
@@ -509,6 +601,7 @@ class ReleaseManifest {
       generatedAt: _requiredTimestamp(json, 'generatedAt'),
       platforms: platforms,
       release: release,
+      distributionPolicy: distributionPolicy,
     );
     _validateManifestIdentity(manifest);
     return manifest;
@@ -551,6 +644,7 @@ void _validatePlatformRelease(
   PlatformRelease release, {
   required int schemaVersion,
   required ReleaseDescriptor? releaseDescriptor,
+  required ReleaseDistributionPolicy distributionPolicy,
   String? rawDownloadUrl,
 }) {
   final isCurrentSchema = schemaVersion >= ReleaseManifest.currentSchemaVersion;
@@ -577,7 +671,7 @@ void _validatePlatformRelease(
 
   if (releaseDescriptor == null) {
     throw const FormatException(
-      'Schema-v2 platform metadata requires a release descriptor.',
+      'Schema-v3 platform metadata requires a release descriptor.',
     );
   }
 
@@ -634,13 +728,15 @@ void _validatePlatformRelease(
   }
   if (!ReleaseManifestTrustPolicy.isTrustedArtifactDownload(
     release.downloadUrl!,
+    policy: distributionPolicy,
+    release: releaseDescriptor,
     platform: release.platform,
     version: version,
     artifactName: artifactName,
     rawUri: rawDownloadUrl,
   )) {
     throw FormatException(
-      'The ${release.platform.value} downloadUrl must reference the canonical Firebase Hosting asset.',
+      'The ${release.platform.value} downloadUrl must reference the approved canonical GitHub Release asset.',
     );
   }
 }
@@ -650,8 +746,8 @@ bool _hasExpectedArtifactName(
   String artifactName,
   String version,
 ) {
-  // Schema-v2 intentionally has one public artifact channel: the signed
-  // Android APK served from Firebase Hosting. Other platforms stay
+  // Schema-v3 intentionally has one public artifact channel: the signed
+  // Android APK served by the approved GitHub distribution repository. Other platforms stay
   // coming-soon until an equally strict, platform-specific policy exists.
   return platform == ReleasePlatform.android &&
       artifactName == ReleaseManifestTrustPolicy.androidArtifactName(version);

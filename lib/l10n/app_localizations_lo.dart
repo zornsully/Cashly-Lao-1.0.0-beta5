@@ -348,6 +348,10 @@ class AppLocalizationsLo extends AppLocalizations {
   String get currencyLabel => 'ສະກຸນເງິນ';
 
   @override
+  String get accountCurrencyLockedHelper =>
+      'ບໍ່ສາມາດປ່ຽນສະກຸນເງິນໄດ້ຫຼັງຈາກສ້າງບັນຊີແລ້ວ.';
+
+  @override
   String get saveAccountFailedMessage =>
       'ບໍ່ສາມາດບັນທຶກບັນຊີໄດ້. ກະລຸນາລອງໃໝ່ອີກຄັ້ງ.';
 
@@ -1001,4 +1005,233 @@ class AppLocalizationsLo extends AppLocalizations {
 
   @override
   String get colorLabel => 'ສີ';
+
+  @override
+  String get smartMoneyScoreCardTitle => 'ຄະແນນການເງິນອັດສະລິຍະ Cashly';
+
+  @override
+  String get smartMoneyScoreCardSubtitle =>
+      'ການເໜັງເໜືອຍອດເງິນນຳພາ. ພຶດຕິກຳໃຫ້ບໍລິບົດ.';
+
+  @override
+  String get smartMoneyScoreWhatIsShapingLabel =>
+      'ສິ່ງທີ່ກຳລັງສ້າງຜົນກະທົບໃນເດືອນນີ້';
+
+  @override
+  String get smartMoneyScorePracticalNextStepLabel =>
+      'ຂັ້ນຕອນຕໍ່ໄປທີ່ປະຕິບັດໄດ້';
+
+  @override
+  String get smartMoneyScoreWhyThisScore => 'ເປັນຫຍັງຈຶ່ງໄດ້ຄະແນນນີ້?';
+
+  @override
+  String get smartMoneyScoreComparedWithOpening =>
+      'ທຽບກັບຍອດເງິນເປີດເດືອນຂອງທ່ານ';
+
+  @override
+  String get smartMoneyScoreNeutralBaseline =>
+      'ນຳໃຊ້ພື້ນຖານເປັນກາງຈົນກວ່າຈະມີຂໍ້ມູນພຽງພໍ';
+
+  @override
+  String smartMoneyScoreMonthlyHeroLabel(int max) {
+    return 'ຄະແນນລາຍເດືອນ · / $max';
+  }
+
+  @override
+  String get smartMoneyScoreStatusNotEnoughData => 'ຂໍ້ມູນບໍ່ພຽງພໍ';
+
+  @override
+  String get smartMoneyScoreStatusExcellentGrowth => 'ການເຕີບໂຕດີເລີດ';
+
+  @override
+  String get smartMoneyScoreStatusGrowing => 'ກຳລັງເຕີບໂຕ';
+
+  @override
+  String get smartMoneyScoreStatusStable => 'ຄົງທີ່';
+
+  @override
+  String get smartMoneyScoreStatusDeclining => 'ຫຼຸດລົງ';
+
+  @override
+  String get smartMoneyScoreStatusNeedsAttention => 'ຕ້ອງການຄວາມສົນໃຈ';
+
+  @override
+  String get smartMoneyScoreStatusExcellent => 'ດີເລີດ';
+
+  @override
+  String get smartMoneyScoreStatusGood => 'ດີ';
+
+  @override
+  String get smartMoneyScoreStatusFair => 'ພໍໃຊ້';
+
+  @override
+  String get smartMoneyScoreStatusHighRisk => 'ຄວາມສ່ຽງສູງ';
+
+  @override
+  String get financialInsightPeriodToday => 'ມື້ນີ້';
+
+  @override
+  String get financialInsightPeriodWeek => 'ອາທິດ';
+
+  @override
+  String get financialInsightPeriodMonth => 'ເດືອນ';
+
+  @override
+  String get smartMoneyScoreBudgetNoneSet => 'ຍັງບໍ່ໄດ້ຕັ້ງງົບປະມານ';
+
+  @override
+  String smartMoneyScoreBudgetOverCount(int count) {
+    return '$count ເກີນງົບປະມານ';
+  }
+
+  @override
+  String smartMoneyScoreBudgetNearlyFullCount(int count) {
+    return '$count ໃກ້ເຕັມ';
+  }
+
+  @override
+  String get smartMoneyScoreBudgetOnTrack => 'ຕາມແຜນ';
+
+  @override
+  String get smartMoneyScoreBreakdownSheetDescription =>
+      'ຄະແນນລາຍເດືອນຄຳນວນຈາກຂໍ້ມູນການເງິນຊຸດດຽວກັນກັບທີ່ສະແດງຢູ່ໜ້າຫຼັກຂອງທ່ານ. ການເໜັງເໜືອຍອດເງິນແມ່ນປັດໄຈຫຼັກສະເໝີ.';
+
+  @override
+  String get smartMoneyScoreBreakdownUnavailableFallback =>
+      'Cashly ຕ້ອງການຍອດເງິນເປີດເດືອນທີ່ໜ້າເຊື່ອຖືກ່ອນຈຶ່ງຈະປຽບທຽບໄດ້ຢ່າງເຕັມທີ່. ຄະແນນຈະຄົງເປັນກາງແທນທີ່ຈະຄາດເດົາ.';
+
+  @override
+  String get smartMoneyScoreSectionBalanceMovement => 'ການເໜັງເໜືອຍອດເງິນ';
+
+  @override
+  String get smartMoneyScoreSectionMonthActivity => 'ກິດຈະກຳການເງິນຂອງເດືອນນີ້';
+
+  @override
+  String get smartMoneyScoreSectionFormula => 'ສູດຄຳນວນ';
+
+  @override
+  String get smartMoneyScoreRowOpeningBalance => 'ຍອດເງິນເປີດ';
+
+  @override
+  String get smartMoneyScoreRowCurrentBalance => 'ຍອດເງິນປັດຈຸບັນ';
+
+  @override
+  String get smartMoneyScoreRowBalanceChange => 'ການປ່ຽນແປງຍອດເງິນ';
+
+  @override
+  String get smartMoneyScoreRowBalanceGrowthContribution =>
+      'ການປະກອບສ່ວນຂອງການເຕີບໂຕຍອດເງິນ';
+
+  @override
+  String get smartMoneyScoreRowIncome => 'ລາຍຮັບ';
+
+  @override
+  String get smartMoneyScoreRowExpenses => 'ລາຍຈ່າຍ';
+
+  @override
+  String get smartMoneyScoreRowNetCashFlowSavings =>
+      'ກະແສເງິນສົດສຸດທິ / ເງິນອອມ';
+
+  @override
+  String get smartMoneyScoreRowBudgetPerformance => 'ຜົນງານງົບປະມານ';
+
+  @override
+  String get smartMoneyScoreRowPreviousPeriodComparison =>
+      'ການປຽບທຽບກັບໄລຍະກ່ອນ';
+
+  @override
+  String get smartMoneyScoreRowOverdueBills => 'ໃບບິນຄ້າງຈ່າຍ';
+
+  @override
+  String get smartMoneyScoreRowStartingScore => 'ຄະແນນເລີ່ມຕົ້ນ';
+
+  @override
+  String get smartMoneyScoreRowBehaviourModifier => 'ຕົວປັບພຶດຕິກຳ';
+
+  @override
+  String get smartMoneyScoreRowFinalMonthlyScore => 'ຄະແນນລາຍເດືອນສຸດທ້າຍ';
+
+  @override
+  String get smartMoneyScoreValueNotIncludedYet => 'ຍັງບໍ່ໄດ້ລວມ';
+
+  @override
+  String get smartMoneyScoreValueNeutralUntilBaseline =>
+      'ເປັນກາງຈົນກວ່າຈະມີພື້ນຖານ';
+
+  @override
+  String smartMoneyScoreValueBehaviourModifierPoints(String points) {
+    return '$points ຄະແນນ (ຈຳກັດທີ່ ±10)';
+  }
+
+  @override
+  String smartMoneyScorePointsSuffix(String points) {
+    return '$points ຄະແນນ';
+  }
+
+  @override
+  String get smartMoneyScoreValueNoComparisonYet => 'ຍັງບໍ່ມີການປຽບທຽບ';
+
+  @override
+  String get smartMoneyScoreImpactIncomePositive => 'ລາຍຮັບນຳໜ້າລາຍຈ່າຍ.';
+
+  @override
+  String get smartMoneyScoreImpactIncomeNegative => 'ລາຍຈ່າຍນຳໜ້າລາຍຮັບ.';
+
+  @override
+  String get smartMoneyScoreImpactIncomeNeutral =>
+      'ລາຍຮັບ ແລະ ລາຍຈ່າຍປັດຈຸບັນເທົ່າກັນ ຫຼື ບໍ່ມີຂໍ້ມູນ.';
+
+  @override
+  String get smartMoneyScoreImpactSavingsPositive =>
+      'ກະແສເງິນສົດເປັນບວກຊ່ວຍໜູນຄະແນນ.';
+
+  @override
+  String get smartMoneyScoreImpactSavingsNegative =>
+      'ກະແສເງິນສົດເປັນລົບຫຼຸດຕົວປັບພຶດຕິກຳເລັກນ້ອຍ.';
+
+  @override
+  String get smartMoneyScoreImpactSavingsNeutral =>
+      'ບໍ່ໄດ້ນຳໃຊ້ຕົວປັບກະແສເງິນສົດ.';
+
+  @override
+  String get smartMoneyScoreImpactBudgetPositive =>
+      'ງົບປະມານປັດຈຸບັນຍັງຄົງຕາມແຜນ.';
+
+  @override
+  String get smartMoneyScoreImpactBudgetNegative =>
+      'ພື້ນທີ່ງົບປະມານແໜ້ນ ຫຼື ເກີນງົບປະມານ.';
+
+  @override
+  String get smartMoneyScoreImpactBudgetNeutral => 'ບໍ່ໄດ້ນຳໃຊ້ຕົວປັບງົບປະມານ.';
+
+  @override
+  String get smartMoneyScoreImpactTrendPositive =>
+      'ການໃຊ້ຈ່າຍຕ່ຳກວ່າໄລຍະທຽບເທົ່າ.';
+
+  @override
+  String get smartMoneyScoreImpactTrendNegative =>
+      'ການໃຊ້ຈ່າຍສູງກວ່າໄລຍະທຽບເທົ່າຢ່າງເຫັນໄດ້ຊັດ.';
+
+  @override
+  String get smartMoneyScoreImpactTrendNeutral =>
+      'ຍັງບໍ່ມີຂໍ້ມູນການໃຊ້ຈ່າຍທຽບເທົ່າພຽງພໍ.';
+
+  @override
+  String get smartMoneyScoreImpactBillsSupporting =>
+      'ບໍ່ມີບັນທຶກໃບບິນ ຫຼື ການແຈ້ງເຕືອນທີ່ຢືນຢັນແລ້ວ, ດັ່ງນັ້ນຈຶ່ງບໍ່ໄດ້ຫັກຄະແນນໃບບິນ.';
+
+  @override
+  String get smartMoneyScoreMetricNetCashFlow => 'ກະແສເງິນສົດສຸດທິ';
+
+  @override
+  String get smartMoneyScoreMetricComparedLastMonth => 'ທຽບກັບເດືອນກ່ອນ';
+
+  @override
+  String smartMoneyScoreMetricExpensesChange(String percent) {
+    return '$percent ລາຍຈ່າຍ';
+  }
+
+  @override
+  String get smartMoneyScoreFormulaFootnote =>
+      'ຄະແນນລາຍເດືອນ = clamp(0–150, 100 + % ການປ່ຽນແປງຍອດເງິນ + ຕົວປັບພຶດຕິກຳການເງິນ).';
 }

@@ -349,6 +349,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get currencyLabel => 'Currency';
 
   @override
+  String get accountCurrencyLockedHelper =>
+      'Currency can\'t be changed after an account is created.';
+
+  @override
   String get saveAccountFailedMessage =>
       'Could not save the account. Please try again.';
 
@@ -1003,4 +1007,235 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get colorLabel => 'Color';
+
+  @override
+  String get smartMoneyScoreCardTitle => 'Cashly Smart Money Score';
+
+  @override
+  String get smartMoneyScoreCardSubtitle =>
+      'Balance movement leads. Habits provide the context.';
+
+  @override
+  String get smartMoneyScoreWhatIsShapingLabel => 'What is shaping this month';
+
+  @override
+  String get smartMoneyScorePracticalNextStepLabel => 'A practical next step';
+
+  @override
+  String get smartMoneyScoreWhyThisScore => 'Why this score?';
+
+  @override
+  String get smartMoneyScoreComparedWithOpening =>
+      'Compared with your month opening balance';
+
+  @override
+  String get smartMoneyScoreNeutralBaseline =>
+      'Using a neutral baseline until enough data is available';
+
+  @override
+  String smartMoneyScoreMonthlyHeroLabel(int max) {
+    return 'MONTHLY SCORE · / $max';
+  }
+
+  @override
+  String get smartMoneyScoreStatusNotEnoughData => 'Not enough data';
+
+  @override
+  String get smartMoneyScoreStatusExcellentGrowth => 'Excellent Growth';
+
+  @override
+  String get smartMoneyScoreStatusGrowing => 'Growing';
+
+  @override
+  String get smartMoneyScoreStatusStable => 'Stable';
+
+  @override
+  String get smartMoneyScoreStatusDeclining => 'Declining';
+
+  @override
+  String get smartMoneyScoreStatusNeedsAttention => 'Needs Attention';
+
+  @override
+  String get smartMoneyScoreStatusExcellent => 'Excellent';
+
+  @override
+  String get smartMoneyScoreStatusGood => 'Good';
+
+  @override
+  String get smartMoneyScoreStatusFair => 'Fair';
+
+  @override
+  String get smartMoneyScoreStatusHighRisk => 'High Risk';
+
+  @override
+  String get financialInsightPeriodToday => 'Today';
+
+  @override
+  String get financialInsightPeriodWeek => 'Week';
+
+  @override
+  String get financialInsightPeriodMonth => 'Month';
+
+  @override
+  String get smartMoneyScoreBudgetNoneSet => 'No budgets set';
+
+  @override
+  String smartMoneyScoreBudgetOverCount(int count) {
+    return '$count over budget';
+  }
+
+  @override
+  String smartMoneyScoreBudgetNearlyFullCount(int count) {
+    return '$count nearly full';
+  }
+
+  @override
+  String get smartMoneyScoreBudgetOnTrack => 'On track';
+
+  @override
+  String get smartMoneyScoreBreakdownSheetDescription =>
+      'The monthly score is calculated from the same synced financial data shown in your dashboard. Balance movement is always the main factor.';
+
+  @override
+  String get smartMoneyScoreBreakdownUnavailableFallback =>
+      'Cashly needs a reliable month opening balance before it can give a full comparison. The score stays neutral rather than guessing.';
+
+  @override
+  String get smartMoneyScoreSectionBalanceMovement => 'Balance movement';
+
+  @override
+  String get smartMoneyScoreSectionMonthActivity =>
+      'This month\'s financial activity';
+
+  @override
+  String get smartMoneyScoreSectionFormula => 'Formula';
+
+  @override
+  String get smartMoneyScoreRowOpeningBalance => 'Opening balance';
+
+  @override
+  String get smartMoneyScoreRowCurrentBalance => 'Current balance';
+
+  @override
+  String get smartMoneyScoreRowBalanceChange => 'Balance change';
+
+  @override
+  String get smartMoneyScoreRowBalanceGrowthContribution =>
+      'Balance-growth contribution';
+
+  @override
+  String get smartMoneyScoreRowIncome => 'Income';
+
+  @override
+  String get smartMoneyScoreRowExpenses => 'Expenses';
+
+  @override
+  String get smartMoneyScoreRowNetCashFlowSavings => 'Net cash flow / savings';
+
+  @override
+  String get smartMoneyScoreRowBudgetPerformance => 'Budget performance';
+
+  @override
+  String get smartMoneyScoreRowPreviousPeriodComparison =>
+      'Previous-period comparison';
+
+  @override
+  String get smartMoneyScoreRowOverdueBills => 'Overdue bills';
+
+  @override
+  String get smartMoneyScoreRowStartingScore => 'Starting score';
+
+  @override
+  String get smartMoneyScoreRowBehaviourModifier => 'Behaviour modifier';
+
+  @override
+  String get smartMoneyScoreRowFinalMonthlyScore => 'Final monthly score';
+
+  @override
+  String get smartMoneyScoreValueNotIncludedYet => 'Not included yet';
+
+  @override
+  String get smartMoneyScoreValueNeutralUntilBaseline =>
+      'Neutral until a baseline is available';
+
+  @override
+  String smartMoneyScoreValueBehaviourModifierPoints(String points) {
+    return '$points points (capped at ±10)';
+  }
+
+  @override
+  String smartMoneyScorePointsSuffix(String points) {
+    return '$points points';
+  }
+
+  @override
+  String get smartMoneyScoreValueNoComparisonYet => 'No comparison yet';
+
+  @override
+  String get smartMoneyScoreImpactIncomePositive =>
+      'Income is ahead of expenses.';
+
+  @override
+  String get smartMoneyScoreImpactIncomeNegative =>
+      'Expenses are ahead of income.';
+
+  @override
+  String get smartMoneyScoreImpactIncomeNeutral =>
+      'Income and expenses are currently even or unavailable.';
+
+  @override
+  String get smartMoneyScoreImpactSavingsPositive =>
+      'Positive cash flow supports the score.';
+
+  @override
+  String get smartMoneyScoreImpactSavingsNegative =>
+      'Negative cash flow lowers the behaviour modifier slightly.';
+
+  @override
+  String get smartMoneyScoreImpactSavingsNeutral =>
+      'No cash-flow modifier was applied.';
+
+  @override
+  String get smartMoneyScoreImpactBudgetPositive =>
+      'Current budgets remain on track.';
+
+  @override
+  String get smartMoneyScoreImpactBudgetNegative =>
+      'Budget room is tight or a budget is exceeded.';
+
+  @override
+  String get smartMoneyScoreImpactBudgetNeutral =>
+      'No active budget modifier was applied.';
+
+  @override
+  String get smartMoneyScoreImpactTrendPositive =>
+      'Spending is lower than the comparable period.';
+
+  @override
+  String get smartMoneyScoreImpactTrendNegative =>
+      'Spending is notably higher than the comparable period.';
+
+  @override
+  String get smartMoneyScoreImpactTrendNeutral =>
+      'There is not enough comparable spending data yet.';
+
+  @override
+  String get smartMoneyScoreImpactBillsSupporting =>
+      'No verified bill or reminder record is available, so no bill penalty was added.';
+
+  @override
+  String get smartMoneyScoreMetricNetCashFlow => 'Net cash flow';
+
+  @override
+  String get smartMoneyScoreMetricComparedLastMonth =>
+      'Compared with last month';
+
+  @override
+  String smartMoneyScoreMetricExpensesChange(String percent) {
+    return '$percent expenses';
+  }
+
+  @override
+  String get smartMoneyScoreFormulaFootnote =>
+      'Monthly score = clamp(0–150, 100 + balance change % + financial behaviour modifier).';
 }

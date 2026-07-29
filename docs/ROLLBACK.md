@@ -1,42 +1,41 @@
-# Production rollback
+# Manual website metadata rollback
 
-## Principles
+A rollback changes the Firebase Spark website manifest to point to a preserved,
+previously verified public GitHub Release. It does **not** delete, overwrite,
+unpublish, or retag any GitHub APK asset.
 
-- Keep previous Firebase Hosting versions and private GitHub release evidence.
-- Never overwrite a versioned APK or delete a Hosting version automatically.
-- Require the protected production approval for every rollback.
-- Restore the page, release manifest, and matching direct APK as one Hosting
-  version.
-- Verify the restored live site before announcing the rollback.
+## Before a release
 
-## Website and download rollback
+Keep the local release package directory created by
+`prepare_manual_release.ps1`, including:
 
-1. Identify the recorded last known-good Firebase Hosting version ID, its
-   release tag, and the approved Android SHA-256. Do not select a version based
-   only on its date.
-2. Start rollback-production.yml manually and supply the matching immutable
-   release tag, for example v1.0.2.
-3. Review the known-good Hosting version and approve the production environment
-   request.
-4. The protected workflow must clone that exact version to cashly-lao:live:
+- `release-evidence.json`;
+- `SHA256SUMS.txt`;
+- reviewed `RELEASE_NOTES.md`;
+- `public-release-verification.json` produced after anonymous verification.
 
-       firebase hosting:clone cashly-lao:@<known-good-version-id> cashly-lao:live --project cashly-lao --non-interactive
+## Rollback procedure
 
-5. It downloads the restored APK in full from
-   https://cashly-lao.web.app/downloads/Cashly-Lao-Android-<version>.apk,
-   verifies its signature, size, and SHA-256, then validates the matching
-   schema-v2 manifest and page shell.
-6. Confirm the website and download metadata point to the intended release
-   before announcing the rollback.
+1. Select the known-good package directory and confirm it belongs to the
+   approved public distribution repository.
+2. Obtain explicit owner approval for a website-only rollback.
+3. Run:
 
-The rollback keeps later private release evidence and Hosting history for audit
-and investigation. It does not make the repository public and it does not
-reuse an APK filename for a corrected build.
+   ```powershell
+   .\tool\rollback_web_metadata.ps1 `
+     -DistributionRepository owner/public-release-repository `
+     -PackageDirectory build\manual-release\vX.Y.Z `
+     -ApproveWebsiteRollback
+   ```
 
-## Partial publication failure
+4. The script rechecks the public GitHub asset's canonical URL, size, and
+   SHA-256 before generating the prior manifest. Review it.
+5. For an approved Spark deployment, repeat with
+   `-DeployToSpark -ApproveSparkDeployment`.
+6. Fetch `https://cashly-lao.web.app/release-manifest.json` and validate it
+   again. Test its Android button manually.
 
-If preview validation fails, do not clone it to live. If live validation fails
-after a clone, stop publication, record the failed Hosting version, and use the
-protected rollback workflow or fix forward with a new immutable version. The
-previous production version stays recoverable until all advertised Firebase
-download links are verified.
+If the bad APK itself must be withdrawn, stop: that is a separate owner
+decision outside this automated process. Do not silently delete history or
+replace the APK at the same versioned URL. Publish a corrected new version and
+record the incident in the release notes.

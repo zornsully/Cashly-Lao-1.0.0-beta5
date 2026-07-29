@@ -99,7 +99,6 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
             name: name,
             type: _type,
             balance: balance,
-            currencyCode: _currency.code,
             icon: _icon,
             color: _color,
           )
@@ -199,27 +198,45 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
                         const SizedBox(width: AppSpacing.md),
                         Expanded(
                           flex: 2,
-                          child: DropdownButtonFormField<AppCurrency>(
-                            initialValue: _currency,
-                            decoration: InputDecoration(
-                              labelText: l10n.currencyLabel,
-                            ),
-                            items: [
-                              for (final currency in SupportedCurrencies.all)
-                                DropdownMenuItem(
-                                  value: currency,
-                                  child: Text(currency.code),
+                          child: _isEditing
+                              ? InputDecorator(
+                                  decoration: InputDecoration(
+                                    labelText: l10n.currencyLabel,
+                                    enabled: false,
+                                  ),
+                                  child: Text(_currency.code),
+                                )
+                              : DropdownButtonFormField<AppCurrency>(
+                                  initialValue: _currency,
+                                  decoration: InputDecoration(
+                                    labelText: l10n.currencyLabel,
+                                  ),
+                                  items: [
+                                    for (final currency
+                                        in SupportedCurrencies.all)
+                                      DropdownMenuItem(
+                                        value: currency,
+                                        child: Text(currency.code),
+                                      ),
+                                  ],
+                                  onChanged: (value) {
+                                    if (value != null) {
+                                      setState(() => _currency = value);
+                                    }
+                                  },
                                 ),
-                            ],
-                            onChanged: (value) {
-                              if (value != null) {
-                                setState(() => _currency = value);
-                              }
-                            },
-                          ),
                         ),
                       ],
                     ),
+                    if (_isEditing) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        l10n.accountCurrencyLockedHelper,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: AppSpacing.lg),
                     IconPickerField(
                       selected: _icon,
