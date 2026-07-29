@@ -413,6 +413,26 @@ class PlatformRelease {
   }
 }
 
+/// A previously published, independently verified Android release.
+///
+/// Each entry is validated with exactly the same [ReleaseManifestTrustPolicy]
+/// checks as the current release's platform metadata, so a listed history
+/// download is just as trustworthy as the live one. Unlike the current
+/// release, a single malformed or untrusted entry is dropped during parsing
+/// rather than failing the whole manifest — history is informational, not
+/// part of the fail-closed public-download trust gate.
+class ReleaseHistoryEntry {
+  const ReleaseHistoryEntry({
+    required this.release,
+    required this.platformRelease,
+  });
+
+  final ReleaseDescriptor release;
+  final PlatformRelease platformRelease;
+
+  String get version => release.version;
+}
+
 /// The versioned document fetched from the central release channel.
 class ReleaseManifest {
   const ReleaseManifest({
@@ -422,6 +442,7 @@ class ReleaseManifest {
     this.release,
     this.distributionPolicy = ReleaseDistributionPolicy.unconfigured,
     this.source = ReleaseManifestSource.unknown,
+    this.history = const [],
   });
 
   /// Schema v3 separates private source provenance from public distribution.
@@ -433,6 +454,11 @@ class ReleaseManifest {
   final ReleaseDescriptor? release;
   final ReleaseDistributionPolicy distributionPolicy;
   final ReleaseManifestSource source;
+
+  /// Previously published Android releases, most recent first. Additive and
+  /// optional — always empty for schema v1/v2 documents and for any v3
+  /// document that simply has no history to report yet.
+  final List<ReleaseHistoryEntry> history;
 
   bool get isStable => release?.isStable ?? true;
 
@@ -525,6 +551,7 @@ class ReleaseManifest {
       release: release,
       distributionPolicy: distributionPolicy,
       source: source,
+      history: history,
     );
   }
 
@@ -602,10 +629,70 @@ class ReleaseManifest {
       platforms: platforms,
       release: release,
       distributionPolicy: distributionPolicy,
+      history: _parseHistory(
+        json['history'],
+        distributionPolicy: distributionPolicy,
+        currentTag: release?.tag,
+      ),
     );
     _validateManifestIdentity(manifest);
     return manifest;
   }
+}
+
+/// Maximum number of history entries kept. Older entries are dropped rather
+/// than left to grow the manifest without bound — the current release plus
+/// its official GitHub Release page already preserve the full history.
+const _maxHistoryEntries = 10;
+
+List<ReleaseHistoryEntry> _parseHistory(
+  Object? rawHistory, {
+  required ReleaseDistributionPolicy distributionPolicy,
+  String? currentTag,
+}) {
+  if (rawHistory is! List) return const [];
+
+  final entries = <ReleaseHistoryEntry>[];
+  final seenVersions = <String>{};
+  for (final rawEntry in rawHistory) {
+    if (rawEntry is! Map<String, dynamic>) continue;
+    try {
+      final entryRelease = ReleaseDescriptor.fromJson(
+        _requiredObject(rawEntry, 'release'),
+        distributionPolicy: distributionPolicy,
+      );
+      if (!entryRelease.isStable || entryRelease.tag == currentTag) continue;
+
+      final entryPlatform = PlatformRelease.fromJson(
+        _requiredObject(rawEntry, 'platform'),
+        schemaVersion: ReleaseManifest.currentSchemaVersion,
+        releaseDescriptor: entryRelease,
+        distributionPolicy: distributionPolicy,
+      );
+      if (entryPlatform.platform != ReleasePlatform.android ||
+          !entryPlatform.isAvailable ||
+          entryPlatform.isLatest) {
+        continue;
+      }
+      if (!seenVersions.add(entryRelease.version)) continue;
+
+      entries.add(
+        ReleaseHistoryEntry(
+          release: entryRelease,
+          platformRelease: entryPlatform,
+        ),
+      );
+    } catch (_) {
+      // An individual malformed or untrusted history entry is dropped rather
+      // than failing manifest parsing — see ReleaseHistoryEntry's doc comment.
+      continue;
+    }
+  }
+
+  entries.sort(
+    (a, b) => b.release.publishedAt.compareTo(a.release.publishedAt),
+  );
+  return entries.take(_maxHistoryEntries).toList(growable: false);
 }
 
 void _validateManifestIdentity(ReleaseManifest manifest) {

@@ -1290,6 +1290,136 @@ Next recommended phase: Budgets or Categories (similar size to this
 one), or Reports (the large item, still needs its own scoping
 conversation first).
 
+### 2026-07-30 — Release manifest: schema-v3 generator bug fix + version history (done)
+
+Summary:
+
+You asked for fully automated, centralized release management (auto-upload,
+auto-metadata, auto-"latest" marking, multi-platform, suggested new backing
+services). That conflicts directly with this project's non-negotiable
+[free-tier manual release policy](#free-tier-manual-release-policy) — no new
+services, two mandatory owner-approval gates, GitHub Actions staying
+read-only. You chose **"Enrich the manual pipeline"** via AskUserQuestion:
+keep both approval gates and the Spark/GitHub-Free-only model exactly as-is,
+and instead expand the existing manifest schema and add version history,
+still fully manual.
+
+Investigating that surfaced a real, pre-existing defect unrelated to the
+enrichment itself: `tool/generate_release_manifest.dart` hardcoded
+`'schemaVersion': 2` in its output, while
+`ReleaseManifest.currentSchemaVersion` (the value every validator —
+`_validatePlatformRelease`, `isTrustedForPublicDownload`,
+`HostedReleaseManifestService._requirePublicStableManifest`,
+`tool/verify_release.dart` — checks against) has been `3` since the Phase 1
+currency-integrity work. `docs/RELEASE_PIPELINE.md` and the generator's own
+`--help` text already documented "schema-v3" throughout — only the actual
+JSON output was stale. Any manifest the script produced today would have
+silently failed `isTrustedForPublicDownload` and never unlocked a real public
+download button. Per this file's own priority order (release-integrity
+problems before feature work), this was fixed as part of the same phase
+rather than building version history on top of a generator whose output the
+app would reject.
+
+Files modified:
+
+- `tool/generate_release_manifest.dart` — schema-version bug: now emits
+  `landing.ReleaseManifest.currentSchemaVersion` instead of a literal `2`
+  (matching the pattern `tool/verify_release.dart` already used). Version
+  history: new `_buildHistory()` carries forward whatever `history` array is
+  already in `--template`, and — only when this run's stable Android artifact
+  is about to replace a different, currently-`available` version — prepends
+  the outgoing release (with `isLatest` forced `false`) as a new entry,
+  capped at the 10 most recent.
+- `tool/publish_web_metadata.ps1` — now passes `--template
+  $websiteManifest` (the currently deployed `web/release-manifest.json`) to
+  the generator instead of relying on its default template
+  (`assets/release/release_manifest.json`, the static offline-fallback
+  asset, which is never the "previous release" — it's a separate,
+  deliberately-static bundled fallback, updated by the owner independently).
+  Without this the history carry-forward logic above would never see a real
+  previous release to archive.
+- `lib/features/landing/domain/entities/release_manifest.dart` — new
+  `ReleaseHistoryEntry` (a `ReleaseDescriptor` + a `PlatformRelease`) and
+  `ReleaseManifest.history` (defaults to `const []`). Parsed via
+  `_parseHistory()`, which reuses `ReleaseDescriptor.fromJson`/
+  `PlatformRelease.fromJson` per entry — the exact same
+  `ReleaseManifestTrustPolicy` checks the current release gets — but unlike
+  the current release's fail-closed all-or-nothing validation, a single
+  malformed, untrusted, prerelease, current-tag-duplicate, or
+  incorrectly-`isLatest`-flagged entry is dropped individually rather than
+  failing the whole manifest. Entries are sorted newest-first and capped at
+  10.
+- `lib/features/landing/data/services/hosted_release_manifest_service.dart`
+  — `_encode()` now round-trips `history` through the persistent cache (the
+  same entry shape, reusing the existing `_encodePlatform` helper), so a
+  cached fallback doesn't silently lose version history versus a fresh
+  network fetch.
+- `lib/features/landing/presentation/screens/landing_page.dart` — new
+  `_VersionHistorySection`/`_VersionHistoryRow`, shown only when
+  `manifest.history.isNotEmpty`, styled to match this file's own established
+  (token-free, hand-styled `_LandingColors`) local convention rather than the
+  authenticated app's `AppSpacing`/`AppSymbols` design-token system — this
+  page has never used those tokens (it's the public, pre-auth marketing
+  page), so matching its existing pattern is consistent, not a new
+  violation. Also fixed one incidental `use_null_aware_elements` lint
+  (`?release.fileSizeLabel` instead of an `if (... case final x?) x`
+  list element) and gave `_FadeInUp` a `super.key` passthrough (needed once
+  a `_FadeInUp` had to be constructed conditionally with an explicit key).
+- `docs/RELEASE_PIPELINE.md` — documents the history carry-forward behavior
+  under the website-metadata step.
+- Tests: `test/features/landing/domain/entities/release_manifest_test.dart`
+  (6 new: valid entry parses; malformed/duplicate-tag/prerelease/
+  incorrectly-latest entries are each dropped; newest-first sort + 10-entry
+  cap), `test/features/landing/data/services/hosted_release_manifest_service_test.dart`
+  (1 new: history round-trips through the cache), `test/features/landing/presentation/screens/landing_page_test.dart`
+  (1 new: the section renders when history is present).
+
+Implementation decisions:
+
+- Reused the exact same trust-chain primitives
+  (`ReleaseDescriptor.fromJson`/`PlatformRelease.fromJson`/
+  `ReleaseManifestTrustPolicy`) for history entries instead of a separate,
+  looser parser — a listed history download is exactly as verifiable as the
+  live one, not a lower-trust afterthought.
+- Per-entry drop-on-failure for history (vs. the current release's
+  fail-closed whole-manifest rejection) is a deliberate, narrower trust
+  boundary: history is informational, so one bad entry shouldn't take down
+  the live download experience, but it still can't smuggle in an unverified
+  or untrusted download link.
+- `--template` needed to change from the static bundled asset to the live
+  deployed manifest for history to ever be non-empty in practice — this was
+  discovered only by tracing where each script's inputs actually come from,
+  not assumed.
+
+Validation:
+
+- `flutter analyze` — 0 issues.
+- `dart format --set-exit-if-changed lib test tool` — clean.
+- `flutter test` — full suite, 380 passing (8 new), 0 failing, 0 skipped.
+- `flutter build web --release` — compiles clean end-to-end.
+- PowerShell parser validation passed for the modified `publish_web_metadata.ps1`.
+- One real widget-test-infra bug found and fixed while adding coverage (not
+  a product bug): a `_FadeInUp` that only mounts once the release-manifest
+  `Future` resolves creates its delay timer mid-`pump()`, too late for that
+  same `pump(duration)` call to flush it — needs an extra zero-duration
+  `pump()` first. Documented inline in the test.
+
+Known limitations:
+
+- No end-to-end dry run of the manual pipeline scripts was performed (would
+  require real signing material, a real GitHub repository, and owner
+  approval) — validated by unit/widget tests, `flutter analyze`, and
+  PowerShell parsing only.
+- The version-history UI has not been visually verified on-device/in-browser
+  — same standing caveat as every other UI phase this session.
+- History is Android-only, matching the current release channel's own
+  Android-only scope; extending it to other platforms is deferred until
+  those platforms leave "Coming soon" (see [Held platforms](docs/RELEASE_PIPELINE.md#held-platforms)).
+
+Next recommended step: none required — this closes the "enrich the manual
+pipeline" request. Resume Accounts/Budgets/Categories/Reports product-polish
+phases, or a native-speaker `app_lo.arb` review, whichever you prefer next.
+
 ## Product Roadmap
 
 The full staged roadmap — objectives, features, deliverables,

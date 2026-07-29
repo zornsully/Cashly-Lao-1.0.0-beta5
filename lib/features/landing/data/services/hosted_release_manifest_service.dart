@@ -204,6 +204,28 @@ class HostedReleaseManifestService implements ReleaseManifestService {
         'releaseUrl': release.releaseUrl.toString(),
       };
     }
+    if (manifest.history.isNotEmpty) {
+      encoded['history'] = manifest.history
+          .map(
+            (entry) => {
+              'release': {
+                'tag': entry.release.tag,
+                'commitSha': entry.release.commitSha,
+                'channel': entry.release.channel.value,
+                'publishedAt': entry.release.publishedAt
+                    .toUtc()
+                    .toIso8601String(),
+                'distributionRepository': entry.release.distributionRepository,
+                'releaseUrl': entry.release.releaseUrl.toString(),
+              },
+              'platform': _encodePlatform(
+                entry.platformRelease,
+                ReleaseManifest.currentSchemaVersion,
+              ),
+            },
+          )
+          .toList(growable: false);
+    }
     return jsonEncode(encoded);
   }
 

@@ -157,6 +157,36 @@ void main() {
       },
     );
 
+    test('round-trips history through the persisted cache', () async {
+      final cache = _MemoryReleaseManifestCache();
+      final networkJson = jsonEncode(
+        _manifestMap(
+          version: '9.2.0',
+          schemaVersion: ReleaseManifest.currentSchemaVersion,
+          generatedAt: DateTime.now().toUtc().toIso8601String(),
+        )..['history'] = [_historyEntryJson(version: '9.1.0')],
+      );
+      final service = HostedReleaseManifestService(
+        client: _StubHttpClient.ok(networkJson),
+        assetBundle: _StringAssetBundle(_manifestJson(version: '1.0.1')),
+        cache: cache,
+        manifestUri: Uri.parse('https://example.com/release-manifest.json'),
+        distributionPolicy: _approvedPolicy,
+      );
+
+      final manifest = await service.loadLatest();
+
+      expect(manifest.history, hasLength(1));
+      expect(manifest.history.single.version, '9.1.0');
+
+      final cachedManifest = ReleaseManifest.fromJson(
+        jsonDecode(cache.value!) as Map<String, dynamic>,
+        distributionPolicy: _approvedPolicy,
+      );
+      expect(cachedManifest.history, hasLength(1));
+      expect(cachedManifest.history.single.version, '9.1.0');
+    });
+
     test(
       'fails with no metadata rather than exposing an unverified release',
       () {
@@ -331,5 +361,44 @@ Map<String, dynamic> _comingSoonPlatform(
     'availabilityMessage': '$displayName support is coming soon.',
     if (schemaVersion == ReleaseManifest.currentSchemaVersion)
       'isLatest': false,
+  };
+}
+
+Map<String, dynamic> _historyEntryJson({required String version}) {
+  final tag = 'v$version';
+  final artifactName = 'Cashly-Lao-Android-$version.apk';
+  return {
+    'release': {
+      'tag': tag,
+      'commitSha': 'b9234493d7f92b32f191c87ac4b2988e24f9ca7b',
+      'channel': 'stable',
+      'publishedAt': '2026-06-01T00:00:00Z',
+      'distributionRepository': 'zornsully/Cashly-Lao-Releases',
+      'releaseUrl':
+          'https://github.com/zornsully/Cashly-Lao-Releases/releases/'
+          'tag/$tag',
+    },
+    'platform': {
+      'platform': 'android',
+      'displayName': 'Android',
+      'availability': 'available',
+      'statusLabel': 'Latest release',
+      'actionLabel': 'Download APK',
+      'availabilityMessage': 'Android is ready to download.',
+      'version': version,
+      'buildNumber': '2',
+      'releaseDate': '2026-06-01',
+      'fileSizeBytes': 1000000,
+      'minimumOsVersion': 'Android 7.0+',
+      'releaseNotes': 'Signed release.',
+      'downloadUrl':
+          'https://github.com/zornsully/Cashly-Lao-Releases/releases/'
+          'download/$tag/$artifactName',
+      'packageFormat': 'APK',
+      'installationNote': 'Install the signed APK.',
+      'sha256': 'B' * 64,
+      'artifactName': artifactName,
+      'isLatest': false,
+    },
   };
 }

@@ -73,7 +73,12 @@ verification, review the generated manifest inputs. Then run:
 
 This generates and validates the schema-v3 manifest, updates local web
 metadata, and builds a Spark-safe web bundle. It does not deploy by default.
-For a separately approved deployment, add:
+Generation diffs against the currently deployed `web/release-manifest.json`:
+if that manifest's Android entry was `available` under a different version,
+it is carried forward into the new manifest's `history` array (capped at the
+10 most recent entries) instead of being discarded, so the landing page's
+version history section can keep showing verified past downloads. For a
+separately approved deployment, add:
 
 ```powershell
 -DeployToSpark -ApproveSparkDeployment
