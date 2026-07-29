@@ -9,6 +9,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../core/constants/app_currency.dart';
 import '../../../../core/constants/app_motion.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/app_symbols.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/providers/firebase_providers.dart';
 import '../../../../core/theme/app_semantic_colors.dart';
@@ -306,7 +307,7 @@ class _ConvertedTotalsCard extends StatelessWidget {
             Row(
               children: [
                 Icon(
-                  Icons.currency_exchange,
+                  AppSymbols.currencyExchange,
                   size: 18,
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -366,6 +367,30 @@ class _ConvertedTotalsCard extends StatelessWidget {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
+            if (totals.isPartial) ...[
+              const SizedBox(height: AppSpacing.xs),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    AppSymbols.warningAmberRounded,
+                    size: 14,
+                    color: theme.colorScheme.error,
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  Expanded(
+                    child: Text(
+                      l10n.convertedTotalsPartialWarning(
+                        totals.excludedCurrencyCodes.join(', '),
+                      ),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.error,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),

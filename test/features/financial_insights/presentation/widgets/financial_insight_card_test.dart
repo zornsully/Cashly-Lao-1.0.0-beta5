@@ -1,4 +1,5 @@
 import 'package:cashly_lao/features/financial_insights/domain/entities/financial_insight.dart';
+import 'package:cashly_lao/features/financial_insights/domain/entities/financial_insight_message.dart';
 import 'package:cashly_lao/features/financial_insights/presentation/widgets/financial_insight_card.dart';
 import 'package:cashly_lao/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -34,28 +35,48 @@ void main() {
       period: FinancialWindowKind.today,
       value: 68,
       tone: FinancialInsightTone.watch,
-      reasons: ['Today is higher than your earlier weekly pace.'],
+      reasons: [
+        FinancialInsightMessage(FinancialInsightMessageKey.todaySpikeReason),
+      ],
     ),
     weekScore: FinancialPeriodScore(
       period: FinancialWindowKind.week,
       value: 82,
       tone: FinancialInsightTone.watch,
-      reasons: ['This week is a little above the previous week.'],
+      reasons: [
+        FinancialInsightMessage(
+          FinancialInsightMessageKey.weekComparableDecreaseReason,
+        ),
+      ],
     ),
     monthScore: FinancialPeriodScore(
       period: FinancialWindowKind.month,
       value: 94,
       tone: FinancialInsightTone.positive,
-      reasons: ['Income covers this month\'s spending.'],
+      reasons: [
+        FinancialInsightMessage(
+          FinancialInsightMessageKey.incomeCoversMonthReason,
+        ),
+      ],
     ),
     tone: FinancialInsightTone.watch,
-    headline: 'Today is spending faster than this week\'s pace.',
-    explanation: 'One quick check can keep the day in your control.',
-    scoreReasons: ['Today is higher than your earlier weekly pace.'],
+    headline: FinancialInsightMessage(
+      FinancialInsightMessageKey.todaySpendingFasterHeadline,
+    ),
+    explanation: FinancialInsightMessage(
+      FinancialInsightMessageKey.todaySpendingFasterExplanation,
+    ),
+    scoreReasons: [
+      FinancialInsightMessage(FinancialInsightMessageKey.todaySpikeReason),
+    ],
     actions: [
       FinancialInsightAction(
-        title: 'Check the next expense before you buy',
-        detail: 'A quick pause can keep today closer to your usual pace.',
+        title: FinancialInsightMessage(
+          FinancialInsightMessageKey.checkNextExpenseTitle,
+        ),
+        detail: FinancialInsightMessage(
+          FinancialInsightMessageKey.checkNextExpenseDetail,
+        ),
       ),
     ],
     today: today,

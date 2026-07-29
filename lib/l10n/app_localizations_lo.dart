@@ -223,6 +223,80 @@ class AppLocalizationsLo extends AppLocalizations {
   String get expenseMonthLabel => 'ລາຍຈ່າຍ (ເດືອນ)';
 
   @override
+  String get dashboardHeaderSubtitle =>
+      'ມຸມມອງທີ່ຈະແຈ້ງກ່ຽວກັບເງິນຂອງທ່ານໃນເດືອນນີ້.';
+
+  @override
+  String get dashboardQuickActionAddIncome => 'ເພີ່ມລາຍຮັບ';
+
+  @override
+  String get dashboardQuickActionAddExpense => 'ເພີ່ມລາຍຈ່າຍ';
+
+  @override
+  String get dashboardQuickActionTransferMoney => 'ໂອນເງິນ';
+
+  @override
+  String get dashboardQuickActionCreateBudget => 'ສ້າງງົບປະມານ';
+
+  @override
+  String get dashboardMetricTotalBalance => 'ຍອດເງິນລວມ';
+
+  @override
+  String get dashboardMetricTotalBalanceCaption =>
+      'ອັບເດດແບບສົດຈາກທຸກບັນຊີທີ່ໃຊ້ງານ';
+
+  @override
+  String dashboardMetricAlsoBalance(String currencyCode, String amount) {
+    return 'ພ້ອມທັງ $currencyCode $amount';
+  }
+
+  @override
+  String get dashboardMetricMonthlyIncome => 'ລາຍຮັບປະຈຳເດືອນ';
+
+  @override
+  String get dashboardMetricMonthlyExpenses => 'ລາຍຈ່າຍປະຈຳເດືອນ';
+
+  @override
+  String get dashboardMetricNetCashFlow => 'ກະແສເງິນສົດສຸດທິ';
+
+  @override
+  String get dashboardMetricThisMonthCaption => 'ເດືອນປະຕິທິນນີ້';
+
+  @override
+  String get dashboardMetricNetCaption => 'ລາຍຮັບຫັກລາຍຈ່າຍ';
+
+  @override
+  String get dashboardChooseCurrencyTooltip => 'ເລືອກສະກຸນເງິນ';
+
+  @override
+  String get dashboardNotificationsTooltip => 'ການແຈ້ງເຕືອນ';
+
+  @override
+  String get dashboardNotificationsEmptyMessage =>
+      'ທ່ານໄດ້ຮັບຂໍ້ມູນລ່າສຸດແລ້ວ.';
+
+  @override
+  String get dashboardIncomeExpensePanelTitle => 'ລາຍຮັບ ແລະ ລາຍຈ່າຍ';
+
+  @override
+  String get dashboardTrendEmptyMessage =>
+      'ຍັງບໍ່ມີກິດຈະກຳພຽງພໍທີ່ຈະສະແດງແນວໂນ້ມ.';
+
+  @override
+  String get dashboardTrendLast6Months => '6 ເດືອນຫຼ້າສຸດ';
+
+  @override
+  String get dashboardCategoryEmptyMessage =>
+      'ບໍ່ມີໝວດໝູ່ລາຍຈ່າຍທີ່ບັນທຶກໄວ້ໃນເດືອນນີ້.';
+
+  @override
+  String get dashboardCategoryBreakdownLabel => 'ການແບ່ງແຍກຕາມໝວດໝູ່';
+
+  @override
+  String get dashboardBudgetsEmptyMessage =>
+      'ບໍ່ມີງົບປະມານທີ່ໃຊ້ງານໃນເດືອນນີ້.';
+
+  @override
   String get languageSectionTitle => 'ພາສາ';
 
   @override
@@ -800,6 +874,11 @@ class AppLocalizationsLo extends AppLocalizations {
   }
 
   @override
+  String convertedTotalsPartialWarning(String currencies) {
+    return 'ບໍ່ລວມ $currencies — ບໍ່ມີອັດຕາແລກປ່ຽນ.';
+  }
+
+  @override
   String get nothingToReportYetTitle => 'ຍັງບໍ່ມີຫຍັງໃຫ້ລາຍງານ';
 
   @override
@@ -1234,4 +1313,452 @@ class AppLocalizationsLo extends AppLocalizations {
   @override
   String get smartMoneyScoreFormulaFootnote =>
       'ຄະແນນລາຍເດືອນ = clamp(0–150, 100 + % ການປ່ຽນແປງຍອດເງິນ + ຕົວປັບພຶດຕິກຳການເງິນ).';
+
+  @override
+  String get financialInsightMsgSteadySpendingHeadline =>
+      'ການໃຊ້ຈ່າຍຂອງທ່ານມື້ນີ້ຄົງທີ່ດີ.';
+
+  @override
+  String get financialInsightMsgSteadySpendingExplanation =>
+      'ສືບຕໍ່ບັນທຶກລາຍການທຸລະກຳ ແລ້ວ Cashly ຈະເຮັດໃຫ້ແຕ່ລະຄວາມເຂົ້າໃຈເປັນສ່ວນຕົວຫຼາຍຂຶ້ນ.';
+
+  @override
+  String get financialInsightMsgNegativeBalanceHeadline =>
+      'ຍອດເງິນລວມຂອງທ່ານຕ່ຳກວ່າສູນ.';
+
+  @override
+  String financialInsightMsgNegativeBalanceExplanation(
+    String currency,
+    String amount,
+  ) {
+    return 'ຍອດເງິນລວມ $currency ຂອງທ່ານແມ່ນ $amount. ການເຮັດໃຫ້ຍອດຂາດນັ້ນກັບຄືນເປັນບວກແມ່ນຂັ້ນຕອນຕໍ່ໄປທີ່ຊັດເຈນທີ່ສຸດ.';
+  }
+
+  @override
+  String get financialInsightMsgPlanEssentialExpenseTitle =>
+      'ວາງແຜນລາຍຈ່າຍທີ່ຈຳເປັນຕໍ່ໄປກ່ອນ';
+
+  @override
+  String get financialInsightMsgPlanEssentialExpenseDetail =>
+      'ການເນັ້ນໃສ່ລາຍຈ່າຍທີ່ຈຳເປັນເທື່ອລະອັນຊ່ວຍສ້າງເງິນສະຫງວນທີ່ເປັນບວກຄືນ ໂດຍບໍ່ຕັດສິນທາງເລືອກທີ່ຜ່ານມາ.';
+
+  @override
+  String financialInsightMsgCategoryOverBudgetHeadline(String category) {
+    return '$category ເກີນງົບປະມານປະຈຳເດືອນແລ້ວ.';
+  }
+
+  @override
+  String financialInsightMsgCategoryOverBudgetExplanation(
+    String spent,
+    String limit,
+  ) {
+    return 'ທ່ານໄດ້ໃຊ້ຈ່າຍ $spent ຈາກແຜນ $limit.';
+  }
+
+  @override
+  String financialInsightMsgPauseCategorySpendingTitle(String category) {
+    return 'ຢຸດການໃຊ້ຈ່າຍ $category ສຳລັບມື້ນີ້';
+  }
+
+  @override
+  String get financialInsightMsgPauseCategorySpendingDetail =>
+      'ການຢຸດພັກສັ້ນໆຊ່ວຍປົກປ້ອງແຜນທີ່ເຫຼືອຂອງເດືອນນີ້ ໂດຍບໍ່ຕັດສິນທາງເລືອກທີ່ຜ່ານມາ.';
+
+  @override
+  String financialInsightMsgCategoryNeedsRoomHeadline(String category) {
+    return '$category ຕ້ອງການພື້ນທີ່ເລັກນ້ອຍໃນເດືອນນີ້.';
+  }
+
+  @override
+  String financialInsightMsgCategoryNeedsRoomExplanation(
+    String percent,
+    String limit,
+  ) {
+    return 'ທ່ານໄດ້ໃຊ້ $percent ຂອງງົບປະມານ $limit.';
+  }
+
+  @override
+  String financialInsightMsgSetRestOfMonthLimitTitle(String category) {
+    return 'ຕັ້ງຂີດຈຳກັດສ່ວນທີ່ເຫຼືອຂອງເດືອນສຳລັບ $category';
+  }
+
+  @override
+  String financialInsightMsgSetRestOfMonthLimitDetail(String remaining) {
+    return 'ການຮັກສາການຊື້ຄັ້ງຕໍ່ໄປພາຍໃນ $remaining ຈະຮັກສາງົບປະມານນີ້ໃຫ້ຢູ່ໃນແຜນ.';
+  }
+
+  @override
+  String financialInsightMsgCategoryHigherThanUsualHeadline(String category) {
+    return '$category ສູງກວ່າອັດຕາປົກກະຕິຂອງທ່ານ.';
+  }
+
+  @override
+  String financialInsightMsgCategoryHigherThanUsualExplanation(
+    String changePercent,
+  ) {
+    return 'ມັນສູງກວ່າໄລຍະທຽບເທົ່າ $changePercent ດັ່ງນັ້ນຄວນກວດເບິ່ງໄວໆ.';
+  }
+
+  @override
+  String financialInsightMsgReviewNextCategoryPurchaseTitle(String category) {
+    return 'ກວດສອບການຊື້ $category ຄັ້ງຕໍ່ໄປຂອງທ່ານ';
+  }
+
+  @override
+  String get financialInsightMsgReviewNextCategoryPurchaseDetail =>
+      'ການປ່ຽນແທນ ຫຼື ຊັກຊ້າເລັກນ້ອຍສາມາດຫຼຸດຜ່ອນການເພີ່ມຂຶ້ນນີ້ ໃນຂະນະທີ່ທ່ານຕັດສິນໃຈວ່າມັນເປັນຄັ້ງດຽວຫຼືບໍ່.';
+
+  @override
+  String get financialInsightMsgTodaySpendingFasterHeadline =>
+      'ມື້ນີ້ໃຊ້ຈ່າຍໄວກວ່າອັດຕາຂອງອາທິດນີ້.';
+
+  @override
+  String get financialInsightMsgTodaySpendingFasterExplanation =>
+      'ມັນສາມາດເກີດຂຶ້ນໄດ້ — ການກວດເບິ່ງຢ່າງຕັ້ງໃຈກ່ອນການຊື້ຄັ້ງຕໍ່ໄປຈະຮັກສາການຄວບຄຸມມື້ນີ້ໄວ້.';
+
+  @override
+  String get financialInsightMsgCheckNextExpenseTitle =>
+      'ກວດເບິ່ງລາຍຈ່າຍຄັ້ງຕໍ່ໄປກ່ອນຊື້';
+
+  @override
+  String get financialInsightMsgCheckNextExpenseDetail =>
+      'ການຢຸດພັກໄວໆສາມາດຮັກສາມື້ນີ້ໃຫ້ໃກ້ຄຽງອັດຕາປົກກະຕິ ໂດຍບໍ່ປ່ຽນແປງສິ່ງທີ່ເກີດຂຶ້ນແລ້ວ.';
+
+  @override
+  String get financialInsightMsgSpendingAheadOfIncomeHeadline =>
+      'ການໃຊ້ຈ່າຍຂອງເດືອນນີ້ນຳໜ້າລາຍຮັບຈົນຮອດຕອນນີ້.';
+
+  @override
+  String get financialInsightMsgSpendingAheadOfIncomeExplanation =>
+      'ນີ້ແມ່ນແນວໂນ້ມທີ່ຄວນຕິດຕາມ ບໍ່ແມ່ນຄຳຕັດສິນ — ທາງເລືອກຕັ້ງໃຈໜຶ່ງ ຫຼື ສອງຢ່າງຍັງສາມາດປ່ຽນເດືອນນີ້ໄດ້.';
+
+  @override
+  String get financialInsightMsgChooseLowPriorityExpenseTitle =>
+      'ເລືອກລາຍຈ່າຍທີ່ບໍ່ສຳຄັນໜຶ່ງອັນເພື່ອຊັກຊ້າ';
+
+  @override
+  String get financialInsightMsgChooseLowPriorityExpenseDetail =>
+      'ເນັ້ນໃສ່ທາງເລືອກຕໍ່ໄປເທົ່ານັ້ນ; ການຫຼຸດຄ່າໃຊ້ຈ່າຍທີ່ປັບໄດ້ໜຶ່ງອັນສາມາດເຮັດໃຫ້ເດືອນນີ້ດຸ່ນດ່ຽງຂຶ້ນ.';
+
+  @override
+  String get financialInsightMsgBalanceZeroHeadline =>
+      'ຍອດເງິນທີ່ໃຊ້ໄດ້ຂອງທ່ານແມ່ນສູນ.';
+
+  @override
+  String get financialInsightMsgBalanceThinHeadline =>
+      'ເງິນສະຫງວນຍອດເງິນຂອງທ່ານກຳລັງແໜ້ນ.';
+
+  @override
+  String get financialInsightMsgBalanceLimitedHeadline =>
+      'ຍອດເງິນຂອງທ່ານຕ້ອງການພື້ນທີ່ເພີ່ມເຕີມເລັກນ້ອຍ.';
+
+  @override
+  String get financialInsightMsgBalanceSteadyHeadline =>
+      'ຍອດເງິນຂອງທ່ານຄົງທີ່ດີ.';
+
+  @override
+  String financialInsightMsgBalanceZeroExplanation(String currency) {
+    return 'ບໍ່ມີເງິນສະຫງວນ $currency ເຫຼືອຢູ່ຫຼັງຈາກກິດຈະກຳຫຼ້າສຸດ. ການເລືອກລາຍຈ່າຍຕໍ່ໄປຢ່າງລະມັດລະວັງຊ່ວຍສ້າງພື້ນທີ່ຄືນໄດ້.';
+  }
+
+  @override
+  String financialInsightMsgBalanceThinExplanation(String currency, int days) {
+    return 'ຕາມອັດຕາການໃຊ້ຈ່າຍຫຼ້າສຸດຂອງທ່ານ ຍອດເງິນ $currency ນີ້ຄຸ້ມຄອງປະມານ $days ມື້. ການປົກປ້ອງລາຍຈ່າຍທີ່ຈຳເປັນໜຶ່ງອັນກ່ອນຈະຊ່ວຍໄດ້.';
+  }
+
+  @override
+  String financialInsightMsgBalanceLimitedExplanation(
+    String currency,
+    int days,
+  ) {
+    return 'ຕາມອັດຕາການໃຊ້ຈ່າຍຫຼ້າສຸດຂອງທ່ານ ຍອດເງິນ $currency ນີ້ຄຸ້ມຄອງປະມານ $days ມື້. ແຜນສ່ວນທີ່ເຫຼືອຂອງອາທິດແບບນ້ອຍໆສາມາດຮັກສາພື້ນທີ່ນັ້ນໄວ້.';
+  }
+
+  @override
+  String get financialInsightMsgBalanceSteadyExplanation =>
+      'ຍອດເງິນຂອງທ່ານກຳລັງຮອງຮັບອັດຕາປັດຈຸບັນ.';
+
+  @override
+  String get financialInsightMsgProtectEssentialExpenseTitle =>
+      'ປົກປ້ອງລາຍຈ່າຍທີ່ຈຳເປັນຕໍ່ໄປ';
+
+  @override
+  String get financialInsightMsgProtectEssentialExpenseDetail =>
+      'ການເລືອກຄ່າໃຊ້ຈ່າຍທີ່ຈຳເປັນຕໍ່ໄປກ່ອນຊ່ວຍສ້າງພື້ນທີ່ກ່ອນເພີ່ມສິ່ງທີ່ບໍ່ຈຳເປັນ.';
+
+  @override
+  String financialInsightMsgReserveNextDaysTitle(int days) {
+    return 'ສະຫງວນສິ່ງຈຳເປັນສຳລັບ $days ມື້ຕໍ່ໄປ';
+  }
+
+  @override
+  String get financialInsightMsgReserveNextDaysDetail =>
+      'ການຮັກສາເງິນສະຫງວນນ້ອຍນັ້ນສຳລັບຄວາມຈຳເປັນກ່ອນ ໃຫ້ຍອດເງິນຂອງທ່ານມີພື້ນທີ່ຟື້ນຕົວຫຼາຍຂຶ້ນ.';
+
+  @override
+  String get financialInsightMsgSetShortRestOfWeekLimitTitle =>
+      'ຕັ້ງຂີດຈຳກັດສ່ວນທີ່ເຫຼືອຂອງອາທິດແບບສັ້ນ';
+
+  @override
+  String get financialInsightMsgSetShortRestOfWeekLimitDetail =>
+      'ຂີດຈຳກັດນ້ອຍໆສຳລັບການໃຊ້ຈ່າຍທີ່ປັບໄດ້ຊ່ວຍໃຫ້ຍອດເງິນປັດຈຸບັນຂອງທ່ານໃຊ້ໄດ້ດົນຂຶ້ນ.';
+
+  @override
+  String get financialInsightMsgKeepExpenseIntentionalTitle =>
+      'ຮັກສາລາຍຈ່າຍຕໍ່ໄປຂອງທ່ານໃຫ້ຕັ້ງໃຈ';
+
+  @override
+  String get financialInsightMsgKeepExpenseIntentionalBalanceDetail =>
+      'ຍອດເງິນຂອງທ່ານກຳລັງຮອງຮັບອັດຕາປັດຈຸບັນ. ການກວດເບິ່ງໄວໆກ່ອນໃຊ້ຈ່າຍຊ່ວຍໃຫ້ມັນຄົງຢູ່ແບບນັ້ນ.';
+
+  @override
+  String get financialInsightMsgKeepExpenseIntentionalPaceDetail =>
+      'ອັດຕາປັດຈຸບັນຂອງທ່ານແມ່ນດີ. ການກວດເບິ່ງໄວໆກ່ອນຊື້ຊ່ວຍໃຫ້ມັນຄົງຢູ່ແບບນັ້ນ.';
+
+  @override
+  String get financialInsightMsgOnboardingHeadline =>
+      'ມາສ້າງຮູບແບບການໃຊ້ຈ່າຍທຳອິດຂອງທ່ານກັນ.';
+
+  @override
+  String get financialInsightMsgOnboardingExplanation =>
+      'ເພີ່ມລາຍການລາຍຮັບ ຫຼື ລາຍຈ່າຍສອງສາມລາຍການ ແລ້ວ Cashly ຈະປ່ຽນມັນເປັນການກວດເບິ່ງປະຈຳວັນ, ອາທິດ, ແລະ ເດືອນສ່ວນຕົວ.';
+
+  @override
+  String get financialInsightMsgLogNextExpenseTitle =>
+      'ບັນທຶກລາຍຈ່າຍຕໍ່ໄປຂອງທ່ານ';
+
+  @override
+  String get financialInsightMsgLogNextExpenseDetail =>
+      'ແມ່ນແຕ່ການຊື້ປະຈຳວັນນ້ອຍໆກໍ່ໃຫ້ຈຸດເລີ່ມຕົ້ນທີ່ດີກວ່າແກ່ຜູ້ຊ່ວຍ.';
+
+  @override
+  String get financialInsightMsgNotEnoughActivityTodayReason =>
+      'ຍັງບໍ່ມີກິດຈະກຳຫຼ້າສຸດພຽງພໍທີ່ຈະໃຫ້ຄະແນນແນວໂນ້ມມື້ນີ້.';
+
+  @override
+  String get financialInsightMsgNotEnoughActivityWeekReason =>
+      'ຍັງບໍ່ມີກິດຈະກຳຫຼ້າສຸດພຽງພໍທີ່ຈະໃຫ້ຄະແນນແນວໂນ້ມອາທິດນີ້.';
+
+  @override
+  String get financialInsightMsgNotEnoughActivityMonthReason =>
+      'ຍັງບໍ່ມີກິດຈະກຳຫຼ້າສຸດພຽງພໍທີ່ຈະໃຫ້ຄະແນນແນວໂນ້ມເດືອນນີ້.';
+
+  @override
+  String financialInsightMsgBalanceImpactNegativeReason(String currency) {
+    return 'ຍອດເງິນລວມ $currency ຂອງທ່ານຕ່ຳກວ່າສູນ ດັ່ງນັ້ນການສ້າງເງິນສະຫງວນທີ່ເປັນບວກຄືນແມ່ນບູລິມະສິດ.';
+  }
+
+  @override
+  String financialInsightMsgBalanceImpactEmptyReason(String currency) {
+    return 'ຍອດເງິນ $currency ທີ່ໃຊ້ງານຂອງທ່ານແມ່ນສູນຫຼັງຈາກກິດຈະກຳຫຼ້າສຸດ.';
+  }
+
+  @override
+  String financialInsightMsgBalanceImpactLowReason(String currency, int days) {
+    return 'ຍອດເງິນລວມ $currency ຂອງທ່ານຄຸ້ມຄອງປະມານ $days ມື້ຕາມອັດຕາການໃຊ້ຈ່າຍຫຼ້າສຸດ.';
+  }
+
+  @override
+  String financialInsightMsgBalanceImpactHealthyReason(String currency) {
+    return 'ຍອດເງິນລວມ $currency ຂອງທ່ານຄຸ້ມຄອງຫຼາຍກວ່າໜຶ່ງເດືອນຕາມອັດຕາການໃຊ້ຈ່າຍຫຼ້າສຸດ.';
+  }
+
+  @override
+  String financialInsightMsgCategoryOverBudgetReasonToday(String category) {
+    return '$category ເກີນງົບປະມານປະຈຳເດືອນແລ້ວ.';
+  }
+
+  @override
+  String financialInsightMsgCategoryNearBudgetReasonToday(String category) {
+    return '$category ມີພື້ນທີ່ງົບປະມານເຫຼືອໜ້ອຍໃນເດືອນນີ້.';
+  }
+
+  @override
+  String get financialInsightMsgTodaySpikeReason =>
+      'ການໃຊ້ຈ່າຍມື້ນີ້ຫຼາຍກວ່າສອງເທົ່າຂອງອັດຕາປະຈຳວັນກ່ອນໜ້າຂອງອາທິດນີ້.';
+
+  @override
+  String financialInsightMsgTodayComparableIncreaseReason(
+    String changePercent,
+  ) {
+    return 'ການໃຊ້ຈ່າຍມື້ນີ້ສູງກວ່າຍອດລວມທຽບເທົ່າຂອງມື້ວານ $changePercent.';
+  }
+
+  @override
+  String get financialInsightMsgNoActivityTodayReason =>
+      'ບໍ່ມີການບັນທຶກລາຍຮັບ ຫຼື ລາຍຈ່າຍໃນມື້ນີ້.';
+
+  @override
+  String get financialInsightMsgIncomeCoversTodayReason =>
+      'ລາຍຮັບທີ່ບັນທຶກມື້ນີ້ຄຸ້ມຄອງການໃຊ້ຈ່າຍມື້ນີ້.';
+
+  @override
+  String financialInsightMsgCategoryOverBudgetReasonWeek(String category) {
+    return '$category ເກີນງົບປະມານ ດັ່ງນັ້ນອາທິດນີ້ຕ້ອງການອັດຕາທີ່ຊ້າລົງ.';
+  }
+
+  @override
+  String financialInsightMsgCategoryNearBudgetReasonWeek(String category) {
+    return '$category ໃກ້ຮອດຂີດຈຳກັດປະຈຳເດືອນແລ້ວ.';
+  }
+
+  @override
+  String financialInsightMsgCategoryPacedBudgetReasonWeek(String category) {
+    return '$category ນຳໜ້າອັດຕາປະຈຳເດືອນທີ່ຄາດໄວ້.';
+  }
+
+  @override
+  String financialInsightMsgWeeklyCategorySpikeReason(
+    String category,
+    String changePercent,
+  ) {
+    return '$category ສູງກວ່າອາທິດທຽບເທົ່າ $changePercent.';
+  }
+
+  @override
+  String financialInsightMsgWeekComparableIncreaseReason(String changePercent) {
+    return 'ການໃຊ້ຈ່າຍອາທິດນີ້ສູງກວ່າຍອດລວມທຽບເທົ່າຂອງອາທິດກ່ອນ $changePercent.';
+  }
+
+  @override
+  String get financialInsightMsgWeekComparableDecreaseReason =>
+      'ອາທິດນີ້ໃຊ້ຈ່າຍໜ້ອຍກວ່າອາທິດທຽບເທົ່າກ່ອນໜ້າ.';
+
+  @override
+  String financialInsightMsgCategoryOverBudgetReasonMonth(
+    String category,
+    String percent,
+  ) {
+    return '$category ເກີນງົບປະມານ $percent.';
+  }
+
+  @override
+  String financialInsightMsgCategoryNearBudgetReasonMonth(
+    String category,
+    String remaining,
+  ) {
+    return '$category ມີ $remaining ເຫຼືອຢູ່.';
+  }
+
+  @override
+  String financialInsightMsgCategoryPacedBudgetReasonMonth(String category) {
+    return '$category ໃຊ້ຈ່າຍໄວກວ່າແຜນປະຈຳເດືອນ.';
+  }
+
+  @override
+  String financialInsightMsgSpendingOverIncomeReasonMonth(
+    String expense,
+    String income,
+  ) {
+    return 'ການໃຊ້ຈ່າຍນັບແຕ່ຕົ້ນເດືອນແມ່ນ $expense ທຽບກັບລາຍຮັບ $income.';
+  }
+
+  @override
+  String get financialInsightMsgIncomeCoversMonthReason =>
+      'ລາຍຮັບປັດຈຸບັນຄຸ້ມຄອງການໃຊ້ຈ່າຍທີ່ບັນທຶກຂອງເດືອນນີ້.';
+
+  @override
+  String financialInsightMsgMonthComparableIncreaseReason(
+    String changePercent,
+  ) {
+    return 'ການໃຊ້ຈ່າຍນັບແຕ່ຕົ້ນເດືອນສູງກວ່າເດືອນທຽບເທົ່າກ່ອນໜ້າ $changePercent.';
+  }
+
+  @override
+  String get financialInsightMsgMonthComparableDecreaseReason =>
+      'ການໃຊ້ຈ່າຍນັບແຕ່ຕົ້ນເດືອນຕ່ຳກວ່າໄລຍະທຽບເທົ່າກ່ອນໜ້າ.';
+
+  @override
+  String get financialInsightMsgSteadyReasonToday =>
+      'ມື້ນີ້ຢູ່ໃນອັດຕາການໃຊ້ຈ່າຍທີ່ດີ.';
+
+  @override
+  String get financialInsightMsgSteadyReasonWeek =>
+      'ອາທິດນີ້ຕິດຕາມໃກ້ຄຽງກັບອັດຕາຫຼ້າສຸດຂອງທ່ານ.';
+
+  @override
+  String get financialInsightMsgSteadyReasonMonth =>
+      'ເດືອນນີ້ຢູ່ໃນແຜນທີ່ບັນທຶກໄວ້ໃນ Cashly.';
+
+  @override
+  String get financialInsightMsgShortHorizonNoActiveAccountToday =>
+      'ມື້ນີ້ຍັງບໍ່ມີຍອດເງິນບັນຊີທີ່ໃຊ້ງານໃຫ້ປຽບທຽບ ດັ່ງນັ້ນ Cashly ກຳລັງໃຊ້ຍອດເງິນປັດຈຸບັນ, ງົບປະມານ, ແລະ ສັນຍານການໃຊ້ຈ່າຍ.';
+
+  @override
+  String get financialInsightMsgShortHorizonNoActiveAccountWeek =>
+      'ອາທິດນີ້ຍັງບໍ່ມີຍອດເງິນບັນຊີທີ່ໃຊ້ງານໃຫ້ປຽບທຽບ ດັ່ງນັ້ນ Cashly ກຳລັງໃຊ້ຍອດເງິນປັດຈຸບັນ, ງົບປະມານ, ແລະ ສັນຍານການໃຊ້ຈ່າຍ.';
+
+  @override
+  String get financialInsightMsgShortHorizonCrossCurrencyToday =>
+      'ມີການໂອນລະຫວ່າງສະກຸນເງິນເກີດຂຶ້ນມື້ນີ້. Cashly ກຳລັງຮັກສາການປຽບທຽບຍອດເງິນເປັນກາງຈົນກວ່າຈະມີພື້ນຖານອັດຕາແລກປ່ຽນ.';
+
+  @override
+  String get financialInsightMsgShortHorizonCrossCurrencyWeek =>
+      'ມີການໂອນລະຫວ່າງສະກຸນເງິນເກີດຂຶ້ນອາທິດນີ້. Cashly ກຳລັງຮັກສາການປຽບທຽບຍອດເງິນເປັນກາງຈົນກວ່າຈະມີພື້ນຖານອັດຕາແລກປ່ຽນ.';
+
+  @override
+  String get financialInsightMsgShortHorizonAccountAddedToday =>
+      'ມີການເພີ່ມບັນຊີໃໝ່ມື້ນີ້ ດັ່ງນັ້ນ Cashly ຍັງບໍ່ສາມາດຄຳນວນຍອດເງິນເປີດນັ້ນຄືນຢ່າງປອດໄພ.';
+
+  @override
+  String get financialInsightMsgShortHorizonAccountAddedWeek =>
+      'ມີການເພີ່ມບັນຊີໃໝ່ອາທິດນີ້ ດັ່ງນັ້ນ Cashly ຍັງບໍ່ສາມາດຄຳນວນຍອດເງິນເປີດນັ້ນຄືນຢ່າງປອດໄພ.';
+
+  @override
+  String get financialInsightMsgShortHorizonUnverifiableToday =>
+      'Cashly ບໍ່ສາມາດຢືນຢັນຄ່າຍອດເງິນສຳລັບມື້ນີ້ໄດ້ ດັ່ງນັ້ນການປຽບທຽບຍອດເງິນຈຶ່ງເປັນກາງ.';
+
+  @override
+  String get financialInsightMsgShortHorizonUnverifiableWeek =>
+      'Cashly ບໍ່ສາມາດຢືນຢັນຄ່າຍອດເງິນສຳລັບອາທິດນີ້ໄດ້ ດັ່ງນັ້ນການປຽບທຽບຍອດເງິນຈຶ່ງເປັນກາງ.';
+
+  @override
+  String get financialInsightMsgShortHorizonZeroOpeningToday =>
+      'ມື້ນີ້ເລີ່ມຕົ້ນທີ່ສູນໂດຍບໍ່ມີລາຍຮັບ ຫຼື ລາຍຈ່າຍທີ່ບັນທຶກ ດັ່ງນັ້ນ Cashly ກຳລັງໃຊ້ຍອດເງິນປັດຈຸບັນ, ງົບປະມານ, ແລະ ສັນຍານການໃຊ້ຈ່າຍ.';
+
+  @override
+  String get financialInsightMsgShortHorizonZeroOpeningWeek =>
+      'ອາທິດນີ້ເລີ່ມຕົ້ນທີ່ສູນໂດຍບໍ່ມີລາຍຮັບ ຫຼື ລາຍຈ່າຍທີ່ບັນທຶກ ດັ່ງນັ້ນ Cashly ກຳລັງໃຊ້ຍອດເງິນປັດຈຸບັນ, ງົບປະມານ, ແລະ ສັນຍານການໃຊ້ຈ່າຍ.';
+
+  @override
+  String financialInsightMsgShortHorizonIncreasedToday(
+    String percent,
+    String points,
+  ) {
+    return 'ຍອດເງິນມື້ນີ້ເພີ່ມຂຶ້ນ $percent, ປະກອບສ່ວນ $points ໃຫ້ຄະແນນຮ່ວມກັບສັນຍານງົບປະມານ ແລະ ການໃຊ້ຈ່າຍ.';
+  }
+
+  @override
+  String financialInsightMsgShortHorizonIncreasedWeek(
+    String percent,
+    String points,
+  ) {
+    return 'ຍອດເງິນອາທິດນີ້ເພີ່ມຂຶ້ນ $percent, ປະກອບສ່ວນ $points ໃຫ້ຄະແນນຮ່ວມກັບສັນຍານງົບປະມານ ແລະ ການໃຊ້ຈ່າຍ.';
+  }
+
+  @override
+  String financialInsightMsgShortHorizonDecreasedToday(
+    String percent,
+    String points,
+  ) {
+    return 'ຍອດເງິນມື້ນີ້ຫຼຸດລົງ $percent, ປະກອບສ່ວນ $points ໃຫ້ຄະແນນຮ່ວມກັບສັນຍານງົບປະມານ ແລະ ການໃຊ້ຈ່າຍ.';
+  }
+
+  @override
+  String financialInsightMsgShortHorizonDecreasedWeek(
+    String percent,
+    String points,
+  ) {
+    return 'ຍອດເງິນອາທິດນີ້ຫຼຸດລົງ $percent, ປະກອບສ່ວນ $points ໃຫ້ຄະແນນຮ່ວມກັບສັນຍານງົບປະມານ ແລະ ການໃຊ້ຈ່າຍ.';
+  }
+
+  @override
+  String financialInsightMsgShortHorizonStayedLevelToday(String points) {
+    return 'ຍອດເງິນມື້ນີ້ຄົງທີ່, ປະກອບສ່ວນ $points ໃຫ້ຄະແນນຮ່ວມກັບສັນຍານງົບປະມານ ແລະ ການໃຊ້ຈ່າຍ.';
+  }
+
+  @override
+  String financialInsightMsgShortHorizonStayedLevelWeek(String points) {
+    return 'ຍອດເງິນອາທິດນີ້ຄົງທີ່, ປະກອບສ່ວນ $points ໃຫ້ຄະແນນຮ່ວມກັບສັນຍານງົບປະມານ ແລະ ການໃຊ້ຈ່າຍ.';
+  }
 }

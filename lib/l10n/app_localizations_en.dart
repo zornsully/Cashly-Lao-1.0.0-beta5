@@ -223,6 +223,78 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expenseMonthLabel => 'Expense (month)';
 
   @override
+  String get dashboardHeaderSubtitle =>
+      'A clear view of your money this month.';
+
+  @override
+  String get dashboardQuickActionAddIncome => 'Add income';
+
+  @override
+  String get dashboardQuickActionAddExpense => 'Add expense';
+
+  @override
+  String get dashboardQuickActionTransferMoney => 'Transfer money';
+
+  @override
+  String get dashboardQuickActionCreateBudget => 'Create budget';
+
+  @override
+  String get dashboardMetricTotalBalance => 'Total balance';
+
+  @override
+  String get dashboardMetricTotalBalanceCaption =>
+      'Live across active accounts';
+
+  @override
+  String dashboardMetricAlsoBalance(String currencyCode, String amount) {
+    return 'Also $currencyCode $amount';
+  }
+
+  @override
+  String get dashboardMetricMonthlyIncome => 'Monthly income';
+
+  @override
+  String get dashboardMetricMonthlyExpenses => 'Monthly expenses';
+
+  @override
+  String get dashboardMetricNetCashFlow => 'Net cash flow';
+
+  @override
+  String get dashboardMetricThisMonthCaption => 'This calendar month';
+
+  @override
+  String get dashboardMetricNetCaption => 'Income minus expenses';
+
+  @override
+  String get dashboardChooseCurrencyTooltip => 'Choose currency';
+
+  @override
+  String get dashboardNotificationsTooltip => 'Notifications';
+
+  @override
+  String get dashboardNotificationsEmptyMessage => 'You are all caught up.';
+
+  @override
+  String get dashboardIncomeExpensePanelTitle => 'Income & expenses';
+
+  @override
+  String get dashboardTrendEmptyMessage =>
+      'Not enough activity to show a trend yet.';
+
+  @override
+  String get dashboardTrendLast6Months => 'Last 6 months';
+
+  @override
+  String get dashboardCategoryEmptyMessage =>
+      'No recorded expense categories this month.';
+
+  @override
+  String get dashboardCategoryBreakdownLabel => 'Category breakdown';
+
+  @override
+  String get dashboardBudgetsEmptyMessage => 'No active budgets this month.';
+
+  @override
   String get languageSectionTitle => 'Language';
 
   @override
@@ -803,6 +875,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String convertedTotalsPartialWarning(String currencies) {
+    return 'Doesn\'t include $currencies — no exchange rate available.';
+  }
+
+  @override
   String get nothingToReportYetTitle => 'Nothing to report yet';
 
   @override
@@ -1238,4 +1315,451 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get smartMoneyScoreFormulaFootnote =>
       'Monthly score = clamp(0–150, 100 + balance change % + financial behaviour modifier).';
+
+  @override
+  String get financialInsightMsgSteadySpendingHeadline =>
+      'Your spending is looking steady today.';
+
+  @override
+  String get financialInsightMsgSteadySpendingExplanation =>
+      'Keep logging transactions and Cashly will make each insight more personal.';
+
+  @override
+  String get financialInsightMsgNegativeBalanceHeadline =>
+      'Your total balance is below zero.';
+
+  @override
+  String financialInsightMsgNegativeBalanceExplanation(
+    String currency,
+    String amount,
+  ) {
+    return 'Your total $currency balance is $amount. Bringing that shortfall above zero is the clearest next step.';
+  }
+
+  @override
+  String get financialInsightMsgPlanEssentialExpenseTitle =>
+      'Plan the next essential expense first';
+
+  @override
+  String get financialInsightMsgPlanEssentialExpenseDetail =>
+      'Focusing on one necessary expense at a time can help rebuild a positive buffer without judging past choices.';
+
+  @override
+  String financialInsightMsgCategoryOverBudgetHeadline(String category) {
+    return '$category is over its monthly budget.';
+  }
+
+  @override
+  String financialInsightMsgCategoryOverBudgetExplanation(
+    String spent,
+    String limit,
+  ) {
+    return 'You have spent $spent against a $limit plan.';
+  }
+
+  @override
+  String financialInsightMsgPauseCategorySpendingTitle(String category) {
+    return 'Pause $category spending for today';
+  }
+
+  @override
+  String get financialInsightMsgPauseCategorySpendingDetail =>
+      'A short pause protects the rest of this month\'s plan without judging past choices.';
+
+  @override
+  String financialInsightMsgCategoryNeedsRoomHeadline(String category) {
+    return '$category needs a little room this month.';
+  }
+
+  @override
+  String financialInsightMsgCategoryNeedsRoomExplanation(
+    String percent,
+    String limit,
+  ) {
+    return 'You have used $percent of its $limit budget.';
+  }
+
+  @override
+  String financialInsightMsgSetRestOfMonthLimitTitle(String category) {
+    return 'Set a rest-of-month limit for $category';
+  }
+
+  @override
+  String financialInsightMsgSetRestOfMonthLimitDetail(String remaining) {
+    return 'Keeping the next purchases within $remaining will keep this budget on track.';
+  }
+
+  @override
+  String financialInsightMsgCategoryHigherThanUsualHeadline(String category) {
+    return '$category is higher than your usual pace.';
+  }
+
+  @override
+  String financialInsightMsgCategoryHigherThanUsualExplanation(
+    String changePercent,
+  ) {
+    return 'It is $changePercent above the comparable period, so it is worth a quick check-in.';
+  }
+
+  @override
+  String financialInsightMsgReviewNextCategoryPurchaseTitle(String category) {
+    return 'Review your next $category purchase';
+  }
+
+  @override
+  String get financialInsightMsgReviewNextCategoryPurchaseDetail =>
+      'A small swap or delay can soften this increase while you decide whether it was a one-off.';
+
+  @override
+  String get financialInsightMsgTodaySpendingFasterHeadline =>
+      'Today is spending faster than this week\'s pace.';
+
+  @override
+  String get financialInsightMsgTodaySpendingFasterExplanation =>
+      'That can happen — one intentional check before another purchase keeps the day in your control.';
+
+  @override
+  String get financialInsightMsgCheckNextExpenseTitle =>
+      'Check the next expense before you buy';
+
+  @override
+  String get financialInsightMsgCheckNextExpenseDetail =>
+      'A quick pause can keep today closer to your usual pace without changing what has already happened.';
+
+  @override
+  String get financialInsightMsgSpendingAheadOfIncomeHeadline =>
+      'This month\'s spending is ahead of income so far.';
+
+  @override
+  String get financialInsightMsgSpendingAheadOfIncomeExplanation =>
+      'This is a trend to watch, not a verdict — one or two intentional choices can still change the month.';
+
+  @override
+  String get financialInsightMsgChooseLowPriorityExpenseTitle =>
+      'Choose one low-priority expense to delay';
+
+  @override
+  String get financialInsightMsgChooseLowPriorityExpenseDetail =>
+      'Focus on the next choice only; reducing one flexible cost can bring the month closer to balance.';
+
+  @override
+  String get financialInsightMsgBalanceZeroHeadline =>
+      'Your available balance is at zero.';
+
+  @override
+  String get financialInsightMsgBalanceThinHeadline =>
+      'Your balance buffer is getting tight.';
+
+  @override
+  String get financialInsightMsgBalanceLimitedHeadline =>
+      'Your balance could use a little more room.';
+
+  @override
+  String get financialInsightMsgBalanceSteadyHeadline =>
+      'Your balance is looking steady.';
+
+  @override
+  String financialInsightMsgBalanceZeroExplanation(String currency) {
+    return 'There is no $currency buffer left after recent activity. Choosing the next expense carefully can help create room again.';
+  }
+
+  @override
+  String financialInsightMsgBalanceThinExplanation(String currency, int days) {
+    return 'At your recent spending pace, this $currency balance covers about $days days. Protecting one essential expense first can help.';
+  }
+
+  @override
+  String financialInsightMsgBalanceLimitedExplanation(
+    String currency,
+    int days,
+  ) {
+    return 'At your recent spending pace, this $currency balance covers about $days days. A small rest-of-week plan can preserve that room.';
+  }
+
+  @override
+  String get financialInsightMsgBalanceSteadyExplanation =>
+      'Your balance is supporting your current pace.';
+
+  @override
+  String get financialInsightMsgProtectEssentialExpenseTitle =>
+      'Protect the next essential expense';
+
+  @override
+  String get financialInsightMsgProtectEssentialExpenseDetail =>
+      'Choosing the next necessary cost first can help create space before adding anything optional.';
+
+  @override
+  String financialInsightMsgReserveNextDaysTitle(int days) {
+    return 'Reserve the next $days days of essentials';
+  }
+
+  @override
+  String get financialInsightMsgReserveNextDaysDetail =>
+      'Keeping that small buffer for needs first gives your balance more room to recover.';
+
+  @override
+  String get financialInsightMsgSetShortRestOfWeekLimitTitle =>
+      'Set a short rest-of-week limit';
+
+  @override
+  String get financialInsightMsgSetShortRestOfWeekLimitDetail =>
+      'A small limit for flexible spending can keep your current balance working for longer.';
+
+  @override
+  String get financialInsightMsgKeepExpenseIntentionalTitle =>
+      'Keep your next expense intentional';
+
+  @override
+  String get financialInsightMsgKeepExpenseIntentionalBalanceDetail =>
+      'Your balance is supporting the current pace. A quick check before spending helps it stay that way.';
+
+  @override
+  String get financialInsightMsgKeepExpenseIntentionalPaceDetail =>
+      'Your current pace is healthy. A quick check before a purchase helps it stay that way.';
+
+  @override
+  String get financialInsightMsgOnboardingHeadline =>
+      'Let\'s build your first spending pattern.';
+
+  @override
+  String get financialInsightMsgOnboardingExplanation =>
+      'Add a few income or expense entries and Cashly will turn them into personal daily, weekly, and monthly check-ins.';
+
+  @override
+  String get financialInsightMsgLogNextExpenseTitle => 'Log your next expense';
+
+  @override
+  String get financialInsightMsgLogNextExpenseDetail =>
+      'Even a small everyday purchase gives the assistant a better starting point.';
+
+  @override
+  String get financialInsightMsgNotEnoughActivityTodayReason =>
+      'There is not enough recent activity to score today\'s trend yet.';
+
+  @override
+  String get financialInsightMsgNotEnoughActivityWeekReason =>
+      'There is not enough recent activity to score this week\'s trend yet.';
+
+  @override
+  String get financialInsightMsgNotEnoughActivityMonthReason =>
+      'There is not enough recent activity to score this month\'s trend yet.';
+
+  @override
+  String financialInsightMsgBalanceImpactNegativeReason(String currency) {
+    return 'Your total $currency balance is below zero, so rebuilding a positive buffer is the priority.';
+  }
+
+  @override
+  String financialInsightMsgBalanceImpactEmptyReason(String currency) {
+    return 'Your active $currency balance is at zero after recent activity.';
+  }
+
+  @override
+  String financialInsightMsgBalanceImpactLowReason(String currency, int days) {
+    return 'Your total $currency balance covers about $days days at your recent spending pace.';
+  }
+
+  @override
+  String financialInsightMsgBalanceImpactHealthyReason(String currency) {
+    return 'Your total $currency balance covers more than a month at your recent spending pace.';
+  }
+
+  @override
+  String financialInsightMsgCategoryOverBudgetReasonToday(String category) {
+    return '$category is already over its monthly budget.';
+  }
+
+  @override
+  String financialInsightMsgCategoryNearBudgetReasonToday(String category) {
+    return '$category has little budget room left this month.';
+  }
+
+  @override
+  String get financialInsightMsgTodaySpikeReason =>
+      'Today\'s spending is more than twice your earlier daily pace this week.';
+
+  @override
+  String financialInsightMsgTodayComparableIncreaseReason(
+    String changePercent,
+  ) {
+    return 'Today\'s spending is $changePercent above yesterday\'s comparable total.';
+  }
+
+  @override
+  String get financialInsightMsgNoActivityTodayReason =>
+      'No income or expense has been recorded today.';
+
+  @override
+  String get financialInsightMsgIncomeCoversTodayReason =>
+      'Today\'s recorded income covers today\'s spending.';
+
+  @override
+  String financialInsightMsgCategoryOverBudgetReasonWeek(String category) {
+    return '$category is over budget, so this week needs a gentler pace.';
+  }
+
+  @override
+  String financialInsightMsgCategoryNearBudgetReasonWeek(String category) {
+    return '$category is close to its monthly limit.';
+  }
+
+  @override
+  String financialInsightMsgCategoryPacedBudgetReasonWeek(String category) {
+    return '$category is ahead of its expected monthly pace.';
+  }
+
+  @override
+  String financialInsightMsgWeeklyCategorySpikeReason(
+    String category,
+    String changePercent,
+  ) {
+    return '$category is $changePercent above the comparable week.';
+  }
+
+  @override
+  String financialInsightMsgWeekComparableIncreaseReason(String changePercent) {
+    return 'This week\'s spending is $changePercent above last week\'s comparable total.';
+  }
+
+  @override
+  String get financialInsightMsgWeekComparableDecreaseReason =>
+      'This week is spending less than the comparable previous week.';
+
+  @override
+  String financialInsightMsgCategoryOverBudgetReasonMonth(
+    String category,
+    String percent,
+  ) {
+    return '$category is $percent over budget.';
+  }
+
+  @override
+  String financialInsightMsgCategoryNearBudgetReasonMonth(
+    String category,
+    String remaining,
+  ) {
+    return '$category has $remaining remaining.';
+  }
+
+  @override
+  String financialInsightMsgCategoryPacedBudgetReasonMonth(String category) {
+    return '$category is spending faster than its monthly plan.';
+  }
+
+  @override
+  String financialInsightMsgSpendingOverIncomeReasonMonth(
+    String expense,
+    String income,
+  ) {
+    return 'Month-to-date spending is $expense versus $income income.';
+  }
+
+  @override
+  String get financialInsightMsgIncomeCoversMonthReason =>
+      'Income currently covers this month\'s recorded spending.';
+
+  @override
+  String financialInsightMsgMonthComparableIncreaseReason(
+    String changePercent,
+  ) {
+    return 'Month-to-date spending is $changePercent above the comparable previous month.';
+  }
+
+  @override
+  String get financialInsightMsgMonthComparableDecreaseReason =>
+      'Month-to-date spending is lower than the comparable previous period.';
+
+  @override
+  String get financialInsightMsgSteadyReasonToday =>
+      'Today is within a healthy spending pace.';
+
+  @override
+  String get financialInsightMsgSteadyReasonWeek =>
+      'This week is tracking close to your recent pace.';
+
+  @override
+  String get financialInsightMsgSteadyReasonMonth =>
+      'This month is within the plan recorded in Cashly.';
+
+  @override
+  String get financialInsightMsgShortHorizonNoActiveAccountToday =>
+      'Today has no active account balance to compare yet, so Cashly is using current balance, budget, and spending signals.';
+
+  @override
+  String get financialInsightMsgShortHorizonNoActiveAccountWeek =>
+      'This week has no active account balance to compare yet, so Cashly is using current balance, budget, and spending signals.';
+
+  @override
+  String get financialInsightMsgShortHorizonCrossCurrencyToday =>
+      'A transfer between currencies occurred today. Cashly is keeping its balance comparison neutral until an exchange-rate basis is available.';
+
+  @override
+  String get financialInsightMsgShortHorizonCrossCurrencyWeek =>
+      'A transfer between currencies occurred this week. Cashly is keeping its balance comparison neutral until an exchange-rate basis is available.';
+
+  @override
+  String get financialInsightMsgShortHorizonAccountAddedToday =>
+      'An account was added today, so Cashly cannot safely reconstruct that opening balance yet.';
+
+  @override
+  String get financialInsightMsgShortHorizonAccountAddedWeek =>
+      'An account was added this week, so Cashly cannot safely reconstruct that opening balance yet.';
+
+  @override
+  String get financialInsightMsgShortHorizonUnverifiableToday =>
+      'Cashly could not verify the balance values for today, so its balance comparison is neutral.';
+
+  @override
+  String get financialInsightMsgShortHorizonUnverifiableWeek =>
+      'Cashly could not verify the balance values for this week, so its balance comparison is neutral.';
+
+  @override
+  String get financialInsightMsgShortHorizonZeroOpeningToday =>
+      'Today began at zero with no recorded income or expense, so Cashly is using current balance, budget, and spending signals.';
+
+  @override
+  String get financialInsightMsgShortHorizonZeroOpeningWeek =>
+      'This week began at zero with no recorded income or expense, so Cashly is using current balance, budget, and spending signals.';
+
+  @override
+  String financialInsightMsgShortHorizonIncreasedToday(
+    String percent,
+    String points,
+  ) {
+    return 'Today\'s balance increased by $percent, contributing $points to the score alongside budget and spending signals.';
+  }
+
+  @override
+  String financialInsightMsgShortHorizonIncreasedWeek(
+    String percent,
+    String points,
+  ) {
+    return 'This week\'s balance increased by $percent, contributing $points to the score alongside budget and spending signals.';
+  }
+
+  @override
+  String financialInsightMsgShortHorizonDecreasedToday(
+    String percent,
+    String points,
+  ) {
+    return 'Today\'s balance decreased by $percent, contributing $points to the score alongside budget and spending signals.';
+  }
+
+  @override
+  String financialInsightMsgShortHorizonDecreasedWeek(
+    String percent,
+    String points,
+  ) {
+    return 'This week\'s balance decreased by $percent, contributing $points to the score alongside budget and spending signals.';
+  }
+
+  @override
+  String financialInsightMsgShortHorizonStayedLevelToday(String points) {
+    return 'Today\'s balance stayed level, contributing $points to the score alongside budget and spending signals.';
+  }
+
+  @override
+  String financialInsightMsgShortHorizonStayedLevelWeek(String points) {
+    return 'This week\'s balance stayed level, contributing $points to the score alongside budget and spending signals.';
+  }
 }

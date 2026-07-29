@@ -46,7 +46,8 @@ void main() {
     expect(result.ratesAsOfUtc, rates.fetchedAtUtc);
   });
 
-  test('skips a currency the rates snapshot does not cover', () {
+  test('skips a currency the rates snapshot does not cover, and flags it '
+      'as excluded rather than presenting the total as complete', () {
     final report = reportWith(income: {'USD': 100, 'EUR': 50}, expense: {});
 
     final result = useCase(
@@ -57,6 +58,24 @@ void main() {
 
     // EUR isn't in `rates`, so only the USD leg is counted.
     expect(result!.totalIncome, 100);
+    expect(result.isPartial, isTrue);
+    expect(result.excludedCurrencyCodes, ['EUR']);
+  });
+
+  test('reports no excluded currencies when every currency converts', () {
+    final report = reportWith(
+      income: {'USD': 100, 'LAK': 220000},
+      expense: {'USD': 20, 'LAK': 0},
+    );
+
+    final result = useCase(
+      report: report,
+      rates: rates,
+      targetCurrencyCode: 'USD',
+    );
+
+    expect(result!.isPartial, isFalse);
+    expect(result.excludedCurrencyCodes, isEmpty);
   });
 
   test('returns null when no currency in the report is covered', () {

@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import '../entities/financial_insight.dart';
+import '../entities/financial_insight_message.dart';
 
 /// Why a short-horizon balance comparison can or cannot be trusted.
 ///
@@ -41,7 +42,7 @@ class ShortHorizonBalanceMovement {
   final int moderatedImpact;
   final ShortHorizonBalanceMovementState state;
   final bool hasMeaningfulActivity;
-  final String reason;
+  final FinancialInsightMessage reason;
 
   bool get isReliable => state == ShortHorizonBalanceMovementState.reliable;
 
@@ -80,7 +81,7 @@ class ShortHorizonBalanceMovementCalculator {
         'Monthly movement uses the persisted Smart Money Score lifecycle.',
       ),
     };
-    final label = _periodLabel(period);
+    final isToday = period == FinancialWindowKind.today;
     final balance = snapshot.balance;
     final hasMeaningfulActivity = window.income != 0 || window.expense != 0;
 
@@ -90,8 +91,11 @@ class ShortHorizonBalanceMovementCalculator {
         currentBalance: balance.totalBalance,
         hasMeaningfulActivity: hasMeaningfulActivity,
         state: ShortHorizonBalanceMovementState.insufficientData,
-        reason:
-            '$label has no active account balance to compare yet, so Cashly is using current balance, budget, and spending signals.',
+        reason: FinancialInsightMessage(
+          isToday
+              ? FinancialInsightMessageKey.shortHorizonNoActiveAccountToday
+              : FinancialInsightMessageKey.shortHorizonNoActiveAccountWeek,
+        ),
       );
     }
     if (_hasCrossCurrencyMovement(balance, period)) {
@@ -100,8 +104,11 @@ class ShortHorizonBalanceMovementCalculator {
         currentBalance: balance.totalBalance,
         hasMeaningfulActivity: hasMeaningfulActivity,
         state: ShortHorizonBalanceMovementState.unsafeCurrencyMovement,
-        reason:
-            'A transfer between currencies occurred during $label. Cashly is keeping its balance comparison neutral until an exchange-rate basis is available.',
+        reason: FinancialInsightMessage(
+          isToday
+              ? FinancialInsightMessageKey.shortHorizonCrossCurrencyToday
+              : FinancialInsightMessageKey.shortHorizonCrossCurrencyWeek,
+        ),
       );
     }
     if (_hasAccountCreatedInPeriod(balance, period)) {
@@ -110,8 +117,11 @@ class ShortHorizonBalanceMovementCalculator {
         currentBalance: balance.totalBalance,
         hasMeaningfulActivity: hasMeaningfulActivity,
         state: ShortHorizonBalanceMovementState.insufficientData,
-        reason:
-            'An account was added during $label, so Cashly cannot safely reconstruct that opening balance yet.',
+        reason: FinancialInsightMessage(
+          isToday
+              ? FinancialInsightMessageKey.shortHorizonAccountAddedToday
+              : FinancialInsightMessageKey.shortHorizonAccountAddedWeek,
+        ),
       );
     }
     if (!_isFinite(balance.totalBalance, window.income, window.expense)) {
@@ -120,8 +130,11 @@ class ShortHorizonBalanceMovementCalculator {
         currentBalance: balance.totalBalance,
         hasMeaningfulActivity: hasMeaningfulActivity,
         state: ShortHorizonBalanceMovementState.insufficientData,
-        reason:
-            'Cashly could not verify the balance values for $label, so its balance comparison is neutral.',
+        reason: FinancialInsightMessage(
+          isToday
+              ? FinancialInsightMessageKey.shortHorizonUnverifiableToday
+              : FinancialInsightMessageKey.shortHorizonUnverifiableWeek,
+        ),
       );
     }
 
@@ -140,8 +153,11 @@ class ShortHorizonBalanceMovementCalculator {
         moderatedImpact: 0,
         state: ShortHorizonBalanceMovementState.insufficientData,
         hasMeaningfulActivity: false,
-        reason:
-            '$label began at zero with no recorded income or expense, so Cashly is using current balance, budget, and spending signals.',
+        reason: FinancialInsightMessage(
+          isToday
+              ? FinancialInsightMessageKey.shortHorizonZeroOpeningToday
+              : FinancialInsightMessageKey.shortHorizonZeroOpeningWeek,
+        ),
       );
     }
 
@@ -163,11 +179,21 @@ class ShortHorizonBalanceMovementCalculator {
         .round()
         .clamp(-maxModeratedImpact, maxModeratedImpact)
         .toInt();
-    final direction = balanceChange > 0
-        ? 'increased'
+    final movementArgs = {
+      'percent': _roundedPercent(balanceChangePercentage),
+      'points': _signedPoints(moderatedImpact),
+    };
+    final movementKey = balanceChange > 0
+        ? (isToday
+              ? FinancialInsightMessageKey.shortHorizonIncreasedToday
+              : FinancialInsightMessageKey.shortHorizonIncreasedWeek)
         : balanceChange < 0
-        ? 'decreased'
-        : 'stayed level';
+        ? (isToday
+              ? FinancialInsightMessageKey.shortHorizonDecreasedToday
+              : FinancialInsightMessageKey.shortHorizonDecreasedWeek)
+        : (isToday
+              ? FinancialInsightMessageKey.shortHorizonStayedLevelToday
+              : FinancialInsightMessageKey.shortHorizonStayedLevelWeek);
 
     return ShortHorizonBalanceMovement(
       period: period,
@@ -178,8 +204,7 @@ class ShortHorizonBalanceMovementCalculator {
       moderatedImpact: moderatedImpact,
       state: ShortHorizonBalanceMovementState.reliable,
       hasMeaningfulActivity: hasMeaningfulActivity,
-      reason:
-          '$label balance $direction by ${_roundedPercent(balanceChangePercentage)}. This contributes ${_signedPoints(moderatedImpact)} point${moderatedImpact.abs() == 1 ? '' : 's'} alongside budget and spending signals.',
+      reason: FinancialInsightMessage(movementKey, movementArgs),
     );
   }
 
@@ -188,7 +213,7 @@ class ShortHorizonBalanceMovementCalculator {
     required double currentBalance,
     required bool hasMeaningfulActivity,
     required ShortHorizonBalanceMovementState state,
-    required String reason,
+    required FinancialInsightMessage reason,
   }) => ShortHorizonBalanceMovement(
     period: period,
     openingBalance: currentBalance,
@@ -221,12 +246,6 @@ class ShortHorizonBalanceMovementCalculator {
 
   bool _isFinite(double a, double b, double c) =>
       a.isFinite && b.isFinite && c.isFinite;
-
-  String _periodLabel(FinancialWindowKind period) => switch (period) {
-    FinancialWindowKind.today => 'Today',
-    FinancialWindowKind.week => 'This week',
-    FinancialWindowKind.month => 'This month',
-  };
 
   String _roundedPercent(double value) => '${value.round()}%';
 

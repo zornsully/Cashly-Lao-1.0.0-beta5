@@ -1,15 +1,11 @@
 {
   "@@locale": "lo",
-
   "appName": "Cashly",
-
   "errorGenericTitle": "ມີບາງຢ່າງຜິດພາດ",
   "retry": "ລອງໃໝ່",
   "cancel": "ຍົກເລີກ",
   "delete": "ລຶບ",
-
   "splashTimeoutMessage": "ນີ້ໃຊ້ເວລາດົນກວ່າທີ່ຄາດໄວ້. ກະລຸນາກວດສອບການເຊື່ອມຕໍ່ອິນເຕີເນັດຂອງທ່ານ ແລະລອງໃໝ່ອີກຄັ້ງ.",
-
   "loginTitle": "ຍິນດີຕ້ອນຮັບກັບຄືນ",
   "loginSubtitle": "ເຂົ້າສູ່ລະບົບເພື່ອຕິດຕາມເງິນຂອງທ່ານ.",
   "emailLabel": "ອີເມວ",
@@ -23,7 +19,6 @@
   "orDividerLabel": "ຫຼື",
   "continueWithGoogle": "ດຳເນີນການຕໍ່ດ້ວຍ Google",
   "googleSignInFailedMessage": "ບໍ່ສາມາດເຂົ້າສູ່ລະບົບດ້ວຍ Google ໄດ້. ກະລຸນາລອງໃໝ່ອີກຄັ້ງ.",
-
   "registerTitle": "ສ້າງບັນຊີຂອງທ່ານ",
   "registerSubtitle": "ເລີ່ມຕົ້ນການວາງແຜນງົບປະມານແບບສະຫຼາດພາຍໃນສອງສາມນາທີ.",
   "fullNameLabel": "ຊື່ເຕັມ",
@@ -31,7 +26,6 @@
   "createAccountButton": "ສ້າງບັນຊີ",
   "registerFailedMessage": "ບໍ່ສາມາດສ້າງບັນຊີຂອງທ່ານໄດ້. ກະລຸນາລອງໃໝ່ອີກຄັ້ງ.",
   "haveAccountPrompt": "ມີບັນຊີແລ້ວບໍ?",
-
   "forgotPasswordTitle": "ຕັ້ງລະຫັດຜ່ານໃໝ່",
   "forgotPasswordSubtitle": "ປ້ອນອີເມວຂອງທ່ານ ແລະພວກເຮົາຈະສົ່ງລິ້ງຕັ້ງລະຫັດຜ່ານໃໝ່ໃຫ້.",
   "sendResetLinkButton": "ສົ່ງລິ້ງຕັ້ງລະຫັດຜ່ານໃໝ່",
@@ -39,7 +33,6 @@
   "checkEmailTitle": "ກວດສອບອີເມວຂອງທ່ານ",
   "checkEmailSubtitle": "ພວກເຮົາໄດ້ສົ່ງລິ້ງຕັ້ງລະຫັດຜ່ານໃໝ່ໄປທີ່ {email} ແລ້ວ.",
   "backToSignInButton": "ກັບໄປໜ້າເຂົ້າສູ່ລະບົບ",
-
   "verifyEmailTitle": "ຢືນຢັນອີເມວຂອງທ່ານ",
   "verifyEmailSubtitle": "ພວກເຮົາໄດ້ສົ່ງລິ້ງຢືນຢັນໄປທີ່ {email} ແລ້ວ. ກົດລິ້ງນັ້ນ ແລ້ວສືບຕໍ່ດ້ານລຸ່ມ.",
   "verifiedButton": "ຂ້ອຍໄດ້ຢືນຢັນອີເມວແລ້ວ",
@@ -49,7 +42,6 @@
   "resendFailedMessage": "ບໍ່ສາມາດສົ່ງອີເມວອີກຄັ້ງໄດ້. ກະລຸນາລອງໃໝ່ອີກຄັ້ງ.",
   "notVerifiedYetMessage": "ພວກເຮົາຍັງບໍ່ສາມາດຢືນຢັນໄດ້.",
   "signOutButton": "ອອກຈາກລະບົບ",
-
   "dashboardTitle": "ໜ້າຫຼັກ",
   "offlineBannerMessage": "ອອບໄລນ໌ — ຂໍ້ມູນຈະຊິງຄ໌ອັດຕະໂນມັດເມື່ອທ່ານກັບມາອອນລາຍ",
   "reportsTooltip": "ບົດລາຍງານ",
@@ -59,7 +51,7 @@
   "hidePasswordTooltip": "ເຊື່ອງລະຫັດຜ່ານ",
   "editDisplayNameTooltip": "ແກ້ໄຂຊື່",
   "deleteTransactionTitle": "ລຶບລາຍການທຸລະກຳ?",
-  "deleteTransactionMessage": "ການດຳເນີນການນີ້ຈະລຶບລາຍການທຸລະກຳຢ່າງຖາວອນ ແລະຍົກເລີກຜົນກະທົບຕໍ່ຍອດເງິນໃນບັນຊີ. ບໍ່ສາມາດຍົກເລີກໄດ້.",
+  "deleteTransactionMessage": "ການດຳເນີນການນີ້ຈະລຶບລາຍການທຸລະກຳຢ່າງຖາວອນ ແລະ ຍ້ອນຄືນຜົນກະທົບຕໍ່ຍອດເງິນຂອງບັນຊີ. ບໍ່ສາມາດຍົກເລີກໄດ້.",
   "deleteTransactionFailedMessage": "ບໍ່ສາມາດລຶບລາຍການທຸລະກຳໄດ້.",
   "welcomeToCashly": "ຍິນດີຕ້ອນຮັບສູ່ Cashly",
   "addFirstAccountMessage": "ເພີ່ມບັນຊີທຳອິດຂອງທ່ານເພື່ອເລີ່ມເບິ່ງສະຫຼຸບການເງິນຂອງທ່ານທີ່ນີ້.",
@@ -73,12 +65,32 @@
   "totalBalanceLabel": "ຍອດເງິນລວມ ({currencyCode})",
   "incomeMonthLabel": "ລາຍຮັບ (ເດືອນ)",
   "expenseMonthLabel": "ລາຍຈ່າຍ (ເດືອນ)",
-
+  "dashboardHeaderSubtitle": "ມຸມມອງທີ່ຈະແຈ້ງກ່ຽວກັບເງິນຂອງທ່ານໃນເດືອນນີ້.",
+  "dashboardQuickActionAddIncome": "ເພີ່ມລາຍຮັບ",
+  "dashboardQuickActionAddExpense": "ເພີ່ມລາຍຈ່າຍ",
+  "dashboardQuickActionTransferMoney": "ໂອນເງິນ",
+  "dashboardQuickActionCreateBudget": "ສ້າງງົບປະມານ",
+  "dashboardMetricTotalBalance": "ຍອດເງິນລວມ",
+  "dashboardMetricTotalBalanceCaption": "ອັບເດດແບບສົດຈາກທຸກບັນຊີທີ່ໃຊ້ງານ",
+  "dashboardMetricAlsoBalance": "ພ້ອມທັງ {currencyCode} {amount}",
+  "dashboardMetricMonthlyIncome": "ລາຍຮັບປະຈຳເດືອນ",
+  "dashboardMetricMonthlyExpenses": "ລາຍຈ່າຍປະຈຳເດືອນ",
+  "dashboardMetricNetCashFlow": "ກະແສເງິນສົດສຸດທິ",
+  "dashboardMetricThisMonthCaption": "ເດືອນປະຕິທິນນີ້",
+  "dashboardMetricNetCaption": "ລາຍຮັບຫັກລາຍຈ່າຍ",
+  "dashboardChooseCurrencyTooltip": "ເລືອກສະກຸນເງິນ",
+  "dashboardNotificationsTooltip": "ການແຈ້ງເຕືອນ",
+  "dashboardNotificationsEmptyMessage": "ທ່ານໄດ້ຮັບຂໍ້ມູນລ່າສຸດແລ້ວ.",
+  "dashboardIncomeExpensePanelTitle": "ລາຍຮັບ ແລະ ລາຍຈ່າຍ",
+  "dashboardTrendEmptyMessage": "ຍັງບໍ່ມີກິດຈະກຳພຽງພໍທີ່ຈະສະແດງແນວໂນ້ມ.",
+  "dashboardTrendLast6Months": "6 ເດືອນຫຼ້າສຸດ",
+  "dashboardCategoryEmptyMessage": "ບໍ່ມີໝວດໝູ່ລາຍຈ່າຍທີ່ບັນທຶກໄວ້ໃນເດືອນນີ້.",
+  "dashboardCategoryBreakdownLabel": "ການແບ່ງແຍກຕາມໝວດໝູ່",
+  "dashboardBudgetsEmptyMessage": "ບໍ່ມີງົບປະມານທີ່ໃຊ້ງານໃນເດືອນນີ້.",
   "languageSectionTitle": "ພາສາ",
   "languageEnglish": "English",
   "languageLao": "ລາວ",
   "languageUpdateFailedMessage": "ບໍ່ສາມາດປ່ຽນພາສາໄດ້.",
-
   "emailRequiredError": "ກະລຸນາປ້ອນອີເມວ.",
   "emailInvalidError": "ກະລຸນາປ້ອນອີເມວທີ່ຖືກຕ້ອງ.",
   "passwordTooShortError": "ລະຫັດຜ່ານຕ້ອງມີຢ່າງໜ້ອຍ 8 ໂຕອັກສອນ.",
@@ -92,7 +104,6 @@
   "amountRequiredError": "ກະລຸນາປ້ອນຈຳນວນເງິນ.",
   "amountInvalidError": "ກະລຸນາປ້ອນຕົວເລກທີ່ຖືກຕ້ອງ.",
   "amountMustBePositiveError": "ຈຳນວນເງິນຕ້ອງຫຼາຍກວ່າສູນ.",
-
   "incomeLabel": "ລາຍຮັບ",
   "expenseLabel": "ລາຍຈ່າຍ",
   "transferLabel": "ໂອນເງິນ",
@@ -103,11 +114,9 @@
   "hideArchivedTooltip": "ເຊື່ອງລາຍການທີ່ເກັບໄວ້",
   "showArchivedTooltip": "ສະແດງລາຍການທີ່ເກັບໄວ້",
   "saveChangesButton": "ບັນທຶກການປ່ຽນແປງ",
-
   "accountsTitle": "ບັນຊີ",
   "noAccountsYetTitle": "ຍັງບໍ່ມີບັນຊີ",
   "noAccountsYetMessage": "ເພີ່ມບັນຊີເງິນສົດ, ກະເປົາເງິນ, ທະນາຄານ, ບັດເຄຣດິດ ຫຼືເງິນຝາກ ເພື່ອເລີ່ມຕິດຕາມເງິນຂອງທ່ານ.",
-  "addAccountButton": "ເພີ່ມບັນຊີ",
   "deleteAccountTitle": "ລຶບບັນຊີ?",
   "deleteAccountMessage": "ການດຳເນີນການນີ້ຈະລຶບ \"{name}\" ຢ່າງຖາວອນ. ບໍ່ສາມາດຍົກເລີກໄດ້.",
   "deleteAccountFailedMessage": "ບໍ່ສາມາດລຶບບັນຊີໄດ້.",
@@ -125,7 +134,6 @@
   "accountTypeBankLabel": "ທະນາຄານ",
   "accountTypeCreditCardLabel": "ບັດເຄຣດິດ",
   "accountTypeSavingsLabel": "ເງິນຝາກ",
-
   "categoriesTitle": "ໝວດໝູ່",
   "noExpenseCategoriesYetTitle": "ຍັງບໍ່ມີໝວດໝູ່ລາຍຈ່າຍ",
   "noIncomeCategoriesYetTitle": "ຍັງບໍ່ມີໝວດໝູ່ລາຍຮັບ",
@@ -140,7 +148,6 @@
   "categoryNameLabel": "ຊື່ໝວດໝູ່",
   "categoryTypeLabel": "ປະເພດ",
   "saveCategoryFailedMessage": "ບໍ່ສາມາດບັນທຶກໝວດໝູ່ໄດ້. ກະລຸນາລອງໃໝ່ອີກຄັ້ງ.",
-
   "budgetTitle": "ງົບປະມານ",
   "deleteBudgetTitle": "ລຶບງົບປະມານ?",
   "deleteBudgetMessage": "ການດຳເນີນການນີ້ຈະລຶບງົບປະມານສຳລັບ \"{name}\" ຂອງເດືອນນີ້. ບໍ່ສາມາດຍົກເລີກໄດ້.",
@@ -156,7 +163,6 @@
   "overspentByMessage": "ເກີນ {amount}",
   "remainingAmountMessage": "ເຫຼືອ {amount}",
   "saveBudgetFailedMessage": "ບໍ່ສາມາດບັນທຶກງົບປະມານໄດ້. ກະລຸນາລອງໃໝ່ອີກຄັ້ງ.",
-
   "savingsGoalsTitle": "ເປົ້າໝາຍການເກັບເງິນ",
   "savingsGoalsTooltip": "ເປົ້າໝາຍການເກັບເງິນ",
   "noSavingsGoalsYetTitle": "ຍັງບໍ່ມີເປົ້າໝາຍການເກັບເງິນ",
@@ -199,12 +205,8 @@
   "goalCelebrationMessage": "ທ່ານໄດ້ບັນລຸເປົ້າໝາຍ \"{goalName}\" ຂອງທ່ານແລ້ວ.",
   "goalNotFoundMessage": "ເປົ້າໝາຍນີ້ບໍ່ມີອີກຕໍ່ໄປແລ້ວ.",
   "linkedAccountArchivedMessage": "ບັນຊີທີ່ເຊື່ອມຕໍ່ກັບເປົ້າໝາຍນີ້ຖືກເກັບໄວ້ແລ້ວ.",
-
   "transactionsTitle": "ລາຍການທຸລະກຳ",
   "transactionsTabLabel": "ທຸລະກຳ",
-  "deleteTransactionTitle": "ລຶບລາຍການທຸລະກຳ?",
-  "deleteTransactionMessage": "ການດຳເນີນການນີ້ຈະລຶບລາຍການທຸລະກຳຢ່າງຖາວອນ ແລະ ຍ້ອນຄືນຜົນກະທົບຕໍ່ຍອດເງິນຂອງບັນຊີ. ບໍ່ສາມາດຍົກເລີກໄດ້.",
-  "deleteTransactionFailedMessage": "ບໍ່ສາມາດລຶບລາຍການທຸລະກຳໄດ້.",
   "noTransactionsInMonthTitle": "ບໍ່ມີລາຍການທຸລະກຳໃນ {month}",
   "addFirstTransactionMessage": "ເພີ່ມລາຍຮັບ ຫຼື ລາຍຈ່າຍທຳອິດຂອງທ່ານສຳລັບເດືອນນີ້.",
   "addTransactionButton": "ເພີ່ມລາຍການທຸລະກຳ",
@@ -250,7 +252,6 @@
   "noteOptionalLabel": "ໝາຍເຫດ (ບໍ່ບັງຄັບ)",
   "saveTransactionFailedMessage": "ບໍ່ສາມາດບັນທຶກລາຍການທຸລະກຳໄດ້. ກະລຸນາລອງໃໝ່ອີກຄັ້ງ.",
   "archivedSuffixFormat": "{name} (ເກັບຖາວອນ)",
-
   "reportsTitle": "ລາຍງານ",
   "exportReportTooltip": "ສົ່ງອອກເປັນ CSV",
   "exportReportSubject": "ບົດລາຍງານ Cashly — {month}",
@@ -258,11 +259,27 @@
   "convertedTotalsCardTitle": "ຍອດລວມທີ່ແປງແລ້ວ",
   "convertedTotalsCaption": "ຍອດລວມໂດຍປະມານຂອງທຸກສະກຸນເງິນ, ສະແດງເປັນ {currency}.",
   "@convertedTotalsCaption": {
-    "placeholders": {"currency": {"type": "String"}}
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      }
+    }
   },
   "convertedTotalsRatesAsOf": "ອັດຕາແລກປ່ຽນ ນັບແຕ່ {date} · ອັດຕາໂດຍ ExchangeRate-API",
   "@convertedTotalsRatesAsOf": {
-    "placeholders": {"date": {"type": "String"}}
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "convertedTotalsPartialWarning": "ບໍ່ລວມ {currencies} — ບໍ່ມີອັດຕາແລກປ່ຽນ.",
+  "@convertedTotalsPartialWarning": {
+    "placeholders": {
+      "currencies": {
+        "type": "String"
+      }
+    }
   },
   "nothingToReportYetTitle": "ຍັງບໍ່ມີຫຍັງໃຫ້ລາຍງານ",
   "nothingToReportYetMessage": "ເມື່ອທ່ານບັນທຶກລາຍຮັບ ຫຼື ລາຍຈ່າຍສຳລັບເດືອນນີ້, ທ່ານຈະເຫັນສະຫຼຸບປະຈຳເດືອນ, ການແບ່ງແຍກລາຍຈ່າຍ ແລະ ແນວໂນ້ມຢູ່ບ່ອນນີ້.",
@@ -273,9 +290,7 @@
   "netLabel": "ສຸດທິ",
   "totalLabel": "ລວມ",
   "monthIncomeExpenseSummaryMessage": "{month} — ລາຍຮັບ {income}, ລາຍຈ່າຍ {expense}",
-
   "save": "ບັນທຶກ",
-
   "settingsTitle": "ຕັ້ງຄ່າ",
   "appearanceSectionTitle": "ຮູບລັກສະນະ",
   "themeLabel": "ຮູບແບບ",
@@ -309,10 +324,8 @@
   "defaultCurrencyHelperMessage": "ໃຊ້ເພື່ອເລືອກສະກຸນເງິນລ່ວງໜ້າເມື່ອທ່ານສ້າງບັນຊີ ຫຼື ງົບປະມານໃໝ່.",
   "defaultCurrencyUpdateFailedMessage": "ບໍ່ສາມາດອັບເດດສະກຸນເງິນເລີ່ມຕົ້ນຂອງທ່ານໄດ້.",
   "currencyDisplayFormat": "{code} — {name}",
-
   "profileTitle": "ໂປຣໄຟລ໌",
   "editNameDialogTitle": "ແກ້ໄຂຊື່",
-  "fullNameLabel": "ຊື່ເຕັມ",
   "nameUpdatedMessage": "ອັບເດດຊື່ແລ້ວ.",
   "nameUpdateFailedMessage": "ບໍ່ສາມາດອັບເດດຊື່ຂອງທ່ານໄດ້.",
   "deleteUserAccountTitle": "ລຶບບັນຊີ?",
@@ -325,12 +338,9 @@
   "emailVerifiedLabel": "ອີເມວຢືນຢັນແລ້ວ",
   "notVerifiedLabel": "ຍັງບໍ່ໄດ້ຢືນຢັນ",
   "memberSinceLabel": "ສະມາຊິກຕັ້ງແຕ່",
-  "signOutButton": "ອອກຈາກລະບົບ",
   "deleteAccountButtonLabel": "ລຶບບັນຊີ",
-
   "iconLabel": "ໄອຄອນ",
   "colorLabel": "ສີ",
-
   "smartMoneyScoreCardTitle": "ຄະແນນການເງິນອັດສະລິຍະ Cashly",
   "smartMoneyScoreCardSubtitle": "ການເໜັງເໜືອຍອດເງິນນຳພາ. ພຶດຕິກຳໃຫ້ບໍລິບົດ.",
   "smartMoneyScoreWhatIsShapingLabel": "ສິ່ງທີ່ກຳລັງສ້າງຜົນກະທົບໃນເດືອນນີ້",
@@ -395,5 +405,405 @@
   "smartMoneyScoreMetricNetCashFlow": "ກະແສເງິນສົດສຸດທິ",
   "smartMoneyScoreMetricComparedLastMonth": "ທຽບກັບເດືອນກ່ອນ",
   "smartMoneyScoreMetricExpensesChange": "{percent} ລາຍຈ່າຍ",
-  "smartMoneyScoreFormulaFootnote": "ຄະແນນລາຍເດືອນ = clamp(0–150, 100 + % ການປ່ຽນແປງຍອດເງິນ + ຕົວປັບພຶດຕິກຳການເງິນ)."
+  "smartMoneyScoreFormulaFootnote": "ຄະແນນລາຍເດືອນ = clamp(0–150, 100 + % ການປ່ຽນແປງຍອດເງິນ + ຕົວປັບພຶດຕິກຳການເງິນ).",
+  "financialInsightMsgSteadySpendingHeadline": "ການໃຊ້ຈ່າຍຂອງທ່ານມື້ນີ້ຄົງທີ່ດີ.",
+  "financialInsightMsgSteadySpendingExplanation": "ສືບຕໍ່ບັນທຶກລາຍການທຸລະກຳ ແລ້ວ Cashly ຈະເຮັດໃຫ້ແຕ່ລະຄວາມເຂົ້າໃຈເປັນສ່ວນຕົວຫຼາຍຂຶ້ນ.",
+  "financialInsightMsgNegativeBalanceHeadline": "ຍອດເງິນລວມຂອງທ່ານຕ່ຳກວ່າສູນ.",
+  "financialInsightMsgNegativeBalanceExplanation": "ຍອດເງິນລວມ {currency} ຂອງທ່ານແມ່ນ {amount}. ການເຮັດໃຫ້ຍອດຂາດນັ້ນກັບຄືນເປັນບວກແມ່ນຂັ້ນຕອນຕໍ່ໄປທີ່ຊັດເຈນທີ່ສຸດ.",
+  "@financialInsightMsgNegativeBalanceExplanation": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgPlanEssentialExpenseTitle": "ວາງແຜນລາຍຈ່າຍທີ່ຈຳເປັນຕໍ່ໄປກ່ອນ",
+  "financialInsightMsgPlanEssentialExpenseDetail": "ການເນັ້ນໃສ່ລາຍຈ່າຍທີ່ຈຳເປັນເທື່ອລະອັນຊ່ວຍສ້າງເງິນສະຫງວນທີ່ເປັນບວກຄືນ ໂດຍບໍ່ຕັດສິນທາງເລືອກທີ່ຜ່ານມາ.",
+  "financialInsightMsgCategoryOverBudgetHeadline": "{category} ເກີນງົບປະມານປະຈຳເດືອນແລ້ວ.",
+  "@financialInsightMsgCategoryOverBudgetHeadline": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgCategoryOverBudgetExplanation": "ທ່ານໄດ້ໃຊ້ຈ່າຍ {spent} ຈາກແຜນ {limit}.",
+  "@financialInsightMsgCategoryOverBudgetExplanation": {
+    "placeholders": {
+      "spent": {
+        "type": "String"
+      },
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgPauseCategorySpendingTitle": "ຢຸດການໃຊ້ຈ່າຍ {category} ສຳລັບມື້ນີ້",
+  "@financialInsightMsgPauseCategorySpendingTitle": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgPauseCategorySpendingDetail": "ການຢຸດພັກສັ້ນໆຊ່ວຍປົກປ້ອງແຜນທີ່ເຫຼືອຂອງເດືອນນີ້ ໂດຍບໍ່ຕັດສິນທາງເລືອກທີ່ຜ່ານມາ.",
+  "financialInsightMsgCategoryNeedsRoomHeadline": "{category} ຕ້ອງການພື້ນທີ່ເລັກນ້ອຍໃນເດືອນນີ້.",
+  "@financialInsightMsgCategoryNeedsRoomHeadline": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgCategoryNeedsRoomExplanation": "ທ່ານໄດ້ໃຊ້ {percent} ຂອງງົບປະມານ {limit}.",
+  "@financialInsightMsgCategoryNeedsRoomExplanation": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      },
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgSetRestOfMonthLimitTitle": "ຕັ້ງຂີດຈຳກັດສ່ວນທີ່ເຫຼືອຂອງເດືອນສຳລັບ {category}",
+  "@financialInsightMsgSetRestOfMonthLimitTitle": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgSetRestOfMonthLimitDetail": "ການຮັກສາການຊື້ຄັ້ງຕໍ່ໄປພາຍໃນ {remaining} ຈະຮັກສາງົບປະມານນີ້ໃຫ້ຢູ່ໃນແຜນ.",
+  "@financialInsightMsgSetRestOfMonthLimitDetail": {
+    "placeholders": {
+      "remaining": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgCategoryHigherThanUsualHeadline": "{category} ສູງກວ່າອັດຕາປົກກະຕິຂອງທ່ານ.",
+  "@financialInsightMsgCategoryHigherThanUsualHeadline": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgCategoryHigherThanUsualExplanation": "ມັນສູງກວ່າໄລຍະທຽບເທົ່າ {changePercent} ດັ່ງນັ້ນຄວນກວດເບິ່ງໄວໆ.",
+  "@financialInsightMsgCategoryHigherThanUsualExplanation": {
+    "placeholders": {
+      "changePercent": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgReviewNextCategoryPurchaseTitle": "ກວດສອບການຊື້ {category} ຄັ້ງຕໍ່ໄປຂອງທ່ານ",
+  "@financialInsightMsgReviewNextCategoryPurchaseTitle": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgReviewNextCategoryPurchaseDetail": "ການປ່ຽນແທນ ຫຼື ຊັກຊ້າເລັກນ້ອຍສາມາດຫຼຸດຜ່ອນການເພີ່ມຂຶ້ນນີ້ ໃນຂະນະທີ່ທ່ານຕັດສິນໃຈວ່າມັນເປັນຄັ້ງດຽວຫຼືບໍ່.",
+  "financialInsightMsgTodaySpendingFasterHeadline": "ມື້ນີ້ໃຊ້ຈ່າຍໄວກວ່າອັດຕາຂອງອາທິດນີ້.",
+  "financialInsightMsgTodaySpendingFasterExplanation": "ມັນສາມາດເກີດຂຶ້ນໄດ້ — ການກວດເບິ່ງຢ່າງຕັ້ງໃຈກ່ອນການຊື້ຄັ້ງຕໍ່ໄປຈະຮັກສາການຄວບຄຸມມື້ນີ້ໄວ້.",
+  "financialInsightMsgCheckNextExpenseTitle": "ກວດເບິ່ງລາຍຈ່າຍຄັ້ງຕໍ່ໄປກ່ອນຊື້",
+  "financialInsightMsgCheckNextExpenseDetail": "ການຢຸດພັກໄວໆສາມາດຮັກສາມື້ນີ້ໃຫ້ໃກ້ຄຽງອັດຕາປົກກະຕິ ໂດຍບໍ່ປ່ຽນແປງສິ່ງທີ່ເກີດຂຶ້ນແລ້ວ.",
+  "financialInsightMsgSpendingAheadOfIncomeHeadline": "ການໃຊ້ຈ່າຍຂອງເດືອນນີ້ນຳໜ້າລາຍຮັບຈົນຮອດຕອນນີ້.",
+  "financialInsightMsgSpendingAheadOfIncomeExplanation": "ນີ້ແມ່ນແນວໂນ້ມທີ່ຄວນຕິດຕາມ ບໍ່ແມ່ນຄຳຕັດສິນ — ທາງເລືອກຕັ້ງໃຈໜຶ່ງ ຫຼື ສອງຢ່າງຍັງສາມາດປ່ຽນເດືອນນີ້ໄດ້.",
+  "financialInsightMsgChooseLowPriorityExpenseTitle": "ເລືອກລາຍຈ່າຍທີ່ບໍ່ສຳຄັນໜຶ່ງອັນເພື່ອຊັກຊ້າ",
+  "financialInsightMsgChooseLowPriorityExpenseDetail": "ເນັ້ນໃສ່ທາງເລືອກຕໍ່ໄປເທົ່ານັ້ນ; ການຫຼຸດຄ່າໃຊ້ຈ່າຍທີ່ປັບໄດ້ໜຶ່ງອັນສາມາດເຮັດໃຫ້ເດືອນນີ້ດຸ່ນດ່ຽງຂຶ້ນ.",
+  "financialInsightMsgBalanceZeroHeadline": "ຍອດເງິນທີ່ໃຊ້ໄດ້ຂອງທ່ານແມ່ນສູນ.",
+  "financialInsightMsgBalanceThinHeadline": "ເງິນສະຫງວນຍອດເງິນຂອງທ່ານກຳລັງແໜ້ນ.",
+  "financialInsightMsgBalanceLimitedHeadline": "ຍອດເງິນຂອງທ່ານຕ້ອງການພື້ນທີ່ເພີ່ມເຕີມເລັກນ້ອຍ.",
+  "financialInsightMsgBalanceSteadyHeadline": "ຍອດເງິນຂອງທ່ານຄົງທີ່ດີ.",
+  "financialInsightMsgBalanceZeroExplanation": "ບໍ່ມີເງິນສະຫງວນ {currency} ເຫຼືອຢູ່ຫຼັງຈາກກິດຈະກຳຫຼ້າສຸດ. ການເລືອກລາຍຈ່າຍຕໍ່ໄປຢ່າງລະມັດລະວັງຊ່ວຍສ້າງພື້ນທີ່ຄືນໄດ້.",
+  "@financialInsightMsgBalanceZeroExplanation": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgBalanceThinExplanation": "ຕາມອັດຕາການໃຊ້ຈ່າຍຫຼ້າສຸດຂອງທ່ານ ຍອດເງິນ {currency} ນີ້ຄຸ້ມຄອງປະມານ {days} ມື້. ການປົກປ້ອງລາຍຈ່າຍທີ່ຈຳເປັນໜຶ່ງອັນກ່ອນຈະຊ່ວຍໄດ້.",
+  "@financialInsightMsgBalanceThinExplanation": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "financialInsightMsgBalanceLimitedExplanation": "ຕາມອັດຕາການໃຊ້ຈ່າຍຫຼ້າສຸດຂອງທ່ານ ຍອດເງິນ {currency} ນີ້ຄຸ້ມຄອງປະມານ {days} ມື້. ແຜນສ່ວນທີ່ເຫຼືອຂອງອາທິດແບບນ້ອຍໆສາມາດຮັກສາພື້ນທີ່ນັ້ນໄວ້.",
+  "@financialInsightMsgBalanceLimitedExplanation": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "financialInsightMsgBalanceSteadyExplanation": "ຍອດເງິນຂອງທ່ານກຳລັງຮອງຮັບອັດຕາປັດຈຸບັນ.",
+  "financialInsightMsgProtectEssentialExpenseTitle": "ປົກປ້ອງລາຍຈ່າຍທີ່ຈຳເປັນຕໍ່ໄປ",
+  "financialInsightMsgProtectEssentialExpenseDetail": "ການເລືອກຄ່າໃຊ້ຈ່າຍທີ່ຈຳເປັນຕໍ່ໄປກ່ອນຊ່ວຍສ້າງພື້ນທີ່ກ່ອນເພີ່ມສິ່ງທີ່ບໍ່ຈຳເປັນ.",
+  "financialInsightMsgReserveNextDaysTitle": "ສະຫງວນສິ່ງຈຳເປັນສຳລັບ {days} ມື້ຕໍ່ໄປ",
+  "@financialInsightMsgReserveNextDaysTitle": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "financialInsightMsgReserveNextDaysDetail": "ການຮັກສາເງິນສະຫງວນນ້ອຍນັ້ນສຳລັບຄວາມຈຳເປັນກ່ອນ ໃຫ້ຍອດເງິນຂອງທ່ານມີພື້ນທີ່ຟື້ນຕົວຫຼາຍຂຶ້ນ.",
+  "financialInsightMsgSetShortRestOfWeekLimitTitle": "ຕັ້ງຂີດຈຳກັດສ່ວນທີ່ເຫຼືອຂອງອາທິດແບບສັ້ນ",
+  "financialInsightMsgSetShortRestOfWeekLimitDetail": "ຂີດຈຳກັດນ້ອຍໆສຳລັບການໃຊ້ຈ່າຍທີ່ປັບໄດ້ຊ່ວຍໃຫ້ຍອດເງິນປັດຈຸບັນຂອງທ່ານໃຊ້ໄດ້ດົນຂຶ້ນ.",
+  "financialInsightMsgKeepExpenseIntentionalTitle": "ຮັກສາລາຍຈ່າຍຕໍ່ໄປຂອງທ່ານໃຫ້ຕັ້ງໃຈ",
+  "financialInsightMsgKeepExpenseIntentionalBalanceDetail": "ຍອດເງິນຂອງທ່ານກຳລັງຮອງຮັບອັດຕາປັດຈຸບັນ. ການກວດເບິ່ງໄວໆກ່ອນໃຊ້ຈ່າຍຊ່ວຍໃຫ້ມັນຄົງຢູ່ແບບນັ້ນ.",
+  "financialInsightMsgKeepExpenseIntentionalPaceDetail": "ອັດຕາປັດຈຸບັນຂອງທ່ານແມ່ນດີ. ການກວດເບິ່ງໄວໆກ່ອນຊື້ຊ່ວຍໃຫ້ມັນຄົງຢູ່ແບບນັ້ນ.",
+  "financialInsightMsgOnboardingHeadline": "ມາສ້າງຮູບແບບການໃຊ້ຈ່າຍທຳອິດຂອງທ່ານກັນ.",
+  "financialInsightMsgOnboardingExplanation": "ເພີ່ມລາຍການລາຍຮັບ ຫຼື ລາຍຈ່າຍສອງສາມລາຍການ ແລ້ວ Cashly ຈະປ່ຽນມັນເປັນການກວດເບິ່ງປະຈຳວັນ, ອາທິດ, ແລະ ເດືອນສ່ວນຕົວ.",
+  "financialInsightMsgLogNextExpenseTitle": "ບັນທຶກລາຍຈ່າຍຕໍ່ໄປຂອງທ່ານ",
+  "financialInsightMsgLogNextExpenseDetail": "ແມ່ນແຕ່ການຊື້ປະຈຳວັນນ້ອຍໆກໍ່ໃຫ້ຈຸດເລີ່ມຕົ້ນທີ່ດີກວ່າແກ່ຜູ້ຊ່ວຍ.",
+  "financialInsightMsgNotEnoughActivityTodayReason": "ຍັງບໍ່ມີກິດຈະກຳຫຼ້າສຸດພຽງພໍທີ່ຈະໃຫ້ຄະແນນແນວໂນ້ມມື້ນີ້.",
+  "financialInsightMsgNotEnoughActivityWeekReason": "ຍັງບໍ່ມີກິດຈະກຳຫຼ້າສຸດພຽງພໍທີ່ຈະໃຫ້ຄະແນນແນວໂນ້ມອາທິດນີ້.",
+  "financialInsightMsgNotEnoughActivityMonthReason": "ຍັງບໍ່ມີກິດຈະກຳຫຼ້າສຸດພຽງພໍທີ່ຈະໃຫ້ຄະແນນແນວໂນ້ມເດືອນນີ້.",
+  "financialInsightMsgBalanceImpactNegativeReason": "ຍອດເງິນລວມ {currency} ຂອງທ່ານຕ່ຳກວ່າສູນ ດັ່ງນັ້ນການສ້າງເງິນສະຫງວນທີ່ເປັນບວກຄືນແມ່ນບູລິມະສິດ.",
+  "@financialInsightMsgBalanceImpactNegativeReason": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgBalanceImpactEmptyReason": "ຍອດເງິນ {currency} ທີ່ໃຊ້ງານຂອງທ່ານແມ່ນສູນຫຼັງຈາກກິດຈະກຳຫຼ້າສຸດ.",
+  "@financialInsightMsgBalanceImpactEmptyReason": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgBalanceImpactLowReason": "ຍອດເງິນລວມ {currency} ຂອງທ່ານຄຸ້ມຄອງປະມານ {days} ມື້ຕາມອັດຕາການໃຊ້ຈ່າຍຫຼ້າສຸດ.",
+  "@financialInsightMsgBalanceImpactLowReason": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "financialInsightMsgBalanceImpactHealthyReason": "ຍອດເງິນລວມ {currency} ຂອງທ່ານຄຸ້ມຄອງຫຼາຍກວ່າໜຶ່ງເດືອນຕາມອັດຕາການໃຊ້ຈ່າຍຫຼ້າສຸດ.",
+  "@financialInsightMsgBalanceImpactHealthyReason": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgCategoryOverBudgetReasonToday": "{category} ເກີນງົບປະມານປະຈຳເດືອນແລ້ວ.",
+  "@financialInsightMsgCategoryOverBudgetReasonToday": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgCategoryNearBudgetReasonToday": "{category} ມີພື້ນທີ່ງົບປະມານເຫຼືອໜ້ອຍໃນເດືອນນີ້.",
+  "@financialInsightMsgCategoryNearBudgetReasonToday": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgTodaySpikeReason": "ການໃຊ້ຈ່າຍມື້ນີ້ຫຼາຍກວ່າສອງເທົ່າຂອງອັດຕາປະຈຳວັນກ່ອນໜ້າຂອງອາທິດນີ້.",
+  "financialInsightMsgTodayComparableIncreaseReason": "ການໃຊ້ຈ່າຍມື້ນີ້ສູງກວ່າຍອດລວມທຽບເທົ່າຂອງມື້ວານ {changePercent}.",
+  "@financialInsightMsgTodayComparableIncreaseReason": {
+    "placeholders": {
+      "changePercent": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgNoActivityTodayReason": "ບໍ່ມີການບັນທຶກລາຍຮັບ ຫຼື ລາຍຈ່າຍໃນມື້ນີ້.",
+  "financialInsightMsgIncomeCoversTodayReason": "ລາຍຮັບທີ່ບັນທຶກມື້ນີ້ຄຸ້ມຄອງການໃຊ້ຈ່າຍມື້ນີ້.",
+  "financialInsightMsgCategoryOverBudgetReasonWeek": "{category} ເກີນງົບປະມານ ດັ່ງນັ້ນອາທິດນີ້ຕ້ອງການອັດຕາທີ່ຊ້າລົງ.",
+  "@financialInsightMsgCategoryOverBudgetReasonWeek": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgCategoryNearBudgetReasonWeek": "{category} ໃກ້ຮອດຂີດຈຳກັດປະຈຳເດືອນແລ້ວ.",
+  "@financialInsightMsgCategoryNearBudgetReasonWeek": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgCategoryPacedBudgetReasonWeek": "{category} ນຳໜ້າອັດຕາປະຈຳເດືອນທີ່ຄາດໄວ້.",
+  "@financialInsightMsgCategoryPacedBudgetReasonWeek": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgWeeklyCategorySpikeReason": "{category} ສູງກວ່າອາທິດທຽບເທົ່າ {changePercent}.",
+  "@financialInsightMsgWeeklyCategorySpikeReason": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      },
+      "changePercent": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgWeekComparableIncreaseReason": "ການໃຊ້ຈ່າຍອາທິດນີ້ສູງກວ່າຍອດລວມທຽບເທົ່າຂອງອາທິດກ່ອນ {changePercent}.",
+  "@financialInsightMsgWeekComparableIncreaseReason": {
+    "placeholders": {
+      "changePercent": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgWeekComparableDecreaseReason": "ອາທິດນີ້ໃຊ້ຈ່າຍໜ້ອຍກວ່າອາທິດທຽບເທົ່າກ່ອນໜ້າ.",
+  "financialInsightMsgCategoryOverBudgetReasonMonth": "{category} ເກີນງົບປະມານ {percent}.",
+  "@financialInsightMsgCategoryOverBudgetReasonMonth": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgCategoryNearBudgetReasonMonth": "{category} ມີ {remaining} ເຫຼືອຢູ່.",
+  "@financialInsightMsgCategoryNearBudgetReasonMonth": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      },
+      "remaining": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgCategoryPacedBudgetReasonMonth": "{category} ໃຊ້ຈ່າຍໄວກວ່າແຜນປະຈຳເດືອນ.",
+  "@financialInsightMsgCategoryPacedBudgetReasonMonth": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgSpendingOverIncomeReasonMonth": "ການໃຊ້ຈ່າຍນັບແຕ່ຕົ້ນເດືອນແມ່ນ {expense} ທຽບກັບລາຍຮັບ {income}.",
+  "@financialInsightMsgSpendingOverIncomeReasonMonth": {
+    "placeholders": {
+      "expense": {
+        "type": "String"
+      },
+      "income": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgIncomeCoversMonthReason": "ລາຍຮັບປັດຈຸບັນຄຸ້ມຄອງການໃຊ້ຈ່າຍທີ່ບັນທຶກຂອງເດືອນນີ້.",
+  "financialInsightMsgMonthComparableIncreaseReason": "ການໃຊ້ຈ່າຍນັບແຕ່ຕົ້ນເດືອນສູງກວ່າເດືອນທຽບເທົ່າກ່ອນໜ້າ {changePercent}.",
+  "@financialInsightMsgMonthComparableIncreaseReason": {
+    "placeholders": {
+      "changePercent": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgMonthComparableDecreaseReason": "ການໃຊ້ຈ່າຍນັບແຕ່ຕົ້ນເດືອນຕ່ຳກວ່າໄລຍະທຽບເທົ່າກ່ອນໜ້າ.",
+  "financialInsightMsgSteadyReasonToday": "ມື້ນີ້ຢູ່ໃນອັດຕາການໃຊ້ຈ່າຍທີ່ດີ.",
+  "financialInsightMsgSteadyReasonWeek": "ອາທິດນີ້ຕິດຕາມໃກ້ຄຽງກັບອັດຕາຫຼ້າສຸດຂອງທ່ານ.",
+  "financialInsightMsgSteadyReasonMonth": "ເດືອນນີ້ຢູ່ໃນແຜນທີ່ບັນທຶກໄວ້ໃນ Cashly.",
+  "financialInsightMsgShortHorizonNoActiveAccountToday": "ມື້ນີ້ຍັງບໍ່ມີຍອດເງິນບັນຊີທີ່ໃຊ້ງານໃຫ້ປຽບທຽບ ດັ່ງນັ້ນ Cashly ກຳລັງໃຊ້ຍອດເງິນປັດຈຸບັນ, ງົບປະມານ, ແລະ ສັນຍານການໃຊ້ຈ່າຍ.",
+  "financialInsightMsgShortHorizonNoActiveAccountWeek": "ອາທິດນີ້ຍັງບໍ່ມີຍອດເງິນບັນຊີທີ່ໃຊ້ງານໃຫ້ປຽບທຽບ ດັ່ງນັ້ນ Cashly ກຳລັງໃຊ້ຍອດເງິນປັດຈຸບັນ, ງົບປະມານ, ແລະ ສັນຍານການໃຊ້ຈ່າຍ.",
+  "financialInsightMsgShortHorizonCrossCurrencyToday": "ມີການໂອນລະຫວ່າງສະກຸນເງິນເກີດຂຶ້ນມື້ນີ້. Cashly ກຳລັງຮັກສາການປຽບທຽບຍອດເງິນເປັນກາງຈົນກວ່າຈະມີພື້ນຖານອັດຕາແລກປ່ຽນ.",
+  "financialInsightMsgShortHorizonCrossCurrencyWeek": "ມີການໂອນລະຫວ່າງສະກຸນເງິນເກີດຂຶ້ນອາທິດນີ້. Cashly ກຳລັງຮັກສາການປຽບທຽບຍອດເງິນເປັນກາງຈົນກວ່າຈະມີພື້ນຖານອັດຕາແລກປ່ຽນ.",
+  "financialInsightMsgShortHorizonAccountAddedToday": "ມີການເພີ່ມບັນຊີໃໝ່ມື້ນີ້ ດັ່ງນັ້ນ Cashly ຍັງບໍ່ສາມາດຄຳນວນຍອດເງິນເປີດນັ້ນຄືນຢ່າງປອດໄພ.",
+  "financialInsightMsgShortHorizonAccountAddedWeek": "ມີການເພີ່ມບັນຊີໃໝ່ອາທິດນີ້ ດັ່ງນັ້ນ Cashly ຍັງບໍ່ສາມາດຄຳນວນຍອດເງິນເປີດນັ້ນຄືນຢ່າງປອດໄພ.",
+  "financialInsightMsgShortHorizonUnverifiableToday": "Cashly ບໍ່ສາມາດຢືນຢັນຄ່າຍອດເງິນສຳລັບມື້ນີ້ໄດ້ ດັ່ງນັ້ນການປຽບທຽບຍອດເງິນຈຶ່ງເປັນກາງ.",
+  "financialInsightMsgShortHorizonUnverifiableWeek": "Cashly ບໍ່ສາມາດຢືນຢັນຄ່າຍອດເງິນສຳລັບອາທິດນີ້ໄດ້ ດັ່ງນັ້ນການປຽບທຽບຍອດເງິນຈຶ່ງເປັນກາງ.",
+  "financialInsightMsgShortHorizonZeroOpeningToday": "ມື້ນີ້ເລີ່ມຕົ້ນທີ່ສູນໂດຍບໍ່ມີລາຍຮັບ ຫຼື ລາຍຈ່າຍທີ່ບັນທຶກ ດັ່ງນັ້ນ Cashly ກຳລັງໃຊ້ຍອດເງິນປັດຈຸບັນ, ງົບປະມານ, ແລະ ສັນຍານການໃຊ້ຈ່າຍ.",
+  "financialInsightMsgShortHorizonZeroOpeningWeek": "ອາທິດນີ້ເລີ່ມຕົ້ນທີ່ສູນໂດຍບໍ່ມີລາຍຮັບ ຫຼື ລາຍຈ່າຍທີ່ບັນທຶກ ດັ່ງນັ້ນ Cashly ກຳລັງໃຊ້ຍອດເງິນປັດຈຸບັນ, ງົບປະມານ, ແລະ ສັນຍານການໃຊ້ຈ່າຍ.",
+  "financialInsightMsgShortHorizonIncreasedToday": "ຍອດເງິນມື້ນີ້ເພີ່ມຂຶ້ນ {percent}, ປະກອບສ່ວນ {points} ໃຫ້ຄະແນນຮ່ວມກັບສັນຍານງົບປະມານ ແລະ ການໃຊ້ຈ່າຍ.",
+  "@financialInsightMsgShortHorizonIncreasedToday": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      },
+      "points": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgShortHorizonIncreasedWeek": "ຍອດເງິນອາທິດນີ້ເພີ່ມຂຶ້ນ {percent}, ປະກອບສ່ວນ {points} ໃຫ້ຄະແນນຮ່ວມກັບສັນຍານງົບປະມານ ແລະ ການໃຊ້ຈ່າຍ.",
+  "@financialInsightMsgShortHorizonIncreasedWeek": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      },
+      "points": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgShortHorizonDecreasedToday": "ຍອດເງິນມື້ນີ້ຫຼຸດລົງ {percent}, ປະກອບສ່ວນ {points} ໃຫ້ຄະແນນຮ່ວມກັບສັນຍານງົບປະມານ ແລະ ການໃຊ້ຈ່າຍ.",
+  "@financialInsightMsgShortHorizonDecreasedToday": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      },
+      "points": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgShortHorizonDecreasedWeek": "ຍອດເງິນອາທິດນີ້ຫຼຸດລົງ {percent}, ປະກອບສ່ວນ {points} ໃຫ້ຄະແນນຮ່ວມກັບສັນຍານງົບປະມານ ແລະ ການໃຊ້ຈ່າຍ.",
+  "@financialInsightMsgShortHorizonDecreasedWeek": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      },
+      "points": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgShortHorizonStayedLevelToday": "ຍອດເງິນມື້ນີ້ຄົງທີ່, ປະກອບສ່ວນ {points} ໃຫ້ຄະແນນຮ່ວມກັບສັນຍານງົບປະມານ ແລະ ການໃຊ້ຈ່າຍ.",
+  "@financialInsightMsgShortHorizonStayedLevelToday": {
+    "placeholders": {
+      "points": {
+        "type": "String"
+      }
+    }
+  },
+  "financialInsightMsgShortHorizonStayedLevelWeek": "ຍອດເງິນອາທິດນີ້ຄົງທີ່, ປະກອບສ່ວນ {points} ໃຫ້ຄະແນນຮ່ວມກັບສັນຍານງົບປະມານ ແລະ ການໃຊ້ຈ່າຍ.",
+  "@financialInsightMsgShortHorizonStayedLevelWeek": {
+    "placeholders": {
+      "points": {
+        "type": "String"
+      }
+    }
+  }
 }

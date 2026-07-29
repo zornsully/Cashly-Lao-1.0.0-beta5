@@ -8,9 +8,15 @@ import '../entities/monthly_report.dart';
 class ConvertReportTotalsUseCase {
   const ConvertReportTotalsUseCase();
 
-  /// Returns null when [report] has nothing to convert (a currency [rates]
-  /// doesn't cover for every currency present) — callers should treat that
+  /// Returns null only when [report] has nothing convertible at all (no
+  /// currency present is covered by [rates]) — callers should treat that
   /// the same as "conversion unavailable," never show a zeroed-out figure.
+  ///
+  /// When [rates] covers *some* but not all of the report's currencies, the
+  /// returned total still reflects only the covered ones —
+  /// [ConvertedMonthlyTotals.excludedCurrencyCodes] names what was left
+  /// out, so a caller can say so rather than presenting a partial figure
+  /// as if it were complete.
   ConvertedMonthlyTotals? call({
     required MonthlyReport report,
     required ExchangeRates rates,
@@ -19,6 +25,7 @@ class ConvertReportTotalsUseCase {
     var totalIncome = 0.0;
     var totalExpense = 0.0;
     var convertedAnyCurrency = false;
+    final excludedCurrencyCodes = <String>[];
 
     for (final currencyCode in report.currencies) {
       final income = report.totalIncomeByCurrency[currencyCode] ?? 0;
@@ -34,7 +41,10 @@ class ConvertReportTotalsUseCase {
         from: currencyCode,
         to: targetCurrencyCode,
       );
-      if (convertedIncome == null || convertedExpense == null) continue;
+      if (convertedIncome == null || convertedExpense == null) {
+        excludedCurrencyCodes.add(currencyCode);
+        continue;
+      }
 
       totalIncome += convertedIncome;
       totalExpense += convertedExpense;
@@ -48,6 +58,7 @@ class ConvertReportTotalsUseCase {
       totalIncome: totalIncome,
       totalExpense: totalExpense,
       ratesAsOfUtc: rates.fetchedAtUtc,
+      excludedCurrencyCodes: excludedCurrencyCodes,
     );
   }
 }
