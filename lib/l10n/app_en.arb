@@ -153,6 +153,15 @@
   "transferLabel": "Transfer",
   "archivedBadgeLabel": "Archived",
   "defaultBadgeLabel": "Default",
+  "negativeBalanceBadgeLabel": "Negative",
+  "accountPercentOfTotalBalance": "{percent}% of total",
+  "@accountPercentOfTotalBalance": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
   "archiveMenuItem": "Archive",
   "unarchiveMenuItem": "Unarchive",
   "hideArchivedTooltip": "Hide archived",
@@ -328,6 +337,10 @@
   "searchTooltip": "Search",
   "closeSearchTooltip": "Close search",
   "filterSortTooltip": "Filter & sort",
+  "moreActionsTooltip": "More actions",
+  "editMenuItem": "Edit",
+  "duplicateMenuItem": "Duplicate",
+  "transactionCountLabel": "Transactions",
   "filterSortSheetTitle": "Filter & sort",
   "typeFilterLabel": "Type",
   "allTypesLabel": "All types",

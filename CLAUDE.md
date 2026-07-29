@@ -1071,6 +1071,225 @@ already has search (`transactions_list_screen_test.dart` covers it) but
 desktop has no data-table view or filter toolbar today, so more of this
 one is genuinely new UI, not just cleanup.
 
+### 2026-07-29 — Product polish Phase 2: Transactions (done)
+
+Summary:
+
+Reading the actual code first changed scope again: the mobile list
+already had a genuinely solid filter/search system (type/account/
+category/sort, all localized) — replacing it with a new toolbar would
+have been a regression, not polish, and would have meant duplicating a
+working search box. Kept that system exactly as-is (same AppBar
+search-toggle + filter bottom sheet, at every width) and closed what
+was actually missing instead.
+
+1. **No permanent delete icon anymore.** `TransactionTile`'s bare
+   delete `IconButton` is now a three-dot `PopupMenuButton` with Edit/
+   Duplicate/Delete — used by every screen embedding this shared tile
+   (Transactions, Dashboard's two recent-transaction lists, Savings
+   Goals' account-activity history), so the change is consistent
+   app-wide, not just on this one screen.
+2. **"Duplicate" is a genuinely new feature**, not a UI reshuffle —
+   there was no way to do this before. `TransactionFormScreen` gained
+   `duplicateFrom` (distinct from `existing`/edit-mode): pre-fills
+   account/category/type/amount/note from an existing transaction but
+   still submits as a create, going through the same atomic
+   `CreateTransactionUseCase` path unchanged. The date is deliberately
+   *not* copied — a duplicate is almost always "this again, today."
+   Wired through the router (`transactionNew`'s `extra` now
+   distinguishes a `TransactionType` prefill from a full
+   `TransactionEntity` duplicate-source by runtime type).
+3. **Desktop summary cards** (Income/Expense/Net/Transaction Count),
+   added above the list on wide screens only. Computed from whatever
+   the current filter/search/month already narrowed the list to, via
+   a new `_summarizeByCurrency` helper that mirrors
+   `BuildDashboardSummaryUseCase`'s already-tested pattern exactly:
+   grouped by the transaction's *account* currency (never the
+   transaction itself), transfers excluded from income/expense,
+   orphaned-account transactions skipped. Transaction Count is the one
+   dimensionless figure shown once, spanning all currencies — everything
+   else is per-currency, never summed across currencies.
+4. Localized the few remaining strings and replaced every `Icons.*` in
+   the three touched files (`transactions_list_screen.dart`,
+   `transaction_tile.dart`, `transaction_form_screen.dart`) with
+   `AppSymbols.*` — 11 new constants, codepoints read from the
+   installed `material_symbols_icons` package, same discipline as
+   every prior icon addition this pass.
+
+Files modified:
+
+- `lib/features/transactions/presentation/widgets/transaction_tile.dart`
+  — three-dot menu; fixed the trailing action button at 48px
+  (Material's own default minimum interactive size) instead of
+  shrinking it on narrow layouts, which the old delete button did.
+- `lib/features/transactions/presentation/screens/transaction_form_screen.dart`
+  — `duplicateFrom` parameter and prefill logic.
+- `lib/features/transactions/presentation/screens/transactions_list_screen.dart`
+  — `_TransactionsSummaryRow`/`_SummaryCard`/`_summarizeByCurrency`;
+  `onDuplicate` wired into the existing `TransactionTile` call site.
+- `lib/features/dashboard/presentation/screens/dashboard_screen.dart`,
+  `lib/features/savings_goals/presentation/screens/savings_goal_detail_screen.dart`
+  — `onDuplicate` added to their own `TransactionTile` call sites (the
+  shared-widget API change touches every embedder, not just
+  Transactions).
+- `lib/core/routing/app_router.dart` — `transactionNew` route now
+  passes both `initialType` and `duplicateFrom` from `state.extra`,
+  discriminated by runtime type.
+- `lib/core/constants/app_symbols.dart` — 11 new constants.
+- `lib/l10n/app_en.arb` / `app_lo.arb` — 5 new keys.
+
+Implementation decisions:
+
+- Did **not** build a persistent inline desktop toolbar (search +
+  filter fields always visible, replacing the AppBar icons) — the
+  existing AppBar search-toggle and filter-bottom-sheet already work
+  correctly at every width and are already covered by a passing test.
+  Duplicating that into a second, always-visible search box would
+  have been redundant UI, not an improvement — genuinely additive
+  scope (the summary cards) was worth doing; replacing working,
+  tested UI for its own sake was not.
+- The Transaction Count card intentionally spans all currencies in one
+  number (unlike Income/Expense/Net, which are always per-currency) —
+  a count is dimensionless, so combining it across currencies isn't a
+  money-correctness violation the way summing amounts would be.
+- Fixed the trailing action button at a flat 48px instead of the old
+  compact/standard variable sizing — `PopupMenuButton`'s internal
+  `IconButton` enforces Material's default minimum interactive size
+  regardless of an explicit smaller `constraints`, and this app's own
+  accessibility requirement (44px minimum touch target) argues for
+  embracing that rather than fighting it. The pre-existing test
+  asserting an upper bound was rewritten to assert the actual
+  accessibility-meaningful property (`>= 44`) instead.
+
+Validation:
+
+- `flutter analyze` — 0 issues.
+- `dart format --set-exit-if-changed lib test tool` — clean.
+- `flutter test` — full suite, 372/372 passing. Two real bugs were
+  caught by this pass, not by manual inspection: a 2.8px `RenderFlex`
+  overflow in `_SummaryCard` (fixed by widening its grid aspect ratio)
+  and the `PopupMenuButton` sizing issue above — both only surfaced
+  because the existing widget tests happen to run at an ~800px default
+  test surface width, which hits this phase's new wide-layout code
+  path. Concrete evidence for why the "not verified on-device" caveat
+  on prior phases matters: this is exactly the class of bug that kind
+  of check catches.
+- `flutter build web --release` — compiles clean end-to-end.
+
+Known limitations:
+
+- **Not visually verified on-device or in-browser**, same standing
+  caveat as every prior UI phase this pass, for the same reason
+  (reaching these screens requires signing in). The two bugs caught by
+  the test suite this time are a reminder that "tests pass" and
+  "looks right" are not the same claim — worth a real look next time
+  you're signed in, especially the summary-cards grid's reflow and the
+  three-dot menu's placement/tap targets on an actual touch device.
+- New Lao strings are drafts, same unreviewed status as the rest of
+  `app_lo.arb`.
+- No date-range picker was added — the existing month selector already
+  serves as the de facto date filter (same pattern Budget/Reports use),
+  and building a separate arbitrary-range picker was judged out of
+  scope for this pass.
+
+Next recommended phase: Accounts, Budgets, or Categories (all smaller,
+page-level phases per your ordering), or Reports — the master prompt's
+"major redesign" item, which is larger than every other page-level
+phase combined (new summary metrics not in `MonthlyReport` today, new
+charts, export formats, and an anomaly-detection engine) and would need
+its own scoping conversation before starting.
+
+### 2026-07-29 — Product polish Phase 3: Accounts (done)
+
+Summary:
+
+Smaller phase than Dashboard/Transactions — Accounts already had a
+solid three-dot archive/delete menu (no permanent-icon issue here) and
+was already fully localized. What was actually missing, closed this
+phase:
+
+1. **No responsive treatment at all** — a single-column list at every
+   width, even on a wide desktop window. Added a `LayoutBuilder`-driven
+   grid (same content-width-driven pattern as Dashboard's Quick
+   Actions and Transactions' summary cards): 1 column under ~360px of
+   content width, up to 3 as it widens.
+2. **Negative balances used color only** (red text, no badge) —
+   contradicts this project's own accessibility principle ("never
+   encode meaning in color alone," already followed by every chart in
+   the app). Added a genuine "Negative" badge.
+3. **No percentage-of-total-balance signal**, which the master prompt
+   explicitly asked for. Added `AccountCard.percentOfTotalBalance`,
+   computed per currency (never mixed — an account's share is only
+   ever shown against the total of *other accounts in the same
+   currency*) via a new `_totalBalanceByCurrency` helper in the
+   screen; omitted entirely (no caption) when that currency's total is
+   zero or negative, since a percentage wouldn't be meaningful there.
+4. Localized 2 new strings and replaced the remaining `Icons.*` in
+   both touched files with `AppSymbols.*`.
+
+Files modified:
+
+- `lib/core/widgets/app_badge.dart` — added an optional `color` param
+  (defaults to the existing neutral look, so all 6 pre-existing
+  call sites — Archived/Default/Completed/Due — are visually
+  unchanged) so `AccountCard` could reuse the shared badge component
+  for the new "Negative" badge instead of hand-rolling a one-off.
+- `lib/features/accounts/presentation/widgets/account_card.dart` —
+  negative badge; optional `percentOfTotalBalance` caption under the
+  balance.
+- `lib/features/accounts/presentation/screens/accounts_list_screen.dart`
+  — responsive grid/list switch; `_totalBalanceByCurrency` helper;
+  icon sweep. The archive-toggle icon now reuses one `AppSymbols.archive`
+  glyph for both states (tinted primary when active) instead of the
+  old filled/outline `Icons.archive`/`Icons.archive_outlined` pair —
+  Material Symbols Rounded, as bundled in this app, doesn't expose a
+  separate filled variant per name the way classic Material Icons did.
+- `lib/core/constants/app_symbols.dart` — 2 new constants (`archive`,
+  `addRounded` already existed from Dashboard).
+- `lib/l10n/app_en.arb` / `app_lo.arb` — 2 new keys
+  (`negativeBalanceBadgeLabel`, `accountPercentOfTotalBalance`).
+
+Implementation decisions:
+
+- Percentage is computed from whatever `accounts` list is already
+  being rendered (respects the existing `showArchived` toggle) rather
+  than a second, independently-fetched "all accounts" total — keeps
+  the percentage consistent with what the user is actually looking at.
+- Extending the shared `AppBadge` (rather than a local one-off in
+  `account_card.dart`) follows the same "shared design system" reasoning
+  as every prior phase's component reuse — the negative-badge use case
+  isn't unique to Accounts and the same `color` param is available if
+  a future phase needs a semantic badge elsewhere (e.g. Budget's "Over
+  Budget" status).
+
+Validation:
+
+- `flutter analyze` — 0 issues.
+- `dart format --set-exit-if-changed lib test tool` — clean.
+- `flutter test` — full suite, 372/372 passing (no new test cases —
+  the existing `accounts_list_screen_test.dart` already covers
+  name/balance rendering and passed unchanged, confirming the new grid/
+  badge/percentage additions didn't disturb existing behavior; no
+  dedicated widget test was added for the new percentage/badge
+  rendering itself, which is a real coverage gap worth closing before
+  this screen is next touched).
+- `flutter build web --release` — compiles clean end-to-end.
+
+Known limitations:
+
+- **Not visually verified on-device or in-browser**, same standing
+  caveat as every prior UI phase this pass.
+- New Lao strings are drafts, same unreviewed status as the rest of
+  `app_lo.arb`.
+- No widget test added for the negative badge or percentage caption
+  specifically (see Validation) — the existing test suite doesn't
+  construct a negative-balance or multi-account-same-currency fixture
+  today.
+
+Next recommended phase: Budgets or Categories (similar size to this
+one), or Reports (the large item, still needs its own scoping
+conversation first).
+
 ## Product Roadmap
 
 The full staged roadmap — objectives, features, deliverables,

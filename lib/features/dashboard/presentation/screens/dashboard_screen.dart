@@ -941,6 +941,10 @@ class _RecentTransactionsPanel extends StatelessWidget {
                       AppRoutes.transactionEditPath(transaction.id),
                       extra: transaction,
                     ),
+                    onDuplicate: () => context.push(
+                      AppRoutes.transactionNew,
+                      extra: transaction,
+                    ),
                     onDelete: () => onDeleteTransaction(transaction),
                   ),
               ],
@@ -1184,6 +1188,8 @@ class _CompactDashboard extends StatelessWidget {
                 AppRoutes.transactionEditPath(transaction.id),
                 extra: transaction,
               ),
+              onDuplicate: () =>
+                  context.push(AppRoutes.transactionNew, extra: transaction),
               onDelete: () => onDeleteTransaction(transaction),
             ),
         const SizedBox(height: AppSpacing.lg),

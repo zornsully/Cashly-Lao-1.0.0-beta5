@@ -26,7 +26,12 @@ import '../providers/transaction_controller.dart';
 /// reconciling account balances either way — see
 /// [TransactionRemoteDataSource]).
 class TransactionFormScreen extends ConsumerStatefulWidget {
-  const TransactionFormScreen({super.key, this.existing, this.initialType});
+  const TransactionFormScreen({
+    super.key,
+    this.existing,
+    this.initialType,
+    this.duplicateFrom,
+  });
 
   final TransactionEntity? existing;
 
@@ -35,6 +40,14 @@ class TransactionFormScreen extends ConsumerStatefulWidget {
   /// An existing transaction always wins so edit flows cannot be changed by
   /// a stale route extra.
   final TransactionType? initialType;
+
+  /// Set from the transactions list's "Duplicate" action — pre-fills every
+  /// field from an existing transaction (account/category/type/amount/note)
+  /// while still submitting as a brand-new create, never an edit. Only
+  /// consulted when [existing] is null, same precedence reasoning as
+  /// [initialType]. The date is deliberately *not* copied — a duplicate is
+  /// almost always "this again, today," not a backdated re-entry.
+  final TransactionEntity? duplicateFrom;
 
   @override
   ConsumerState<TransactionFormScreen> createState() =>
@@ -58,15 +71,18 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
   void initState() {
     super.initState();
     final existing = widget.existing;
+    // `existing` (edit) always wins; `duplicateFrom` only ever seeds a new
+    // transaction's initial fields, never triggers edit mode.
+    final prefill = existing ?? widget.duplicateFrom;
     _amountController = TextEditingController(
-      text: existing != null ? existing.amount.toStringAsFixed(2) : '',
+      text: prefill != null ? prefill.amount.toStringAsFixed(2) : '',
     );
-    _noteController = TextEditingController(text: existing?.note ?? '');
-    _type = existing?.type ?? widget.initialType ?? TransactionType.expense;
+    _noteController = TextEditingController(text: prefill?.note ?? '');
+    _type = prefill?.type ?? widget.initialType ?? TransactionType.expense;
     _date = existing?.date ?? DateTime.now();
-    _accountId = existing?.accountId;
-    _categoryId = existing?.categoryId;
-    _toAccountId = existing?.toAccountId;
+    _accountId = prefill?.accountId;
+    _categoryId = prefill?.categoryId;
+    _toAccountId = prefill?.toAccountId;
   }
 
   @override
@@ -246,12 +262,12 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                         ButtonSegment(
                           value: TransactionType.expense,
                           label: Text(l10n.expenseLabel),
-                          icon: const Icon(Icons.arrow_upward),
+                          icon: const Icon(AppSymbols.arrowUpward),
                         ),
                         ButtonSegment(
                           value: TransactionType.income,
                           label: Text(l10n.incomeLabel),
-                          icon: const Icon(Icons.arrow_downward),
+                          icon: const Icon(AppSymbols.arrowDownward),
                         ),
                         ButtonSegment(
                           value: TransactionType.transfer,
@@ -367,7 +383,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                         initialValue: _categoryId,
                         decoration: InputDecoration(
                           labelText: l10n.categoryFieldLabel,
-                          prefixIcon: const Icon(Icons.category_outlined),
+                          prefixIcon: const Icon(AppSymbols.category),
                         ),
                         items: _withOrphanFallback(
                           items: [
@@ -394,7 +410,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                       child: InputDecorator(
                         decoration: InputDecoration(
                           labelText: l10n.dateLabel,
-                          prefixIcon: const Icon(Icons.calendar_today_outlined),
+                          prefixIcon: const Icon(AppSymbols.calendarToday),
                         ),
                         child: Text(DateFormat.yMMMd().format(_date)),
                       ),
@@ -403,7 +419,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                     AppTextField(
                       label: l10n.noteOptionalLabel,
                       controller: _noteController,
-                      prefixIcon: Icons.notes_outlined,
+                      prefixIcon: AppSymbols.notes,
                     ),
                     const SizedBox(height: AppSpacing.xl),
                     PrimaryButton(

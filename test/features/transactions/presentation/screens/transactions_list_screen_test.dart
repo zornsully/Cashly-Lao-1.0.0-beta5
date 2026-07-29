@@ -1,5 +1,6 @@
 import 'package:cashly_lao/core/constants/app_color_key.dart';
 import 'package:cashly_lao/core/constants/app_icon_key.dart';
+import 'package:cashly_lao/core/constants/app_symbols.dart';
 import 'package:cashly_lao/features/accounts/domain/entities/account_entity.dart';
 import 'package:cashly_lao/features/accounts/domain/entities/account_type.dart';
 import 'package:cashly_lao/features/accounts/domain/repositories/account_repository.dart';
@@ -136,7 +137,7 @@ void main() {
     expect(find.text('Groceries'), findsOneWidget);
     expect(find.text('Transport'), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.search));
+    await tester.tap(find.byIcon(AppSymbols.search));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'grocer');
     await tester.pumpAndSettle();

@@ -752,6 +752,18 @@ abstract class AppLocalizations {
   /// **'Default'**
   String get defaultBadgeLabel;
 
+  /// No description provided for @negativeBalanceBadgeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Negative'**
+  String get negativeBalanceBadgeLabel;
+
+  /// No description provided for @accountPercentOfTotalBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% of total'**
+  String accountPercentOfTotalBalance(String percent);
+
   /// No description provided for @archiveMenuItem.
   ///
   /// In en, this message translates to:
@@ -1381,6 +1393,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Filter & sort'**
   String get filterSortTooltip;
+
+  /// No description provided for @moreActionsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'More actions'**
+  String get moreActionsTooltip;
+
+  /// No description provided for @editMenuItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get editMenuItem;
+
+  /// No description provided for @duplicateMenuItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate'**
+  String get duplicateMenuItem;
+
+  /// No description provided for @transactionCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Transactions'**
+  String get transactionCountLabel;
 
   /// No description provided for @filterSortSheetTitle.
   ///

@@ -364,6 +364,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get defaultBadgeLabel => 'Default';
 
   @override
+  String get negativeBalanceBadgeLabel => 'Negative';
+
+  @override
+  String accountPercentOfTotalBalance(String percent) {
+    return '$percent% of total';
+  }
+
+  @override
   String get archiveMenuItem => 'Archive';
 
   @override
@@ -718,6 +726,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get filterSortTooltip => 'Filter & sort';
+
+  @override
+  String get moreActionsTooltip => 'More actions';
+
+  @override
+  String get editMenuItem => 'Edit';
+
+  @override
+  String get duplicateMenuItem => 'Duplicate';
+
+  @override
+  String get transactionCountLabel => 'Transactions';
 
   @override
   String get filterSortSheetTitle => 'Filter & sort';
