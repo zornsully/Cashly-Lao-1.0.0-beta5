@@ -803,6 +803,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String convertedTotalsPartialWarning(String currencies) {
+    return 'Doesn\'t include $currencies — no exchange rate available.';
+  }
+
+  @override
   String get nothingToReportYetTitle => 'Nothing to report yet';
 
   @override

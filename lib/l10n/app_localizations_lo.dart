@@ -800,6 +800,11 @@ class AppLocalizationsLo extends AppLocalizations {
   }
 
   @override
+  String convertedTotalsPartialWarning(String currencies) {
+    return 'ບໍ່ລວມ $currencies — ບໍ່ມີອັດຕາແລກປ່ຽນ.';
+  }
+
+  @override
   String get nothingToReportYetTitle => 'ຍັງບໍ່ມີຫຍັງໃຫ້ລາຍງານ';
 
   @override

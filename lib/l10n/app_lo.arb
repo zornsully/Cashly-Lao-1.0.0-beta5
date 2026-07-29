@@ -251,6 +251,14 @@
       }
     }
   },
+  "convertedTotalsPartialWarning": "ບໍ່ລວມ {currencies} — ບໍ່ມີອັດຕາແລກປ່ຽນ.",
+  "@convertedTotalsPartialWarning": {
+    "placeholders": {
+      "currencies": {
+        "type": "String"
+      }
+    }
+  },
   "nothingToReportYetTitle": "ຍັງບໍ່ມີຫຍັງໃຫ້ລາຍງານ",
   "nothingToReportYetMessage": "ເມື່ອທ່ານບັນທຶກລາຍຮັບ ຫຼື ລາຍຈ່າຍສຳລັບເດືອນນີ້, ທ່ານຈະເຫັນສະຫຼຸບປະຈຳເດືອນ, ການແບ່ງແຍກລາຍຈ່າຍ ແລະ ແນວໂນ້ມຢູ່ບ່ອນນີ້.",
   "incomeExpenseTrendSectionTitle": "ແນວໂນ້ມລາຍຮັບ ແລະ ລາຍຈ່າຍ",

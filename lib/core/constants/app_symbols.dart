@@ -57,6 +57,11 @@ abstract final class AppSymbols {
     fontFamily: _family,
     fontPackage: _package,
   );
+  static const IconData warningAmberRounded = IconData(
+    0xf083,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
   static const IconData businessCenter = IconData(
     0xeb3f,
     fontFamily: _family,

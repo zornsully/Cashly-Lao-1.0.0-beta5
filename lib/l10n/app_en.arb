@@ -387,6 +387,14 @@
       }
     }
   },
+  "convertedTotalsPartialWarning": "Doesn't include {currencies} — no exchange rate available.",
+  "@convertedTotalsPartialWarning": {
+    "placeholders": {
+      "currencies": {
+        "type": "String"
+      }
+    }
+  },
   "nothingToReportYetTitle": "Nothing to report yet",
   "nothingToReportYetMessage": "Once you record income or expenses for this month, you'll see monthly summaries, spending breakdowns, and trends here.",
   "incomeExpenseTrendSectionTitle": "Income vs Expense Trend",

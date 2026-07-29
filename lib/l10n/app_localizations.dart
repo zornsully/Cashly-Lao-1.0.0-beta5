@@ -1520,6 +1520,12 @@ abstract class AppLocalizations {
   /// **'Rates as of {date} · Rates by ExchangeRate-API'**
   String convertedTotalsRatesAsOf(String date);
 
+  /// No description provided for @convertedTotalsPartialWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Doesn\'t include {currencies} — no exchange rate available.'**
+  String convertedTotalsPartialWarning(String currencies);
+
   /// No description provided for @nothingToReportYetTitle.
   ///
   /// In en, this message translates to:

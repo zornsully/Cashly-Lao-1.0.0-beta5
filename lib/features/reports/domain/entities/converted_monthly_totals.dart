@@ -10,6 +10,7 @@ class ConvertedMonthlyTotals extends Equatable {
     required this.totalIncome,
     required this.totalExpense,
     required this.ratesAsOfUtc,
+    this.excludedCurrencyCodes = const [],
   });
 
   final String currencyCode;
@@ -20,6 +21,16 @@ class ConvertedMonthlyTotals extends Equatable {
   /// figure so it's never presented as more precise/live than it is.
   final DateTime ratesAsOfUtc;
 
+  /// Currencies present in the report that [ratesAsOfUtc]'s snapshot had no
+  /// rate for, so their income/expense couldn't be folded into this total.
+  /// Empty means every currency in the report was converted. Kept distinct
+  /// from returning `null` (see [ConvertReportTotalsUseCase]'s doc comment):
+  /// a *partial* total is still a real, useful figure — it just needs to
+  /// say so, rather than silently under-representing the month.
+  final List<String> excludedCurrencyCodes;
+
+  bool get isPartial => excludedCurrencyCodes.isNotEmpty;
+
   double get net => totalIncome - totalExpense;
 
   @override
@@ -28,5 +39,6 @@ class ConvertedMonthlyTotals extends Equatable {
     totalIncome,
     totalExpense,
     ratesAsOfUtc,
+    excludedCurrencyCodes,
   ];
 }

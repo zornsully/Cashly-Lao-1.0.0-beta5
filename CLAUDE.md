@@ -878,6 +878,91 @@ currency partial-conversion signal, landing-page design-system
 decision, App Check) are unrelated to Smart Money Score and can be
 picked up independently.
 
+### 2026-07-29 — Post-audit: report currency partial-conversion signal (done)
+
+Summary:
+
+`ConvertReportTotalsUseCase` returned `null` only when *no* currency in
+a report had an exchange rate, but silently dropped any individual
+currency that lacked one while still returning a total that looked
+complete — a user with USD+CNY activity and no CNY rate would see a
+converted figure that quietly excluded all CNY amounts with no
+indication anything was missing. Closed by adding a real signal instead
+of just a boolean: `ConvertedMonthlyTotals` gained
+`excludedCurrencyCodes` (which currencies had no rate) and a derived
+`isPartial` getter, and `_ConvertedTotalsCard` (`reports_screen.dart`)
+now shows a small warning line naming them whenever the total is
+partial.
+
+Files modified:
+
+- `lib/features/reports/domain/entities/converted_monthly_totals.dart`
+  — `excludedCurrencyCodes` field (defaults to `const []`) + `isPartial`
+  getter.
+- `lib/features/reports/domain/usecases/convert_report_totals_usecase.dart`
+  — collects the codes it `continue`s past instead of discarding them;
+  doc comment updated to describe the partial case explicitly rather
+  than only the "returns null" case.
+- `lib/features/reports/presentation/screens/reports_screen.dart` —
+  `_ConvertedTotalsCard` shows a warning row (icon + "Doesn't include
+  {currencies} — no exchange rate available.") when
+  `totals.isPartial`. While touching this card, also fixed two adjacent
+  `Icons.*` literals in the same widget
+  (`Icons.currency_exchange`/`Icons.warning_amber_rounded`) to use
+  `AppSymbols.*` instead, since one was a pre-existing violation right
+  next to the line being edited and the other was a fresh icon this
+  change introduced — both should never have been `Icons.*` per
+  CLAUDE.md's design rules. This is *not* the broader `Icons.*` sweep
+  (still open, tracked separately) — only these two, directly touched
+  by this change.
+- `lib/core/constants/app_symbols.dart` — added
+  `warningAmberRounded` (codepoint `0xf083`, sourced directly from the
+  installed `material_symbols_icons` package's own `symbols.dart`
+  rather than guessed, consistent with this file's existing entries).
+- `lib/l10n/app_en.arb` / `app_lo.arb` — new key
+  `convertedTotalsPartialWarning`, worded to avoid needing an ICU
+  plural (no existing precedent for that in this codebase — see Phase
+  2a/2b's own reasoning for the same choice).
+- `test/features/reports/domain/usecases/convert_report_totals_usecase_test.dart`
+  — extended the existing "skips a currency..." test to also assert
+  `isPartial`/`excludedCurrencyCodes`, and added a new test confirming
+  a fully-covered report reports no exclusions.
+
+Implementation decisions:
+
+- `excludedCurrencyCodes` (a list) over a plain boolean: naming *which*
+  currencies were dropped is materially more useful to a user than just
+  knowing "something's missing," and costs nothing extra to compute
+  since the usecase already iterates every currency.
+- Still returns `null` (not a partial total) when *nothing* converts —
+  that boundary was already correct and is unchanged; this only fixes
+  the previously-silent partial case sitting between "fully converted"
+  and "nothing converted."
+
+Validation:
+
+- `flutter analyze` — 0 issues.
+- `dart format --set-exit-if-changed lib test tool` — clean.
+- `flutter test` — full suite, 372 passing (1 new test), 0 failing, 0
+  skipped. The existing `reports_screen_test.dart` widget test
+  ("shows a converted rollup card when the report spans multiple
+  currencies") still passes unchanged, confirming the new warning row
+  doesn't break the non-partial rendering path.
+
+Known limitations:
+
+- New Lao string is a draft, same unreviewed status as the rest of
+  `app_lo.arb`.
+- Not verified on-device — the warning row's layout (icon + wrapped
+  text inside the existing card) hasn't been visually confirmed,
+  though it follows the same `Row`/`Icon`/`Expanded(Text)` pattern
+  already used elsewhere in this screen.
+
+Next recommended phase: pick from the remaining original-audit items —
+`Icons.*`→`AppSymbols.*` sweep (large, mechanical), the landing-page
+design-system decision (needs your input first), or Firebase App Check
+(infra-adjacent).
+
 ## Product Roadmap
 
 The full staged roadmap — objectives, features, deliverables,
