@@ -223,6 +223,78 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expenseMonthLabel => 'Expense (month)';
 
   @override
+  String get dashboardHeaderSubtitle =>
+      'A clear view of your money this month.';
+
+  @override
+  String get dashboardQuickActionAddIncome => 'Add income';
+
+  @override
+  String get dashboardQuickActionAddExpense => 'Add expense';
+
+  @override
+  String get dashboardQuickActionTransferMoney => 'Transfer money';
+
+  @override
+  String get dashboardQuickActionCreateBudget => 'Create budget';
+
+  @override
+  String get dashboardMetricTotalBalance => 'Total balance';
+
+  @override
+  String get dashboardMetricTotalBalanceCaption =>
+      'Live across active accounts';
+
+  @override
+  String dashboardMetricAlsoBalance(String currencyCode, String amount) {
+    return 'Also $currencyCode $amount';
+  }
+
+  @override
+  String get dashboardMetricMonthlyIncome => 'Monthly income';
+
+  @override
+  String get dashboardMetricMonthlyExpenses => 'Monthly expenses';
+
+  @override
+  String get dashboardMetricNetCashFlow => 'Net cash flow';
+
+  @override
+  String get dashboardMetricThisMonthCaption => 'This calendar month';
+
+  @override
+  String get dashboardMetricNetCaption => 'Income minus expenses';
+
+  @override
+  String get dashboardChooseCurrencyTooltip => 'Choose currency';
+
+  @override
+  String get dashboardNotificationsTooltip => 'Notifications';
+
+  @override
+  String get dashboardNotificationsEmptyMessage => 'You are all caught up.';
+
+  @override
+  String get dashboardIncomeExpensePanelTitle => 'Income & expenses';
+
+  @override
+  String get dashboardTrendEmptyMessage =>
+      'Not enough activity to show a trend yet.';
+
+  @override
+  String get dashboardTrendLast6Months => 'Last 6 months';
+
+  @override
+  String get dashboardCategoryEmptyMessage =>
+      'No recorded expense categories this month.';
+
+  @override
+  String get dashboardCategoryBreakdownLabel => 'Category breakdown';
+
+  @override
+  String get dashboardBudgetsEmptyMessage => 'No active budgets this month.';
+
+  @override
   String get languageSectionTitle => 'Language';
 
   @override

@@ -115,7 +115,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   onPressed: () => context.push(AppRoutes.savingsGoals),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.insert_chart_outlined),
+                  icon: const Icon(AppSymbols.insertChartOutlined),
                   tooltip: l10n.reportsTooltip,
                   onPressed: () => context.push(AppRoutes.reports),
                 ),
@@ -128,12 +128,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           if (!summary.hasAnyAccounts) {
             return ResponsiveCenter(
               child: EmptyState(
-                icon: Icons.dashboard_customize_outlined,
+                icon: AppSymbols.dashboardCustomize,
                 title: l10n.welcomeToCashly,
                 message: l10n.addFirstAccountMessage,
                 action: FilledButton.icon(
                   onPressed: () => context.go(AppRoutes.accounts),
-                  icon: const Icon(Icons.add),
+                  icon: const Icon(AppSymbols.addRounded),
                   label: Text(l10n.addAccountButton),
                 ),
               ),
@@ -222,6 +222,7 @@ class _WideDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final selectedCurrency = SupportedCurrencies.byCode(selectedCurrencyCode);
     final balance = summary.totalBalanceByCurrency[selectedCurrencyCode] ?? 0;
     final income = summary.totalIncomeByCurrency[selectedCurrencyCode] ?? 0;
@@ -276,6 +277,7 @@ class _WideDashboard extends StatelessWidget {
                 extra: TransactionType.transfer,
               ),
               onCreateBudget: () => context.push(AppRoutes.budgetNew),
+              minTileWidth: 200,
             ),
             const SizedBox(height: AppSpacing.lg),
             LayoutBuilder(
@@ -299,43 +301,46 @@ class _WideDashboard extends StatelessWidget {
                   childAspectRatio: columns == 4 ? 1.55 : 1.78,
                   children: [
                     _DashboardMetricCard(
-                      label: 'Total balance',
+                      label: l10n.dashboardMetricTotalBalance,
                       amount: balance,
                       currency: selectedCurrency,
                       icon: AppSymbols.accountBalanceWallet,
                       color: Theme.of(context).colorScheme.primary,
-                      caption: 'Live across active accounts',
+                      caption: l10n.dashboardMetricTotalBalanceCaption,
                       secondaryValue: otherBalance == null
                           ? null
-                          : 'Also $otherCurrencyCode $otherBalance',
+                          : l10n.dashboardMetricAlsoBalance(
+                              otherCurrencyCode!,
+                              otherBalance,
+                            ),
                     ),
                     _DashboardMetricCard(
-                      label: 'Monthly income',
+                      label: l10n.dashboardMetricMonthlyIncome,
                       amount: income,
                       currency: selectedCurrency,
-                      icon: Icons.arrow_downward_rounded,
+                      icon: AppSymbols.arrowDownward,
                       color: semanticColors.positiveForeground,
-                      caption: 'This calendar month',
+                      caption: l10n.dashboardMetricThisMonthCaption,
                     ),
                     _DashboardMetricCard(
-                      label: 'Monthly expenses',
+                      label: l10n.dashboardMetricMonthlyExpenses,
                       amount: expense,
                       currency: selectedCurrency,
-                      icon: Icons.arrow_upward_rounded,
+                      icon: AppSymbols.arrowUpward,
                       color: semanticColors.negativeForeground,
-                      caption: 'This calendar month',
+                      caption: l10n.dashboardMetricThisMonthCaption,
                     ),
                     _DashboardMetricCard(
-                      label: 'Net cash flow',
+                      label: l10n.dashboardMetricNetCashFlow,
                       amount: net,
                       currency: selectedCurrency,
                       icon: net < 0
-                          ? Icons.trending_down_rounded
-                          : Icons.trending_up_rounded,
+                          ? AppSymbols.trendingDown
+                          : AppSymbols.trendingUp,
                       color: net < 0
                           ? semanticColors.negativeForeground
                           : semanticColors.positiveForeground,
-                      caption: 'Income minus expenses',
+                      caption: l10n.dashboardMetricNetCaption,
                     ),
                   ],
                 );
@@ -453,7 +458,7 @@ class _DashboardDesktopHeader extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                'A clear view of your money this month.',
+                l10n.dashboardHeaderSubtitle,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -467,11 +472,11 @@ class _DashboardDesktopHeader extends StatelessWidget {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             _HeaderPill(
-              icon: Icons.calendar_month_outlined,
+              icon: AppSymbols.calendarMonth,
               label: DateFormat.yMMMM().format(month),
             ),
             PopupMenuButton<String>(
-              tooltip: 'Choose currency',
+              tooltip: l10n.dashboardChooseCurrencyTooltip,
               onSelected: onSelectedCurrencyChanged,
               itemBuilder: (context) => [
                 for (final currencyCode in currencies)
@@ -482,15 +487,15 @@ class _DashboardDesktopHeader extends StatelessWidget {
                   ),
               ],
               child: _HeaderPill(
-                icon: Icons.currency_exchange_rounded,
+                icon: AppSymbols.currencyExchange,
                 label: selectedCurrencyCode,
                 showsDisclosure: currencies.length > 1,
               ),
             ),
             IconButton(
-              tooltip: 'Notifications',
+              tooltip: l10n.dashboardNotificationsTooltip,
               onPressed: () => _showNotifications(context),
-              icon: const Icon(Icons.notifications_none_rounded),
+              icon: const Icon(AppSymbols.notificationsNone),
             ),
             PopupMenuButton<_ProfileMenuAction>(
               tooltip: l10n.profileTitle,
@@ -507,7 +512,7 @@ class _DashboardDesktopHeader extends StatelessWidget {
                   value: _ProfileMenuAction.profile,
                   child: Row(
                     children: [
-                      const Icon(Icons.person_outline_rounded),
+                      const Icon(AppSymbols.personOutline),
                       const SizedBox(width: AppSpacing.sm),
                       Text(l10n.profileTitle),
                     ],
@@ -517,7 +522,7 @@ class _DashboardDesktopHeader extends StatelessWidget {
                   value: _ProfileMenuAction.settings,
                   child: Row(
                     children: [
-                      const Icon(Icons.settings_outlined),
+                      const Icon(AppSymbols.settings),
                       const SizedBox(width: AppSpacing.sm),
                       Text(l10n.settingsTitle),
                     ],
@@ -528,7 +533,7 @@ class _DashboardDesktopHeader extends StatelessWidget {
                 radius: 18,
                 backgroundColor: colorScheme.primaryContainer,
                 foregroundColor: colorScheme.onPrimaryContainer,
-                child: const Icon(Icons.person_rounded, size: 20),
+                child: const Icon(AppSymbols.person, size: 20),
               ),
             ),
           ],
@@ -539,6 +544,7 @@ class _DashboardDesktopHeader extends StatelessWidget {
 
   void _showNotifications(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -554,20 +560,20 @@ class _DashboardDesktopHeader extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                Icons.notifications_none_rounded,
+                AppSymbols.notificationsNone,
                 size: 32,
                 color: colorScheme.primary,
               ),
               const SizedBox(height: AppSpacing.sm),
               Text(
-                'Notifications',
+                l10n.dashboardNotificationsTooltip,
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                'You are all caught up.',
+                l10n.dashboardNotificationsEmptyMessage,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -618,7 +624,7 @@ class _HeaderPill extends StatelessWidget {
           if (showsDisclosure) ...[
             const SizedBox(width: 2),
             Icon(
-              Icons.keyboard_arrow_down_rounded,
+              AppSymbols.keyboardArrowDown,
               size: 18,
               color: colorScheme.onSurfaceVariant,
             ),
@@ -629,12 +635,18 @@ class _HeaderPill extends StatelessWidget {
   }
 }
 
+/// Four equal-weight actions, laid out as a grid that reflows by the space
+/// actually available to it (not the window as a whole) — 4 across once
+/// there's room, 2x2 as it narrows, down to a single column on very small
+/// screens. Used identically on both the wide and compact dashboards, so
+/// the mobile layout gets the same quick-entry points desktop always had.
 class _QuickActions extends StatelessWidget {
   const _QuickActions({
     required this.onAddIncome,
     required this.onAddExpense,
     required this.onTransferMoney,
     required this.onCreateBudget,
+    this.minTileWidth = 150,
   });
 
   final VoidCallback onAddIncome;
@@ -642,33 +654,123 @@ class _QuickActions extends StatelessWidget {
   final VoidCallback onTransferMoney;
   final VoidCallback onCreateBudget;
 
+  /// Content width, not window width, drives the column count — this lets
+  /// the same widget do the right thing whether it's full-bleed on a phone
+  /// or sharing a constrained desktop content column.
+  final double minTileWidth;
+
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
-      children: [
-        FilledButton.icon(
-          onPressed: onAddIncome,
-          icon: const Icon(Icons.add_rounded, size: 18),
-          label: const Text('Add income'),
+    final l10n = AppLocalizations.of(context)!;
+    final semanticColors = AppSemanticColors.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+
+    final actions = [
+      _QuickActionSpec(
+        label: l10n.dashboardQuickActionAddIncome,
+        icon: AppSymbols.addRounded,
+        color: semanticColors.positiveForeground,
+        onTap: onAddIncome,
+      ),
+      _QuickActionSpec(
+        label: l10n.dashboardQuickActionAddExpense,
+        icon: AppSymbols.removeRounded,
+        color: semanticColors.negativeForeground,
+        onTap: onAddExpense,
+      ),
+      _QuickActionSpec(
+        label: l10n.dashboardQuickActionTransferMoney,
+        icon: AppSymbols.swapHoriz,
+        color: colorScheme.primary,
+        onTap: onTransferMoney,
+      ),
+      _QuickActionSpec(
+        label: l10n.dashboardQuickActionCreateBudget,
+        icon: AppSymbols.pieChart,
+        color: colorScheme.tertiary,
+        onTap: onCreateBudget,
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = (constraints.maxWidth / minTileWidth).floor().clamp(
+          1,
+          actions.length,
+        );
+        return GridView.count(
+          crossAxisCount: columns,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisSpacing: AppSpacing.sm,
+          mainAxisSpacing: AppSpacing.sm,
+          childAspectRatio: 2.2,
+          children: [for (final action in actions) _QuickActionTile(action)],
+        );
+      },
+    );
+  }
+}
+
+class _QuickActionSpec {
+  const _QuickActionSpec({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+}
+
+class _QuickActionTile extends StatelessWidget {
+  const _QuickActionTile(this.action);
+
+  final _QuickActionSpec action;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      color: theme.colorScheme.surfaceContainerHigh,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: action.onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm,
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: action.color.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(action.icon, color: action.color, size: 18),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  action.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-        OutlinedButton.icon(
-          onPressed: onAddExpense,
-          icon: const Icon(Icons.remove_rounded, size: 18),
-          label: const Text('Add expense'),
-        ),
-        OutlinedButton.icon(
-          onPressed: onTransferMoney,
-          icon: const Icon(Icons.swap_horiz_rounded, size: 18),
-          label: const Text('Transfer money'),
-        ),
-        OutlinedButton.icon(
-          onPressed: onCreateBudget,
-          icon: const Icon(Icons.pie_chart_outline_rounded, size: 18),
-          label: const Text('Create budget'),
-        ),
-      ],
+      ),
     );
   }
 }
@@ -855,14 +957,15 @@ class _TrendPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return _DashboardPanel(
-      title: 'Income & expenses',
+      title: l10n.dashboardIncomeExpensePanelTitle,
       onSeeAll: () => context.push(AppRoutes.reports),
       child: points.isEmpty
           ? Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
               child: Text(
-                'Not enough activity to show a trend yet.',
+                l10n.dashboardTrendEmptyMessage,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -872,7 +975,7 @@ class _TrendPanel extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Last 6 months',
+                  l10n.dashboardTrendLast6Months,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -903,7 +1006,7 @@ class _CategorySpendingPanel extends StatelessWidget {
           ? Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
               child: Text(
-                'No recorded expense categories this month.',
+                l10n.dashboardCategoryEmptyMessage,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -915,7 +1018,7 @@ class _CategorySpendingPanel extends StatelessWidget {
                 CategoryPieChart(spending: spending, currency: currency),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
-                  'Category breakdown',
+                  l10n.dashboardCategoryBreakdownLabel,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w700,
@@ -945,7 +1048,7 @@ class _BudgetsPanel extends StatelessWidget {
           ? Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
               child: Text(
-                'No active budgets this month.',
+                l10n.dashboardBudgetsEmptyMessage,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -1035,7 +1138,24 @@ class _CompactDashboard extends StatelessWidget {
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: AppSpacing.md),
+        _QuickActions(
+          onAddIncome: () => context.push(
+            AppRoutes.transactionNew,
+            extra: TransactionType.income,
+          ),
+          onAddExpense: () => context.push(
+            AppRoutes.transactionNew,
+            extra: TransactionType.expense,
+          ),
+          onTransferMoney: () => context.push(
+            AppRoutes.transactionNew,
+            extra: TransactionType.transfer,
+          ),
+          onCreateBudget: () => context.push(AppRoutes.budgetNew),
+          minTileWidth: 140,
+        ),
+        const SizedBox(height: AppSpacing.lg),
         for (final currencyCode in currencies) ...[
           _CurrencyOverview(currencyCode: currencyCode, summary: summary),
           const SizedBox(height: AppSpacing.lg),
@@ -1166,7 +1286,7 @@ class _CurrencyOverview extends StatelessWidget {
                 label: l10n.incomeMonthLabel,
                 amount: income,
                 currency: currency,
-                icon: Icons.arrow_downward,
+                icon: AppSymbols.arrowDownward,
                 color: AppSemanticColors.of(context).positiveForeground,
               ),
             ),
@@ -1176,7 +1296,7 @@ class _CurrencyOverview extends StatelessWidget {
                 label: l10n.expenseMonthLabel,
                 amount: expense,
                 currency: currency,
-                icon: Icons.arrow_upward,
+                icon: AppSymbols.arrowUpward,
                 color: Theme.of(context).colorScheme.error,
               ),
             ),

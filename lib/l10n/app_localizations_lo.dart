@@ -223,6 +223,80 @@ class AppLocalizationsLo extends AppLocalizations {
   String get expenseMonthLabel => 'ລາຍຈ່າຍ (ເດືອນ)';
 
   @override
+  String get dashboardHeaderSubtitle =>
+      'ມຸມມອງທີ່ຈະແຈ້ງກ່ຽວກັບເງິນຂອງທ່ານໃນເດືອນນີ້.';
+
+  @override
+  String get dashboardQuickActionAddIncome => 'ເພີ່ມລາຍຮັບ';
+
+  @override
+  String get dashboardQuickActionAddExpense => 'ເພີ່ມລາຍຈ່າຍ';
+
+  @override
+  String get dashboardQuickActionTransferMoney => 'ໂອນເງິນ';
+
+  @override
+  String get dashboardQuickActionCreateBudget => 'ສ້າງງົບປະມານ';
+
+  @override
+  String get dashboardMetricTotalBalance => 'ຍອດເງິນລວມ';
+
+  @override
+  String get dashboardMetricTotalBalanceCaption =>
+      'ອັບເດດແບບສົດຈາກທຸກບັນຊີທີ່ໃຊ້ງານ';
+
+  @override
+  String dashboardMetricAlsoBalance(String currencyCode, String amount) {
+    return 'ພ້ອມທັງ $currencyCode $amount';
+  }
+
+  @override
+  String get dashboardMetricMonthlyIncome => 'ລາຍຮັບປະຈຳເດືອນ';
+
+  @override
+  String get dashboardMetricMonthlyExpenses => 'ລາຍຈ່າຍປະຈຳເດືອນ';
+
+  @override
+  String get dashboardMetricNetCashFlow => 'ກະແສເງິນສົດສຸດທິ';
+
+  @override
+  String get dashboardMetricThisMonthCaption => 'ເດືອນປະຕິທິນນີ້';
+
+  @override
+  String get dashboardMetricNetCaption => 'ລາຍຮັບຫັກລາຍຈ່າຍ';
+
+  @override
+  String get dashboardChooseCurrencyTooltip => 'ເລືອກສະກຸນເງິນ';
+
+  @override
+  String get dashboardNotificationsTooltip => 'ການແຈ້ງເຕືອນ';
+
+  @override
+  String get dashboardNotificationsEmptyMessage =>
+      'ທ່ານໄດ້ຮັບຂໍ້ມູນລ່າສຸດແລ້ວ.';
+
+  @override
+  String get dashboardIncomeExpensePanelTitle => 'ລາຍຮັບ ແລະ ລາຍຈ່າຍ';
+
+  @override
+  String get dashboardTrendEmptyMessage =>
+      'ຍັງບໍ່ມີກິດຈະກຳພຽງພໍທີ່ຈະສະແດງແນວໂນ້ມ.';
+
+  @override
+  String get dashboardTrendLast6Months => '6 ເດືອນຫຼ້າສຸດ';
+
+  @override
+  String get dashboardCategoryEmptyMessage =>
+      'ບໍ່ມີໝວດໝູ່ລາຍຈ່າຍທີ່ບັນທຶກໄວ້ໃນເດືອນນີ້.';
+
+  @override
+  String get dashboardCategoryBreakdownLabel => 'ການແບ່ງແຍກຕາມໝວດໝູ່';
+
+  @override
+  String get dashboardBudgetsEmptyMessage =>
+      'ບໍ່ມີງົບປະມານທີ່ໃຊ້ງານໃນເດືອນນີ້.';
+
+  @override
   String get languageSectionTitle => 'ພາສາ';
 
   @override

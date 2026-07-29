@@ -488,6 +488,138 @@ abstract class AppLocalizations {
   /// **'Expense (month)'**
   String get expenseMonthLabel;
 
+  /// No description provided for @dashboardHeaderSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A clear view of your money this month.'**
+  String get dashboardHeaderSubtitle;
+
+  /// No description provided for @dashboardQuickActionAddIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Add income'**
+  String get dashboardQuickActionAddIncome;
+
+  /// No description provided for @dashboardQuickActionAddExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Add expense'**
+  String get dashboardQuickActionAddExpense;
+
+  /// No description provided for @dashboardQuickActionTransferMoney.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer money'**
+  String get dashboardQuickActionTransferMoney;
+
+  /// No description provided for @dashboardQuickActionCreateBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'Create budget'**
+  String get dashboardQuickActionCreateBudget;
+
+  /// No description provided for @dashboardMetricTotalBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Total balance'**
+  String get dashboardMetricTotalBalance;
+
+  /// No description provided for @dashboardMetricTotalBalanceCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Live across active accounts'**
+  String get dashboardMetricTotalBalanceCaption;
+
+  /// No description provided for @dashboardMetricAlsoBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Also {currencyCode} {amount}'**
+  String dashboardMetricAlsoBalance(String currencyCode, String amount);
+
+  /// No description provided for @dashboardMetricMonthlyIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly income'**
+  String get dashboardMetricMonthlyIncome;
+
+  /// No description provided for @dashboardMetricMonthlyExpenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly expenses'**
+  String get dashboardMetricMonthlyExpenses;
+
+  /// No description provided for @dashboardMetricNetCashFlow.
+  ///
+  /// In en, this message translates to:
+  /// **'Net cash flow'**
+  String get dashboardMetricNetCashFlow;
+
+  /// No description provided for @dashboardMetricThisMonthCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'This calendar month'**
+  String get dashboardMetricThisMonthCaption;
+
+  /// No description provided for @dashboardMetricNetCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Income minus expenses'**
+  String get dashboardMetricNetCaption;
+
+  /// No description provided for @dashboardChooseCurrencyTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose currency'**
+  String get dashboardChooseCurrencyTooltip;
+
+  /// No description provided for @dashboardNotificationsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get dashboardNotificationsTooltip;
+
+  /// No description provided for @dashboardNotificationsEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You are all caught up.'**
+  String get dashboardNotificationsEmptyMessage;
+
+  /// No description provided for @dashboardIncomeExpensePanelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Income & expenses'**
+  String get dashboardIncomeExpensePanelTitle;
+
+  /// No description provided for @dashboardTrendEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough activity to show a trend yet.'**
+  String get dashboardTrendEmptyMessage;
+
+  /// No description provided for @dashboardTrendLast6Months.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 6 months'**
+  String get dashboardTrendLast6Months;
+
+  /// No description provided for @dashboardCategoryEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No recorded expense categories this month.'**
+  String get dashboardCategoryEmptyMessage;
+
+  /// No description provided for @dashboardCategoryBreakdownLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Category breakdown'**
+  String get dashboardCategoryBreakdownLabel;
+
+  /// No description provided for @dashboardBudgetsEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No active budgets this month.'**
+  String get dashboardBudgetsEmptyMessage;
+
   /// No description provided for @languageSectionTitle.
   ///
   /// In en, this message translates to:

@@ -157,4 +157,75 @@ abstract final class AppSymbols {
     fontFamily: _family,
     fontPackage: _package,
   );
+  static const IconData arrowDownward = IconData(
+    0xe5db,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData arrowUpward = IconData(
+    0xe5d8,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData trendingDown = IconData(
+    0xe8e3,
+    fontFamily: _family,
+    fontPackage: _package,
+    matchTextDirection: true,
+  );
+  static const IconData calendarMonth = IconData(
+    0xebcc,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData keyboardArrowDown = IconData(
+    0xe313,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData notificationsNone = IconData(
+    0xe7f5,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData personOutline = IconData(
+    0xf0d3,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData settings = IconData(
+    0xe8b8,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData person = IconData(
+    0xf0d3,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData addRounded = IconData(
+    0xe145,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData removeRounded = IconData(
+    0xe15b,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData swapHoriz = IconData(
+    0xe8d4,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData dashboardCustomize = IconData(
+    0xe99b,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData insertChartOutlined = IconData(
+    0xf0cc,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
 }

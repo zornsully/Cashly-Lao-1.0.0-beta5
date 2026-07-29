@@ -963,6 +963,114 @@ Next recommended phase: pick from the remaining original-audit items —
 design-system decision (needs your input first), or Firebase App Check
 (infra-adjacent).
 
+### 2026-07-29 — Product polish, Phase 1: Dashboard (done)
+
+Summary:
+
+First phase of a much larger "complete product polish" mission (your
+own master prompt covering Landing/Dashboard/Transactions/Accounts/
+Budgets/Categories/Reports/Settings, a shared design system, full
+responsive breakpoints, native-vs-web app entry behavior, PDF/Excel
+export, and an anomaly-detection "Expense Watch" engine). Given the
+size — larger than everything else done this session combined — you
+chose "one page at a time, highest-traffic first" over a big-bang pass
+or a foundations-first phase. This closes Dashboard within the
+*existing* layout system (no breakpoint/sidebar architecture change —
+that's explicitly out of scope for this phase).
+
+Reading the actual code first changed the scope: `dashboard_screen.dart`
+already had most of what the master prompt's Dashboard section asked
+for — a proper desktop header, a 4-card metric grid, Smart Money Score,
+trend/category/budget panels, and (on desktop only) a `_QuickActions`
+row with exactly the four actions requested (Add Income/Add Expense/
+Transfer/Create Budget). What was actually missing or broken, closed
+this phase:
+
+1. **Quick Actions didn't exist on the mobile/compact dashboard at
+   all** — desktop had them, phones didn't. Added the same widget
+   there.
+2. **Quick Actions weren't actually "four equal buttons"** — one
+   `FilledButton` + three visually-different `OutlinedButton`s in a
+   `Wrap`, not the equal-weight grid the prompt asked for. Replaced
+   with `_QuickActionTile` — four identically-styled tiles in a
+   `LayoutBuilder`-driven grid that reflows by the space actually
+   available to it (4 columns → 2 → 1), so the same widget does the
+   right thing whether it's full-bleed on a phone or sharing desktop
+   content width.
+3. **~20 hardcoded English strings** across the header subtitle, both
+   quick-actions labels, all four metric cards' labels/captions, the
+   currency-choice/notifications tooltips, the notifications sheet, and
+   all three panel empty-states.
+4. **19 raw `Icons.*` references**, this file's full count — every one
+   replaced with `AppSymbols.*`, adding 14 new constants (codepoints
+   read directly from the installed `material_symbols_icons` package's
+   own `symbols.dart`, not guessed, same discipline as the earlier
+   `warningAmberRounded` addition).
+
+Files modified:
+
+- `lib/features/dashboard/presentation/screens/dashboard_screen.dart` —
+  all of the above.
+- `lib/core/constants/app_symbols.dart` — 14 new icon constants
+  (`arrowDownward`, `arrowUpward`, `trendingDown`, `calendarMonth`,
+  `keyboardArrowDown`, `notificationsNone`, `personOutline`, `settings`,
+  `person`, `addRounded`, `removeRounded`, `swapHoriz`,
+  `dashboardCustomize`, `insertChartOutlined`).
+- `lib/l10n/app_en.arb` / `app_lo.arb` — 22 new keys, one parameterized
+  (`dashboardMetricAlsoBalance`).
+
+Implementation decisions:
+
+- Quick Actions' column count is driven by the widget's own
+  `LayoutBuilder` width (content area), not window/screen width — this
+  is what lets one implementation serve both the desktop and compact
+  dashboards correctly without a screen-wide breakpoint system, which
+  is deliberately out of scope for this phase.
+- Did not touch any business logic, providers, routes, or the
+  wide/compact layout switch itself (`_wideLayoutBreakpoint = 760`) —
+  only presentation-layer strings, icons, and the Quick Actions widget.
+- Did not build a shared `PageHeader`/`QuickActions` component usable
+  by other screens yet — that's a cross-cutting Section-1 "shared
+  design system" decision spanning every screen, not a Dashboard-only
+  one; revisit once more screens are through this same pass and a
+  real pattern has emerged, rather than abstracting from a single
+  usage.
+
+Validation:
+
+- `flutter analyze` — 0 issues.
+- `dart format --set-exit-if-changed lib test tool` — clean.
+- `flutter test test/features/dashboard` — 9/9 passing, including the
+  existing desktop-dashboard widget test (confirms totals/layout
+  behavior unchanged).
+- `flutter build web --release` — compiles clean end-to-end (confirms
+  every new `AppSymbols.*`/ARB reference resolves correctly; this is
+  the same build path that caught a real theme-construction crash
+  earlier in this project's history, so a clean build here is a
+  meaningful signal, not just a formality).
+
+Known limitations:
+
+- **Not visually verified on-device or in-browser** — reaching the
+  Dashboard requires signing in, which this session deliberately does
+  not do itself (matches this project's own established pattern —
+  every prior Dashboard-touching change in this project's history was
+  verified on-device by the project owner specifically because of a
+  documented Android-autofill incident from signing in during a prior
+  session). Worth a real look next time you're signed in, particularly
+  the Quick Actions grid's reflow at a few different widths.
+- New Lao strings are drafts, same unreviewed status as the rest of
+  `app_lo.arb`.
+
+Next recommended phase: Transactions (per your "highest-traffic first"
+ordering) — desktop data table + toolbar (search/date/account/category/
+type filters + sorting), summary cards, three-dot row menu instead of
+permanent delete icons; mobile cards + bottom-sheet filters + sticky
+search. This is a larger phase than Dashboard turned out to be — mobile
+already has search (`transactions_list_screen_test.dart` covers it) but
+desktop has no data-table view or filter toolbar today, so more of this
+one is genuinely new UI, not just cleanup.
+
 ## Product Roadmap
 
 The full staged roadmap — objectives, features, deliverables,
