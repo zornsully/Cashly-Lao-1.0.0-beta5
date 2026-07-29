@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "cashly-lao"
+  },
+  "targets": {
+    "cashly-lao": {
+      "hosting": {
+        "cashly-lao": [
+          "cashly-lao"
+        ]
+      }
+    }
+  }
+}

@@ -7,7 +7,13 @@ import '../constants/app_spacing.dart';
 /// (a static status indicator like "Archived") — a chip is meant for
 /// interactive or informational tags, e.g. a future transaction filter.
 class AppChip extends StatelessWidget {
-  const AppChip({required this.label, super.key, this.icon, this.onTap, this.color});
+  const AppChip({
+    required this.label,
+    super.key,
+    this.icon,
+    this.onTap,
+    this.color,
+  });
 
   final String label;
   final IconData? icon;

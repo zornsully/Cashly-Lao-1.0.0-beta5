@@ -60,7 +60,9 @@ void main() {
 
     expect(find.text('Cash Wallet'), findsOneWidget);
     expect(
-      find.text(CurrencyFormatter.format(750, SupportedCurrencies.byCode('USD'))),
+      find.text(
+        CurrencyFormatter.format(750, SupportedCurrencies.byCode('USD')),
+      ),
       findsOneWidget,
     );
   });

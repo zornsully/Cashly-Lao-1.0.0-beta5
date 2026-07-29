@@ -84,7 +84,9 @@ void main() {
     transactionRepository = _MockTransactionRepository();
 
     when(
-      () => accountRepository.watchAccounts(includeArchived: any(named: 'includeArchived')),
+      () => accountRepository.watchAccounts(
+        includeArchived: any(named: 'includeArchived'),
+      ),
     ).thenAnswer((_) => Stream.value([account]));
     when(
       () => categoryRepository.watchCategories(

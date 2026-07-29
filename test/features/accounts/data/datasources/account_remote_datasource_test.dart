@@ -105,114 +105,102 @@ void main() {
     expect(accounts, isEmpty);
   });
 
-  test(
-    'deleteAccount throws ServerException when transactions reference the '
-    'account',
-    () async {
-      final created = await dataSource.createAccount(
-        name: 'Referenced account',
-        type: AccountType.cash,
-        initialBalance: 0,
-        currencyCode: 'LAK',
-        icon: AppIconKey.cash,
-        color: AppColorKey.grey,
-      );
-      await firestore
-          .collection('users')
-          .doc('uid-1')
-          .collection('transactions')
-          .add({'accountId': created.id});
+  test('deleteAccount throws ServerException when transactions reference the '
+      'account', () async {
+    final created = await dataSource.createAccount(
+      name: 'Referenced account',
+      type: AccountType.cash,
+      initialBalance: 0,
+      currencyCode: 'LAK',
+      icon: AppIconKey.cash,
+      color: AppColorKey.grey,
+    );
+    await firestore
+        .collection('users')
+        .doc('uid-1')
+        .collection('transactions')
+        .add({'accountId': created.id});
 
-      expect(
-        () => dataSource.deleteAccount(created.id),
-        throwsA(isA<ServerException>()),
-      );
+    expect(
+      () => dataSource.deleteAccount(created.id),
+      throwsA(isA<ServerException>()),
+    );
 
-      final accounts = await dataSource.watchAccounts().first;
-      expect(accounts, hasLength(1));
-    },
-  );
+    final accounts = await dataSource.watchAccounts().first;
+    expect(accounts, hasLength(1));
+  });
 
-  test(
-    'deleteAccount throws ServerException when a transfer targets the '
-    'account as its destination',
-    () async {
-      final created = await dataSource.createAccount(
-        name: 'Transfer destination',
-        type: AccountType.cash,
-        initialBalance: 0,
-        currencyCode: 'LAK',
-        icon: AppIconKey.cash,
-        color: AppColorKey.grey,
-      );
-      await firestore
-          .collection('users')
-          .doc('uid-1')
-          .collection('transactions')
-          .add({'accountId': 'some-other-account', 'toAccountId': created.id});
+  test('deleteAccount throws ServerException when a transfer targets the '
+      'account as its destination', () async {
+    final created = await dataSource.createAccount(
+      name: 'Transfer destination',
+      type: AccountType.cash,
+      initialBalance: 0,
+      currencyCode: 'LAK',
+      icon: AppIconKey.cash,
+      color: AppColorKey.grey,
+    );
+    await firestore
+        .collection('users')
+        .doc('uid-1')
+        .collection('transactions')
+        .add({'accountId': 'some-other-account', 'toAccountId': created.id});
 
-      expect(
-        () => dataSource.deleteAccount(created.id),
-        throwsA(isA<ServerException>()),
-      );
+    expect(
+      () => dataSource.deleteAccount(created.id),
+      throwsA(isA<ServerException>()),
+    );
 
-      final accounts = await dataSource.watchAccounts().first;
-      expect(accounts, hasLength(1));
-    },
-  );
+    final accounts = await dataSource.watchAccounts().first;
+    expect(accounts, hasLength(1));
+  });
 
-  test(
-    'deleteAccount throws ServerException when an active savings goal '
-    'references the account',
-    () async {
-      final created = await dataSource.createAccount(
-        name: 'Goal-linked account',
-        type: AccountType.savings,
-        initialBalance: 0,
-        currencyCode: 'LAK',
-        icon: AppIconKey.savings,
-        color: AppColorKey.grey,
-      );
-      await firestore
-          .collection('users')
-          .doc('uid-1')
-          .collection('savingsGoals')
-          .add({'accountId': created.id, 'isArchived': false});
+  test('deleteAccount throws ServerException when an active savings goal '
+      'references the account', () async {
+    final created = await dataSource.createAccount(
+      name: 'Goal-linked account',
+      type: AccountType.savings,
+      initialBalance: 0,
+      currencyCode: 'LAK',
+      icon: AppIconKey.savings,
+      color: AppColorKey.grey,
+    );
+    await firestore
+        .collection('users')
+        .doc('uid-1')
+        .collection('savingsGoals')
+        .add({'accountId': created.id, 'isArchived': false});
 
-      expect(
-        () => dataSource.deleteAccount(created.id),
-        throwsA(isA<ServerException>()),
-      );
+    expect(
+      () => dataSource.deleteAccount(created.id),
+      throwsA(isA<ServerException>()),
+    );
 
-      final accounts = await dataSource.watchAccounts().first;
-      expect(accounts, hasLength(1));
-    },
-  );
+    final accounts = await dataSource.watchAccounts().first;
+    expect(accounts, hasLength(1));
+  });
 
-  test(
-    'deleteAccount succeeds when the only referencing savings goal is '
-    'archived',
-    () async {
-      final created = await dataSource.createAccount(
-        name: 'Formerly goal-linked account',
-        type: AccountType.savings,
-        initialBalance: 0,
-        currencyCode: 'LAK',
-        icon: AppIconKey.savings,
-        color: AppColorKey.grey,
-      );
-      await firestore
-          .collection('users')
-          .doc('uid-1')
-          .collection('savingsGoals')
-          .add({'accountId': created.id, 'isArchived': true});
+  test('deleteAccount succeeds when the only referencing savings goal is '
+      'archived', () async {
+    final created = await dataSource.createAccount(
+      name: 'Formerly goal-linked account',
+      type: AccountType.savings,
+      initialBalance: 0,
+      currencyCode: 'LAK',
+      icon: AppIconKey.savings,
+      color: AppColorKey.grey,
+    );
+    await firestore
+        .collection('users')
+        .doc('uid-1')
+        .collection('savingsGoals')
+        .add({'accountId': created.id, 'isArchived': true});
 
-      await dataSource.deleteAccount(created.id);
+    await dataSource.deleteAccount(created.id);
 
-      final accounts = await dataSource.watchAccounts().first;
-      expect(accounts, isEmpty);
-    },
-  );
+    final accounts = await dataSource.watchAccounts().first;
+    expect(accounts, isEmpty);
+  });
 
   test('throws AuthException when there is no signed-in user', () async {
     when(() => firebaseAuth.currentUser).thenReturn(null);

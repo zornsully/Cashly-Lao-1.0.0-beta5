@@ -145,8 +145,7 @@ class _SavingsGoalFormScreenState extends ConsumerState<SavingsGoalFormScreen> {
     if (success) {
       context.pop();
     } else {
-      final message =
-          controller.failure?.message ?? l10n.saveGoalFailedMessage;
+      final message = controller.failure?.message ?? l10n.saveGoalFailedMessage;
       AppSnackbar.showError(context, message);
     }
   }
@@ -215,12 +214,9 @@ class _SavingsGoalFormScreenState extends ConsumerState<SavingsGoalFormScreen> {
                     if (_isEditing)
                       Card(
                         child: ListTile(
-                          leading: const Icon(
-                            AppSymbols.accountBalanceWallet,
-                          ),
+                          leading: const Icon(AppSymbols.accountBalanceWallet),
                           title: Text(
-                            linkedAccount?.name ??
-                                l10n.unavailableAccountLabel,
+                            linkedAccount?.name ?? l10n.unavailableAccountLabel,
                           ),
                           subtitle: Text(l10n.linkedAccountLockedMessage),
                         ),

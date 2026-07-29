@@ -297,10 +297,7 @@ class _FilterSortSheet extends ConsumerWidget {
           initialValue: filter.categoryId,
           decoration: InputDecoration(labelText: l10n.categoryFilterLabel),
           items: [
-            DropdownMenuItem(
-              value: null,
-              child: Text(l10n.allCategoriesLabel),
-            ),
+            DropdownMenuItem(value: null, child: Text(l10n.allCategoriesLabel)),
             for (final category in categories)
               DropdownMenuItem(
                 value: category.id,

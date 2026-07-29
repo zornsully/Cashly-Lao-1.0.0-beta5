@@ -63,9 +63,7 @@ void main() {
 
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            categoryRepositoryProvider.overrideWithValue(repository),
-          ],
+          overrides: [categoryRepositoryProvider.overrideWithValue(repository)],
           child: const MaterialApp(
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,

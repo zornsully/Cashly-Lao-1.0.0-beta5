@@ -47,7 +47,9 @@ void main() {
     'registering the same token again updates platform without touching createdAt',
     () async {
       await dataSource.registerToken(token: 'token-a', platform: 'android');
-      final createdAtFirst = (await tokenDoc('token-a').get()).data()!['createdAt'];
+      final createdAtFirst = (await tokenDoc(
+        'token-a',
+      ).get()).data()!['createdAt'];
 
       await dataSource.registerToken(token: 'token-a', platform: 'ios');
 
@@ -66,7 +68,13 @@ void main() {
     expect(doc.exists, isFalse);
   });
 
-  test('unregisterToken is a no-op when the token was never registered', () async {
-    await expectLater(dataSource.unregisterToken('never-registered'), completes);
-  });
+  test(
+    'unregisterToken is a no-op when the token was never registered',
+    () async {
+      await expectLater(
+        dataSource.unregisterToken('never-registered'),
+        completes,
+      );
+    },
+  );
 }

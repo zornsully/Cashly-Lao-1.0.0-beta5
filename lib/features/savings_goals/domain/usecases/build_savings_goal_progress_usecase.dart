@@ -13,9 +13,7 @@ class BuildSavingsGoalProgressUseCase {
     required List<SavingsGoalEntity> goals,
     required List<AccountEntity> accounts,
   }) {
-    final accountsById = {
-      for (final account in accounts) account.id: account,
-    };
+    final accountsById = {for (final account in accounts) account.id: account};
 
     return [
       for (final goal in goals)

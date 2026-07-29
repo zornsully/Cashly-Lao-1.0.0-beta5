@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/app_snackbar.dart';
+import '../../../../core/utils/platform_capabilities.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_password_field.dart';
 import '../../../../core/widgets/app_text_field.dart';
@@ -133,30 +134,30 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             ],
           ),
         ),
-        const SizedBox(height: AppSpacing.lg),
-        Row(
-          children: [
-            const Expanded(child: Divider()),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-              child: Text(
-                l10n.orDividerLabel,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+        if (AppPlatformCapabilities.supportsGoogleSignIn) ...[
+          const SizedBox(height: AppSpacing.lg),
+          Row(
+            children: [
+              const Expanded(child: Divider()),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                child: Text(
+                  l10n.orDividerLabel,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
-            ),
-            const Expanded(child: Divider()),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        GoogleSignInButton(
-          label: l10n.continueWithGoogle,
-          isLoading: isLoading,
-          onPressed: _continueWithGoogle,
-        ),
+              const Expanded(child: Divider()),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          GoogleSignInButton(
+            label: l10n.continueWithGoogle,
+            isLoading: isLoading,
+            onPressed: _continueWithGoogle,
+          ),
+        ],
         const SizedBox(height: AppSpacing.lg),
         Wrap(
           alignment: WrapAlignment.center,

@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'dart:io' show Platform;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/notifications/presentation/providers/fcm_token_providers.dart';
@@ -32,8 +32,7 @@ class _FcmTokenRegistration extends Notifier<void> {
     ref.onDispose(() => _refreshSubscription?.cancel());
 
     final enabled =
-        ref.watch(userPreferencesProvider).value?.notificationsEnabled ??
-        false;
+        ref.watch(userPreferencesProvider).value?.notificationsEnabled ?? false;
     if (enabled == _wasEnabled) return;
     _wasEnabled = enabled;
 
@@ -61,10 +60,16 @@ class _FcmTokenRegistration extends Notifier<void> {
   }
 
   Future<void> _registerToken(String token) async {
+    if (kIsWeb) return;
     try {
       await ref
           .read(registerFcmTokenUseCaseProvider)
-          .call(token: token, platform: Platform.isIOS ? 'ios' : 'android');
+          .call(
+            token: token,
+            platform: defaultTargetPlatform == TargetPlatform.iOS
+                ? 'ios'
+                : 'android',
+          );
     } catch (_) {
       // Best-effort — see class doc comment.
     }

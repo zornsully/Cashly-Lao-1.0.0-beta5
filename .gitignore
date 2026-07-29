@@ -1,11 +1,17 @@
 # Miscellaneous
 *.class
+*.iml
 *.lock
 *.log
 *.pyc
 *.swp
 .buildlog/
 .history
+.idea/
+
+# Firebase CLI state and short-lived GitHub OIDC credentials.
+/.firebase/
+gha-creds-*.json
 
 
 

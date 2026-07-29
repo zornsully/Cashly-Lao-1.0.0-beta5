@@ -43,10 +43,10 @@ void main() {
             ),
           ],
           child: const MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: SplashScreen(),
-        ),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: SplashScreen(),
+          ),
         ),
       );
       await tester.pump();
@@ -69,10 +69,10 @@ void main() {
             ),
           ],
           child: const MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: SplashScreen(),
-        ),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: SplashScreen(),
+          ),
         ),
       );
 

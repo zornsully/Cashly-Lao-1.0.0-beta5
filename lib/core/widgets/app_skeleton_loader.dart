@@ -7,7 +7,12 @@ import 'app_card.dart';
 /// A pulsing placeholder box — the building block every skeleton loading
 /// state is made of.
 class SkeletonBox extends StatefulWidget {
-  const SkeletonBox({super.key, this.width, this.height = 16, this.borderRadius});
+  const SkeletonBox({
+    super.key,
+    this.width,
+    this.height = 16,
+    this.borderRadius,
+  });
 
   final double? width;
   final double height;
@@ -43,7 +48,8 @@ class _SkeletonBoxState extends State<SkeletonBox>
         height: widget.height,
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          borderRadius: widget.borderRadius ?? BorderRadius.circular(AppRadius.sm),
+          borderRadius:
+              widget.borderRadius ?? BorderRadius.circular(AppRadius.sm),
         ),
       ),
     );

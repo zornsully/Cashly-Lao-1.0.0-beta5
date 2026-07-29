@@ -28,8 +28,7 @@ class GoalCelebrationOverlay extends ConsumerStatefulWidget {
       _GoalCelebrationOverlayState();
 }
 
-class _GoalCelebrationOverlayState
-    extends ConsumerState<GoalCelebrationOverlay>
+class _GoalCelebrationOverlayState extends ConsumerState<GoalCelebrationOverlay>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
@@ -117,8 +116,7 @@ class _ConfettiPainter extends CustomPainter {
       // as one rigid sheet.
       final fallDelay = random.nextDouble() * 0.3;
 
-      final rawParticleProgress =
-          (progress - fallDelay) / (1 - fallDelay);
+      final rawParticleProgress = (progress - fallDelay) / (1 - fallDelay);
       final particleProgress = rawParticleProgress < 0
           ? 0.0
           : (rawParticleProgress > 1 ? 1.0 : rawParticleProgress);
@@ -127,18 +125,18 @@ class _ConfettiPainter extends CustomPainter {
       final rawOpacity = particleProgress > 0.7
           ? (1 - particleProgress) / 0.3
           : 1.0;
-      final opacity = rawOpacity < 0 ? 0.0 : (rawOpacity > 1 ? 1.0 : rawOpacity);
+      final opacity = rawOpacity < 0
+          ? 0.0
+          : (rawOpacity > 1 ? 1.0 : rawOpacity);
       if (opacity <= 0) continue;
 
       final dy = particleProgress * (size.height + 40) - 20;
       final dx = startX + horizontalDrift * particleProgress;
       final particleSize = 4.0 + random.nextDouble() * 4;
-      final rotation =
-          particleProgress * math.pi * 4 * (i.isEven ? 1 : -1);
+      final rotation = particleProgress * math.pi * 4 * (i.isEven ? 1 : -1);
 
-      final paint = Paint()..color = colors[i % colors.length].withValues(
-        alpha: opacity,
-      );
+      final paint = Paint()
+        ..color = colors[i % colors.length].withValues(alpha: opacity);
 
       canvas.save();
       canvas.translate(dx, dy);

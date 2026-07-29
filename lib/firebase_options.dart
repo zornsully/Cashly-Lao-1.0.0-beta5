@@ -12,16 +12,17 @@ class DefaultFirebaseOptions {
 
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web. '
-        'Run `flutterfire configure` to add web support.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
         return ios;
+      case TargetPlatform.macOS:
+        return macos;
+      case TargetPlatform.windows:
+        return windows;
       default:
         throw UnsupportedError(
           'DefaultFirebaseOptions are not supported for '
@@ -29,6 +30,16 @@ class DefaultFirebaseOptions {
         );
     }
   }
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyCgKyPNQpWTFuyh4ahf4r7TaTsIulxd010',
+    appId: '1:406428434702:web:f877e99ac9093b1f36d75f',
+    messagingSenderId: '406428434702',
+    projectId: 'cashly-lao',
+    authDomain: 'cashly-lao.firebaseapp.com',
+    storageBucket: 'cashly-lao.firebasestorage.app',
+    measurementId: 'G-7WNB047S5Z',
+  );
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyD__2UQZZGP8_kzhiWkI9PZBH4VNpqeReQ',
@@ -45,5 +56,31 @@ class DefaultFirebaseOptions {
     projectId: 'cashly-lao',
     storageBucket: 'cashly-lao.firebasestorage.app',
     iosBundleId: 'com.cashlylao.app',
+  );
+
+  /// macOS uses the registered Cashly Lao Apple application configuration.
+  /// The bundle identifier intentionally matches iOS so the same secure
+  /// Firebase project, Firestore rules, and user data are used on both Apple
+  /// platforms.
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyCyNuMU2ZMn5p3gPwD36vqXto1ggwPXiG4',
+    appId: '1:406428434702:ios:80f12cf24f39ce4b36d75f',
+    messagingSenderId: '406428434702',
+    projectId: 'cashly-lao',
+    storageBucket: 'cashly-lao.firebasestorage.app',
+    iosBundleId: 'com.cashlylao.app',
+  );
+
+  /// Windows uses the project's browser-style Firebase application config.
+  /// It provides the same Auth and Firestore backend as the web app while
+  /// keeping credentials and user records in one Cashly Lao project.
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyCgKyPNQpWTFuyh4ahf4r7TaTsIulxd010',
+    appId: '1:406428434702:web:f877e99ac9093b1f36d75f',
+    messagingSenderId: '406428434702',
+    projectId: 'cashly-lao',
+    authDomain: 'cashly-lao.firebaseapp.com',
+    storageBucket: 'cashly-lao.firebasestorage.app',
+    measurementId: 'G-7WNB047S5Z',
   );
 }

@@ -88,8 +88,11 @@ void main() {
   );
 
   testWidgets(
-    'sums account balances and this month\'s income/expense correctly',
+    'uses a four-card desktop dashboard without changing live totals',
     (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1280, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
       final accountRepository = _MockAccountRepository();
       final categoryRepository = _MockCategoryRepository();
       final transactionRepository = _MockTransactionRepository();
@@ -108,7 +111,17 @@ void main() {
       ).thenAnswer((_) => Stream.value([category]));
       when(
         () => transactionRepository.watchTransactionsForMonth(any()),
-      ).thenAnswer((_) => Stream.value([expenseTransaction, incomeTransaction]));
+      ).thenAnswer(
+        (_) => Stream.value([expenseTransaction, incomeTransaction]),
+      );
+      when(
+        () => transactionRepository.watchTransactionsInRange(
+          start: any(named: 'start'),
+          endExclusive: any(named: 'endExclusive'),
+        ),
+      ).thenAnswer(
+        (_) => Stream.value([expenseTransaction, incomeTransaction]),
+      );
       when(
         () => budgetRepository.watchBudgetsForMonth(any()),
       ).thenAnswer((_) => Stream.value(const <BudgetEntity>[]));
@@ -133,18 +146,37 @@ void main() {
       await tester.pumpAndSettle();
 
       final currency = SupportedCurrencies.byCode('USD');
-      expect(
-        find.text(CurrencyFormatter.format(500, currency)),
-        findsOneWidget,
-      );
-      expect(
-        find.text(CurrencyFormatter.format(200, currency)),
-        findsOneWidget,
-      );
-      expect(
-        find.text(CurrencyFormatter.format(50, currency)),
-        findsOneWidget,
-      );
+      expect(find.text(CurrencyFormatter.format(500, currency)), findsWidgets);
+      expect(find.text(CurrencyFormatter.format(200, currency)), findsWidgets);
+      expect(find.text(CurrencyFormatter.format(50, currency)), findsWidgets);
+      expect(find.text('Total balance'), findsOneWidget);
+      expect(find.text('Monthly income'), findsOneWidget);
+      expect(find.text('Monthly expenses'), findsOneWidget);
+      expect(find.text('Net cash flow'), findsOneWidget);
+      expect(find.text('Income & expenses'), findsOneWidget);
+      expect(find.text('Add income'), findsOneWidget);
+      expect(find.text('Add expense'), findsOneWidget);
+      expect(find.text('Transfer money'), findsOneWidget);
+      expect(find.text('Create budget'), findsOneWidget);
+
+      final balancePosition = tester.getTopLeft(find.text('Total balance'));
+      final incomePosition = tester.getTopLeft(find.text('Monthly income'));
+      final expensePosition = tester.getTopLeft(find.text('Monthly expenses'));
+      final netPosition = tester.getTopLeft(find.text('Net cash flow'));
+      expect(balancePosition.dy, incomePosition.dy);
+      expect(incomePosition.dy, expensePosition.dy);
+      expect(expensePosition.dy, netPosition.dy);
+
+      await tester.binding.setSurfaceSize(const Size(900, 900));
+      await tester.pump();
+
+      final tabletBalance = tester.getTopLeft(find.text('Total balance'));
+      final tabletIncome = tester.getTopLeft(find.text('Monthly income'));
+      final tabletExpense = tester.getTopLeft(find.text('Monthly expenses'));
+      final tabletNet = tester.getTopLeft(find.text('Net cash flow'));
+      expect(tabletBalance.dy, tabletIncome.dy);
+      expect(tabletExpense.dy, greaterThan(tabletIncome.dy));
+      expect(tabletExpense.dy, tabletNet.dy);
     },
   );
 }

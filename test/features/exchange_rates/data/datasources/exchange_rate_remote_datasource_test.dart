@@ -27,15 +27,18 @@ void main() {
     expect(result.rates['LAK'], 22000);
   });
 
-  test('fetchLatestRates throws ServerException on a non-200 response', () async {
-    final client = MockClient((request) async => http.Response('', 500));
-    final dataSource = HttpExchangeRateRemoteDataSource(client: client);
+  test(
+    'fetchLatestRates throws ServerException on a non-200 response',
+    () async {
+      final client = MockClient((request) async => http.Response('', 500));
+      final dataSource = HttpExchangeRateRemoteDataSource(client: client);
 
-    expect(
-      () => dataSource.fetchLatestRates(baseCurrencyCode: 'USD'),
-      throwsA(isA<ServerException>()),
-    );
-  });
+      expect(
+        () => dataSource.fetchLatestRates(baseCurrencyCode: 'USD'),
+        throwsA(isA<ServerException>()),
+      );
+    },
+  );
 
   test(
     'fetchLatestRates throws ServerException when the response body is malformed',

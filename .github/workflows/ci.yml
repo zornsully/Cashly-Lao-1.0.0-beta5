@@ -1,59 +1,83 @@
-name: CI
+name: Continuous integration
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Every job starts read-only. Deployment and release permissions live only in
+# the protected production jobs in the dedicated workflows.
+permissions:
+  contents: read
+
+concurrency:
+  group: cashly-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  analyze-and-test:
-    runs-on: ubuntu-latest
+  flutter:
+    name: Flutter quality checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
+      # Pinned to actions/checkout v4.2.2.
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
 
-      - uses: subosito/flutter-action@v2
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           flutter-version: '3.44.6'
-          channel: 'stable'
+          channel: stable
           cache: true
 
-      - run: flutter pub get
+      - name: Restore Dart dependencies
+        run: flutter pub get
 
-      # lib/l10n/app_localizations*.dart are gitignored generated code —
-      # `generate: true` in pubspec.yaml means `flutter build`/`test` would
-      # regenerate them implicitly too, but doing it explicitly here keeps
-      # the analyze step (which doesn't trigger codegen on its own) from
-      # failing on missing files.
-      - run: flutter gen-l10n
+      - name: Generate localizations
+        run: flutter gen-l10n
 
-      - run: flutter analyze
+      - name: Check Dart formatting
+        run: dart format --output=none --set-exit-if-changed lib test tool
 
-      - run: flutter test
+      - name: Analyze source
+        run: flutter analyze
 
-  # Cloud Functions (functions/) — the FCM push-notification backend, this
-  # repo's first non-Flutter component. Independent of the job above: no
-  # Firebase Emulator Suite here (kept for a developer's own pre-deploy
-  # verification), just install/lint/build/test, same as the Flutter job's
-  # own scope.
+      - name: Run automated tests
+        run: flutter test
+
   functions:
-    runs-on: ubuntu-latest
+    name: Cloud Functions quality checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: functions
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          node-version: '20'
-          cache: 'npm'
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '20.19.0'
+          cache: npm
           cache-dependency-path: functions/package-lock.json
 
-      - run: npm ci
+      - name: Restore Node dependencies
+        run: npm ci
 
-      - run: npm run lint
+      - name: Lint Functions source
+        run: npm run lint
 
-      - run: npm run build
+      - name: Build Functions source
+        run: npm run build
 
-      - run: npm test
+      - name: Run Functions tests
+        run: npm test

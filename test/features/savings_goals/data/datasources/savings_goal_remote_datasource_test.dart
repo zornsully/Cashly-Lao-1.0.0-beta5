@@ -148,29 +148,32 @@ void main() {
     );
   });
 
-  test('updateGoal can clear a previously-set auto-contribution schedule', () async {
-    final created = await dataSource.createGoal(
-      name: 'Vacation',
-      targetAmount: 5000000,
-      accountId: 'acc-1',
-      icon: AppIconKey.savings,
-      color: AppColorKey.emerald,
-      autoContributionAmount: 250000,
-      autoContributionFrequency: GoalContributionFrequency.weekly,
-    );
+  test(
+    'updateGoal can clear a previously-set auto-contribution schedule',
+    () async {
+      final created = await dataSource.createGoal(
+        name: 'Vacation',
+        targetAmount: 5000000,
+        accountId: 'acc-1',
+        icon: AppIconKey.savings,
+        color: AppColorKey.emerald,
+        autoContributionAmount: 250000,
+        autoContributionFrequency: GoalContributionFrequency.weekly,
+      );
 
-    await dataSource.updateGoal(
-      id: created.id,
-      name: 'Vacation',
-      targetAmount: 5000000,
-      icon: AppIconKey.savings,
-      color: AppColorKey.emerald,
-    );
+      await dataSource.updateGoal(
+        id: created.id,
+        name: 'Vacation',
+        targetAmount: 5000000,
+        icon: AppIconKey.savings,
+        color: AppColorKey.emerald,
+      );
 
-    final updated = await dataSource.watchGoals().first;
-    expect(updated.single.autoContributionAmount, isNull);
-    expect(updated.single.autoContributionFrequency, isNull);
-  });
+      final updated = await dataSource.watchGoals().first;
+      expect(updated.single.autoContributionAmount, isNull);
+      expect(updated.single.autoContributionFrequency, isNull);
+    },
+  );
 
   test('archiveGoal then unarchiveGoal toggles isArchived', () async {
     final created = await dataSource.createGoal(

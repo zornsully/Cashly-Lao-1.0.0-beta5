@@ -82,8 +82,6 @@ class AuthRepositoryImpl with RepositoryGuard implements AuthRepository {
 
   @override
   Future<Either<Failure, Unit>> deleteAccount({String? password}) {
-    return guardUnit(
-      () => _remoteDataSource.deleteAccount(password: password),
-    );
+    return guardUnit(() => _remoteDataSource.deleteAccount(password: password));
   }
 }

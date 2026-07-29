@@ -84,39 +84,36 @@ void main() {
     ).thenAnswer((_) async => result);
   }
 
-  test(
-    "creates a transfer into the goal's account and records the "
-    'contribution',
-    () async {
-      stubCreateTransaction(Right(transaction));
-      stubRecordContribution(const Right(unit));
+  test("creates a transfer into the goal's account and records the "
+      'contribution', () async {
+    stubCreateTransaction(Right(transaction));
+    stubRecordContribution(const Right(unit));
 
-      final result = await useCase(
-        goal: goal,
-        sourceAccountId: 'source-acc',
+    final result = await useCase(
+      goal: goal,
+      sourceAccountId: 'source-acc',
+      amount: 200000,
+    );
+
+    expect(result, Right(transaction));
+    verify(
+      () => transactionRepository.createTransaction(
+        accountId: 'source-acc',
+        type: TransactionType.transfer,
+        toAccountId: 'goal-acc',
         amount: 200000,
-      );
-
-      expect(result, Right(transaction));
-      verify(
-        () => transactionRepository.createTransaction(
-          accountId: 'source-acc',
-          type: TransactionType.transfer,
-          toAccountId: 'goal-acc',
-          amount: 200000,
-          date: any(named: 'date'),
-          note: any(named: 'note'),
-          categoryId: any(named: 'categoryId'),
-        ),
-      ).called(1);
-      verify(
-        () => goalRepository.recordContribution(
-          goalId: 'goal-1',
-          contributedAt: any(named: 'contributedAt'),
-        ),
-      ).called(1);
-    },
-  );
+        date: any(named: 'date'),
+        note: any(named: 'note'),
+        categoryId: any(named: 'categoryId'),
+      ),
+    ).called(1);
+    verify(
+      () => goalRepository.recordContribution(
+        goalId: 'goal-1',
+        contributedAt: any(named: 'contributedAt'),
+      ),
+    ).called(1);
+  });
 
   test('does not record a contribution when the transfer fails', () async {
     stubCreateTransaction(const Left(ServerFailure('boom')));
@@ -136,22 +133,19 @@ void main() {
     );
   });
 
-  test(
-    'a recordContribution failure does not negate an already-successful '
-    'transfer',
-    () async {
-      stubCreateTransaction(Right(transaction));
-      stubRecordContribution(
-        const Left(ServerFailure('could not update timestamp')),
-      );
+  test('a recordContribution failure does not negate an already-successful '
+      'transfer', () async {
+    stubCreateTransaction(Right(transaction));
+    stubRecordContribution(
+      const Left(ServerFailure('could not update timestamp')),
+    );
 
-      final result = await useCase(
-        goal: goal,
-        sourceAccountId: 'source-acc',
-        amount: 200000,
-      );
+    final result = await useCase(
+      goal: goal,
+      sourceAccountId: 'source-acc',
+      amount: 200000,
+    );
 
-      expect(result, Right(transaction));
-    },
-  );
+    expect(result, Right(transaction));
+  });
 }

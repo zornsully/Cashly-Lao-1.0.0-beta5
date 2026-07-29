@@ -131,7 +131,9 @@ class ReportsScreen extends ConsumerWidget {
                             padding: const EdgeInsets.only(
                               bottom: AppSpacing.lg,
                             ),
-                            child: _ConvertedTotalsCard(totals: convertedTotals),
+                            child: _ConvertedTotalsCard(
+                              totals: convertedTotals,
+                            ),
                           ),
                   ),
                 for (final currencyCode in currencies) ...[

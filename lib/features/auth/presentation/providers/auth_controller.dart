@@ -109,9 +109,7 @@ class AuthController extends AsyncNotifier<void> {
 
   Future<bool> deleteAccount({String? password}) {
     return _run(
-      () => ref
-          .read(deleteUserAccountUseCaseProvider)
-          .call(password: password),
+      () => ref.read(deleteUserAccountUseCaseProvider).call(password: password),
     );
   }
 

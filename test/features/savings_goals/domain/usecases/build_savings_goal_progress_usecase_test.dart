@@ -97,9 +97,7 @@ void main() {
   });
 
   test('currencyCode is derived from the account, not stored on the goal', () {
-    final accounts = [
-      account(id: 'acc-1', balance: 100, currencyCode: 'USD'),
-    ];
+    final accounts = [account(id: 'acc-1', balance: 100, currencyCode: 'USD')];
     final goals = [goal(id: 'goal-1', accountId: 'acc-1', targetAmount: 1000)];
 
     final result = useCase(goals: goals, accounts: accounts);

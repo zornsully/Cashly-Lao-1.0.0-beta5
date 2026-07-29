@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -98,7 +99,10 @@ class SettingsScreen extends ConsumerWidget {
       );
       if (!granted) {
         if (!context.mounted) return;
-        AppSnackbar.showError(context, l10n.notificationsPermissionDeniedMessage);
+        AppSnackbar.showError(
+          context,
+          l10n.notificationsPermissionDeniedMessage,
+        );
         return;
       }
     }
@@ -175,52 +179,54 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: AppSpacing.lg),
-              _SectionHeader(title: l10n.securitySectionTitle),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(l10n.appLockToggleLabel),
-                        subtitle: Text(
-                          isAppLockSupported
-                              ? l10n.appLockToggleHelperMessage
-                              : l10n.appLockUnsupportedMessage,
-                        ),
-                        value: preferences.appLockEnabled,
-                        onChanged: isSaving || !isAppLockSupported
-                            ? null
-                            : (value) =>
-                                  _changeAppLockEnabled(context, ref, value),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              _SectionHeader(title: l10n.notificationsSectionTitle),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  child: SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(l10n.notificationsToggleLabel),
-                    subtitle: Text(l10n.notificationsToggleHelperMessage),
-                    value: preferences.notificationsEnabled,
-                    onChanged: isSaving
-                        ? null
-                        : (value) => _changeNotificationsEnabled(
-                            context,
-                            ref,
-                            value,
+              if (!kIsWeb) ...[
+                const SizedBox(height: AppSpacing.lg),
+                _SectionHeader(title: l10n.securitySectionTitle),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(l10n.appLockToggleLabel),
+                          subtitle: Text(
+                            isAppLockSupported
+                                ? l10n.appLockToggleHelperMessage
+                                : l10n.appLockUnsupportedMessage,
                           ),
+                          value: preferences.appLockEnabled,
+                          onChanged: isSaving || !isAppLockSupported
+                              ? null
+                              : (value) =>
+                                    _changeAppLockEnabled(context, ref, value),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
+                const SizedBox(height: AppSpacing.lg),
+                _SectionHeader(title: l10n.notificationsSectionTitle),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    child: SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(l10n.notificationsToggleLabel),
+                      subtitle: Text(l10n.notificationsToggleHelperMessage),
+                      value: preferences.notificationsEnabled,
+                      onChanged: isSaving
+                          ? null
+                          : (value) => _changeNotificationsEnabled(
+                              context,
+                              ref,
+                              value,
+                            ),
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: AppSpacing.lg),
               _SectionHeader(title: l10n.languageSectionTitle),
               Card(

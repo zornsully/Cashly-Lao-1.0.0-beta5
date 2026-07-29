@@ -1,0 +1,540 @@
+name: Roll back production website
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Published stable release tag whose retained website package should be restored.
+        required: true
+        type: string
+
+# This workflow never deletes a release or a download asset. It restores a
+# retained, checksum-verified website package only after production approval.
+permissions:
+  contents: read
+
+concurrency:
+  group: cashly-production-publication
+  cancel-in-progress: false
+
+jobs:
+  validate_rollback:
+    name: Validate rollback package
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      tag: ${{ steps.release.outputs.tag }}
+      version: ${{ steps.release.outputs.version }}
+      commit: ${{ steps.release.outputs.commit }}
+      android_sha256: ${{ steps.package.outputs.android_sha256 }}
+      android_size: ${{ steps.package.outputs.android_size }}
+      web_sha256: ${{ steps.package.outputs.web_sha256 }}
+    steps:
+      - name: Validate the retained internal stable release
+        id: release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Rollback accepts a retained stable vMAJOR.MINOR.PATCH tag only." >&2
+            exit 1
+          fi
+
+          repository_private="$(gh api "repos/${GITHUB_REPOSITORY}" --jq '.private')"
+          if [[ "$repository_private" != 'true' ]]; then
+            echo 'Rollback is configured for a private repository. Refusing to use GitHub as the internal artifact store if visibility changed.' >&2
+            exit 1
+          fi
+          gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" > release.json
+          if [[ "$(jq -r '.draft' release.json)" != 'true' || "$(jq -r '.prerelease' release.json)" != 'false' ]]; then
+            echo "Rollback requires the retained internal stable GitHub draft, never a published release or prerelease." >&2
+            exit 1
+          fi
+
+          ref_json="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RELEASE_TAG}")"
+          object_type="$(jq -r '.object.type' <<< "$ref_json")"
+          object_sha="$(jq -r '.object.sha' <<< "$ref_json")"
+          for attempt in 1 2 3 4 5; do
+            if [[ "$object_type" == 'commit' ]]; then
+              break
+            fi
+            if [[ "$object_type" != 'tag' || -z "$object_sha" || "$object_sha" == 'null' ]]; then
+              echo "Could not resolve $RELEASE_TAG to a Git commit." >&2
+              exit 1
+            fi
+            tag_json="$(gh api "repos/${GITHUB_REPOSITORY}/git/tags/${object_sha}")"
+            object_type="$(jq -r '.object.type' <<< "$tag_json")"
+            object_sha="$(jq -r '.object.sha' <<< "$tag_json")"
+          done
+          if [[ "$object_type" != 'commit' || -z "$object_sha" || "$object_sha" == 'null' ]]; then
+            echo "The selected release tag does not resolve to a commit." >&2
+            exit 1
+          fi
+
+          version="${RELEASE_TAG#v}"
+          {
+            echo "tag=$RELEASE_TAG"
+            echo "version=$version"
+            echo "commit=$object_sha"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Download retained Android and website packages with checksum list
+        id: package
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+          RELEASE_COMMIT: ${{ steps.release.outputs.commit }}
+        run: |
+          set -euo pipefail
+          mkdir -p rollback-bundle
+          gh release download "$RELEASE_TAG" \
+            --pattern "Cashly-Lao-Android-${RELEASE_VERSION}.apk" \
+            --pattern "Cashly-Lao-Web-${RELEASE_VERSION}.zip" \
+            --pattern SHA256SUMS.txt \
+            --dir rollback-bundle
+
+          android_package="rollback-bundle/Cashly-Lao-Android-${RELEASE_VERSION}.apk"
+          web_package="rollback-bundle/Cashly-Lao-Web-${RELEASE_VERSION}.zip"
+          checksums='rollback-bundle/SHA256SUMS.txt'
+          test -s "$android_package"
+          test -s "$web_package"
+          test -s "$checksums"
+          expected_android_sha256="$(awk '$2 ~ /Cashly-Lao-Android-.*\.apk$/ {print $1; exit}' "$checksums" | tr '[:lower:]' '[:upper:]')"
+          expected_web_sha256="$(awk '$2 ~ /Cashly-Lao-Web-.*\.zip$/ {print $1; exit}' "$checksums" | tr '[:lower:]' '[:upper:]')"
+          actual_android_sha256="$(sha256sum "$android_package" | awk '{print $1}' | tr '[:lower:]' '[:upper:]')"
+          actual_web_sha256="$(sha256sum "$web_package" | awk '{print $1}' | tr '[:lower:]' '[:upper:]')"
+          if [[ -z "$expected_android_sha256" || "$expected_android_sha256" != "$actual_android_sha256" ]]; then
+            echo "The retained Android package does not match its published SHA-256 checksum." >&2
+            exit 1
+          fi
+          if [[ -z "$expected_web_sha256" || "$expected_web_sha256" != "$actual_web_sha256" ]]; then
+            echo "The retained website package does not match its published SHA-256 checksum." >&2
+            exit 1
+          fi
+
+          mkdir rollback-preview
+          unzip -q "$web_package" -d rollback-preview
+          test -s rollback-preview/index.html
+          test -s rollback-preview/release-manifest.json
+          hosted_android="rollback-preview/downloads/Cashly-Lao-Android-${RELEASE_VERSION}.apk"
+          test -s "$hosted_android"
+          hosted_android_sha256="$(sha256sum "$hosted_android" | awk '{print $1}' | tr '[:lower:]' '[:upper:]')"
+          hosted_android_size="$(stat --printf='%s' "$hosted_android")"
+          android_size="$(stat --printf='%s' "$android_package")"
+          if [[ "$hosted_android_sha256" != "$actual_android_sha256" || "$hosted_android_size" != "$android_size" ]]; then
+            echo 'The Firebase-hosted APK in the retained website package differs from the signed Android artifact.' >&2
+            exit 1
+          fi
+
+          manifest='rollback-preview/release-manifest.json'
+          expected_android_url="https://cashly-lao.web.app/downloads/Cashly-Lao-Android-${RELEASE_VERSION}.apk"
+          jq -e \
+            --arg tag "$RELEASE_TAG" \
+            --arg commit "$RELEASE_COMMIT" \
+            --arg version "$RELEASE_VERSION" \
+            --arg url "$expected_android_url" \
+            --arg sha256 "$actual_android_sha256" \
+            '
+              .schemaVersion == 2 and
+              .release.tag == $tag and
+              .release.commitSha == $commit and
+              .release.channel == "stable" and
+              ([.platforms[] | select(
+                .platform == "android" and
+                .availability == "available" and
+                .isLatest == true and
+                .version == $version and
+                .downloadUrl == $url and
+                .sha256 == $sha256
+              )] | length == 1)
+            ' "$manifest" > /dev/null
+          {
+            echo "android_sha256=$actual_android_sha256"
+            echo "android_size=$android_size"
+            echo "web_sha256=$actual_web_sha256"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Upload verified rollback package
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
+        with:
+          name: cashly-lao-rollback-${{ steps.release.outputs.version }}
+          path: |
+            rollback-bundle/Cashly-Lao-Web-${{ steps.release.outputs.version }}.zip
+            rollback-bundle/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14
+
+  rollback_production:
+    name: Protected Firebase Hosting rollback
+    needs: validate_rollback
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    environment:
+      name: production
+      url: https://cashly-lao.web.app
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out the selected release configuration
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ needs.validate_rollback.outputs.commit }}
+          persist-credentials: false
+
+      - name: Download verified rollback website package
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
+        with:
+          name: cashly-lao-rollback-${{ needs.validate_rollback.outputs.version }}
+          path: rollback-bundle
+
+      - name: Restore verified website bundle
+        shell: bash
+        env:
+          RELEASE_VERSION: ${{ needs.validate_rollback.outputs.version }}
+          ANDROID_SHA256: ${{ needs.validate_rollback.outputs.android_sha256 }}
+          ANDROID_SIZE: ${{ needs.validate_rollback.outputs.android_size }}
+          WEB_SHA256: ${{ needs.validate_rollback.outputs.web_sha256 }}
+        run: |
+          set -euo pipefail
+          package="rollback-bundle/Cashly-Lao-Web-${RELEASE_VERSION}.zip"
+          checksums='rollback-bundle/SHA256SUMS.txt'
+          test -s "$package"
+          test -s "$checksums"
+          expected_web_sha256="$(awk '$2 ~ /Cashly-Lao-Web-.*\.zip$/ {print $1; exit}' "$checksums" | tr '[:lower:]' '[:upper:]')"
+          actual_web_sha256="$(sha256sum "$package" | awk '{print $1}' | tr '[:lower:]' '[:upper:]')"
+          if [[ -z "$expected_web_sha256" || "$actual_web_sha256" != "$expected_web_sha256" || "$actual_web_sha256" != "$WEB_SHA256" ]]; then
+            echo 'The rollback website artifact changed after validation. Production will not be modified.' >&2
+            exit 1
+          fi
+          rm -rf build/web
+          mkdir -p build/web
+          unzip -q "$package" -d build/web
+          test -s build/web/index.html
+          test -s build/web/release-manifest.json
+          hosted_android="build/web/downloads/Cashly-Lao-Android-${RELEASE_VERSION}.apk"
+          test -s "$hosted_android"
+          hosted_android_sha256="$(sha256sum "$hosted_android" | awk '{print $1}' | tr '[:lower:]' '[:upper:]')"
+          hosted_android_size="$(stat --printf='%s' "$hosted_android")"
+          if [[ "$hosted_android_sha256" != "$ANDROID_SHA256" || "$hosted_android_size" != "$ANDROID_SIZE" ]]; then
+            echo 'The rollback Firebase Hosting APK differs from the retained signed artifact. Production will not be modified.' >&2
+            exit 1
+          fi
+
+      - name: Verify protected production configuration
+        shell: bash
+        env:
+          GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          for name in GCP_WORKLOAD_IDENTITY_PROVIDER GCP_SERVICE_ACCOUNT FIREBASE_PROJECT_ID; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "The protected production environment is missing $name." >&2
+              exit 1
+            fi
+          done
+          if [[ "$FIREBASE_PROJECT_ID" != 'cashly-lao' ]]; then
+            echo 'FIREBASE_PROJECT_ID must be cashly-lao so the approved manifest URL and Hosting site cannot diverge.' >&2
+            exit 1
+          fi
+
+      - name: Authenticate to Firebase with Workload Identity
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          create_credentials_file: true
+
+      # `auth` exports Application Default Credentials. Set up the Cloud SDK
+      # explicitly before asking gcloud for a short-lived REST API token.
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+
+      - name: Deploy and validate the retained package in a Firebase preview
+        id: rollback_preview
+        shell: bash
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_TOOLS_VERSION: '13.35.1'
+          RELEASE_TAG: ${{ needs.validate_rollback.outputs.tag }}
+          RELEASE_VERSION: ${{ needs.validate_rollback.outputs.version }}
+          RELEASE_COMMIT: ${{ needs.validate_rollback.outputs.commit }}
+          ANDROID_SHA256: ${{ needs.validate_rollback.outputs.android_sha256 }}
+          ANDROID_SIZE: ${{ needs.validate_rollback.outputs.android_size }}
+        run: |
+          set -euo pipefail
+          hosting_site_id='cashly-lao'
+          channel="rollback-${GITHUB_RUN_ID}"
+          npx --yes "firebase-tools@${FIREBASE_TOOLS_VERSION}" hosting:channel:deploy "$channel" \
+            --expires 1d \
+            --only hosting:cashly-lao \
+            --project "$FIREBASE_PROJECT_ID" \
+            --non-interactive
+          access_token="$(gcloud auth print-access-token)"
+          test -n "$access_token"
+          preview_channel_json="$(curl --fail --silent --show-error \
+            --header "Authorization: Bearer $access_token" \
+            "https://firebasehosting.googleapis.com/v1beta1/sites/${hosting_site_id}/channels/${channel}")"
+          preview_origin="$(jq -r '.url // empty' <<< "$preview_channel_json")"
+          preview_version="$(jq -r '.release.version.name // empty' <<< "$preview_channel_json")"
+          preview_origin="${preview_origin%/}"
+          if [[ "$preview_origin" != https://${hosting_site_id}--${channel}-*.web.app ]]; then
+            echo "Firebase returned an unexpected rollback preview origin: $preview_origin" >&2
+            exit 1
+          fi
+          if [[ ! "$preview_version" =~ ^sites/${hosting_site_id}/versions/[^/]+$ ]]; then
+            echo "Firebase did not return an immutable rollback preview version: $preview_version" >&2
+            exit 1
+          fi
+          curl --fail --silent --show-error --retry 5 --retry-delay 5 --max-time 30 \
+            "$preview_origin/" > rollback-preview-index.html
+          grep -q 'main.dart.js' rollback-preview-index.html
+          curl --fail --silent --show-error --retry 5 --retry-delay 5 --max-time 30 \
+            "$preview_origin/main.dart.js" > /dev/null
+          curl --fail --silent --show-error --retry 5 --retry-delay 5 --max-time 30 \
+            "$preview_origin/release-manifest.json" > rollback-preview-manifest.json
+          expected_android_url="https://cashly-lao.web.app/downloads/Cashly-Lao-Android-${RELEASE_VERSION}.apk"
+          jq -e \
+            --arg tag "$RELEASE_TAG" \
+            --arg commit "$RELEASE_COMMIT" \
+            --arg version "$RELEASE_VERSION" \
+            --arg sha256 "$ANDROID_SHA256" \
+            --arg url "$expected_android_url" \
+            '
+              .schemaVersion == 2 and
+              .release.tag == $tag and
+              .release.commitSha == $commit and
+              .release.channel == "stable" and
+              ([.platforms[] | select(
+                .platform == "android" and
+                .availability == "available" and
+                .isLatest == true and
+                .version == $version and
+                .sha256 == $sha256 and
+                .downloadUrl == $url
+              )] | length == 1)
+            ' rollback-preview-manifest.json > /dev/null
+          # Preview Hosting is public by URL. Validate the unauthenticated
+          # download before allowing any live manifest or APK link to change.
+          preview_apk_url="$preview_origin/downloads/Cashly-Lao-Android-${RELEASE_VERSION}.apk"
+          curl --fail --location --silent --show-error \
+            --retry 5 --retry-all-errors --retry-delay 5 \
+            --connect-timeout 15 --max-time 240 \
+            --header 'Accept-Encoding: identity' \
+            --dump-header rollback-preview-android.headers \
+            "$preview_apk_url" --output rollback-preview-android.apk
+          test -s rollback-preview-android.apk
+          actual_sha256="$(sha256sum rollback-preview-android.apk | awk '{print $1}' | tr '[:lower:]' '[:upper:]')"
+          actual_size="$(stat --printf='%s' rollback-preview-android.apk)"
+          content_type="$(awk 'BEGIN { IGNORECASE=1 } /^content-type:/ { value=$0; sub(/^[^:]*:[[:space:]]*/, "", value); gsub(/\r/, "", value); result=tolower(value) } END { print result }' rollback-preview-android.headers)"
+          content_length="$(awk 'BEGIN { IGNORECASE=1 } /^content-length:/ { value=$0; sub(/^[^:]*:[[:space:]]*/, "", value); gsub(/\r/, "", value); result=value } END { print result }' rollback-preview-android.headers)"
+          content_encoding="$(awk 'BEGIN { IGNORECASE=1 } /^content-encoding:/ { value=$0; sub(/^[^:]*:[[:space:]]*/, "", value); gsub(/\r/, "", value); result=tolower(value) } END { print result }' rollback-preview-android.headers)"
+          content_disposition="$(awk 'BEGIN { IGNORECASE=1 } /^content-disposition:/ { value=$0; sub(/^[^:]*:[[:space:]]*/, "", value); gsub(/\r/, "", value); result=tolower(value) } END { print result }' rollback-preview-android.headers)"
+          case "$content_type" in
+            application/vnd.android.package-archive*|application/x-android-package-archive*|application/octet-stream*) ;;
+            *)
+              echo "Firebase rollback preview returned an unsafe APK Content-Type: $content_type" >&2
+              exit 1
+              ;;
+          esac
+          case "$content_disposition" in
+            attachment|attachment\;*) ;;
+            *)
+              echo "Firebase rollback preview did not force an APK attachment download: $content_disposition" >&2
+              exit 1
+              ;;
+          esac
+          if [[ "$actual_sha256" != "$ANDROID_SHA256" || "$actual_size" != "$ANDROID_SIZE" || "$content_length" != "$ANDROID_SIZE" ]]; then
+            echo 'The anonymous Firebase rollback preview APK is not the retained signed artifact. Production will remain unchanged.' >&2
+            exit 1
+          fi
+          if [[ -n "$content_encoding" && "$content_encoding" != 'identity' ]]; then
+            echo "Firebase rollback preview transformed the APK with Content-Encoding: $content_encoding" >&2
+            exit 1
+          fi
+          # A channel name is mutable. Confirm the exact version whose bytes
+          # passed validation is still active, then promote that version ID.
+          validated_channel_json="$(curl --fail --silent --show-error \
+            --header "Authorization: Bearer $access_token" \
+            "https://firebasehosting.googleapis.com/v1beta1/sites/${hosting_site_id}/channels/${channel}")"
+          validated_version="$(jq -r '.release.version.name // empty' <<< "$validated_channel_json")"
+          if [[ "$validated_version" != "$preview_version" ]]; then
+            echo 'The Firebase rollback preview channel changed during validation; it will not be promoted.' >&2
+            exit 1
+          fi
+          {
+            echo "channel=$channel"
+            echo "version_id=${preview_version##*/}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Capture the current live Firebase Hosting version for automatic recovery
+        id: live_before_rollback
+        shell: bash
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          hosting_site_id='cashly-lao'
+          access_token="$(gcloud auth print-access-token)"
+          test -n "$access_token"
+          curl --fail --silent --show-error \
+            --header "Authorization: Bearer $access_token" \
+            "https://firebasehosting.googleapis.com/v1beta1/sites/${hosting_site_id}/channels/live" \
+            > current-live-channel.json
+          previous_version="$(jq -r '.release.version.name // empty' current-live-channel.json)"
+          if [[ ! "$previous_version" =~ ^sites/${hosting_site_id}/versions/[^/]+$ ]]; then
+            echo 'A known live Firebase Hosting version is required before rollback so a failed health check can be automatically restored.' >&2
+            exit 1
+          fi
+          echo "version_id=${previous_version##*/}" >> "$GITHUB_OUTPUT"
+
+      - name: Promote the exact verified rollback preview version to live
+        shell: bash
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_TOOLS_VERSION: '13.35.1'
+          PREVIEW_VERSION_ID: ${{ steps.rollback_preview.outputs.version_id }}
+        run: |
+          set -euo pipefail
+          hosting_site_id='cashly-lao'
+          test -n "$PREVIEW_VERSION_ID"
+          npx --yes "firebase-tools@${FIREBASE_TOOLS_VERSION}" hosting:clone \
+            "${hosting_site_id}:@${PREVIEW_VERSION_ID}" \
+            "${hosting_site_id}:live" \
+            --project "$FIREBASE_PROJECT_ID" \
+            --non-interactive
+
+      - name: Verify restored production website and Android download
+        id: rollback_health
+        continue-on-error: true
+        shell: bash
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          RELEASE_TAG: ${{ needs.validate_rollback.outputs.tag }}
+          RELEASE_VERSION: ${{ needs.validate_rollback.outputs.version }}
+          RELEASE_COMMIT: ${{ needs.validate_rollback.outputs.commit }}
+          ANDROID_SHA256: ${{ needs.validate_rollback.outputs.android_sha256 }}
+          ANDROID_SIZE: ${{ needs.validate_rollback.outputs.android_size }}
+        run: |
+          set -euo pipefail
+          hosting_site_id='cashly-lao'
+          production_origin="https://${hosting_site_id}.web.app"
+          curl --fail --silent --show-error --retry 5 --retry-delay 5 --max-time 30 \
+            "$production_origin/" > restored-index.html
+          grep -q 'main.dart.js' restored-index.html
+          curl --fail --silent --show-error --retry 5 --retry-delay 5 --max-time 30 \
+            "$production_origin/main.dart.js" > /dev/null
+          manifest='restored-release-manifest.json'
+          curl --fail --silent --show-error --retry 5 --retry-delay 5 --max-time 30 \
+            "$production_origin/release-manifest.json" > "$manifest"
+          expected_android_url="https://cashly-lao.web.app/downloads/Cashly-Lao-Android-${RELEASE_VERSION}.apk"
+          jq -e \
+            --arg tag "$RELEASE_TAG" \
+            --arg commit "$RELEASE_COMMIT" \
+            --arg version "$RELEASE_VERSION" \
+            --arg sha256 "$ANDROID_SHA256" \
+            --arg url "$expected_android_url" \
+            '
+              .schemaVersion == 2 and
+              .release.tag == $tag and
+              .release.commitSha == $commit and
+              .release.channel == "stable" and
+              ([.platforms[] | select(
+                .platform == "android" and
+                .availability == "available" and
+                .isLatest == true and
+                .version == $version and
+                .sha256 == $sha256 and
+                .downloadUrl == $url
+              )] | length == 1)
+            ' "$manifest" > /dev/null
+          production_apk_url="$production_origin/downloads/Cashly-Lao-Android-${RELEASE_VERSION}.apk"
+          curl --fail --location --silent --show-error \
+            --retry 5 --retry-all-errors --retry-delay 5 \
+            --connect-timeout 15 --max-time 240 \
+            --header 'Accept-Encoding: identity' \
+            --dump-header restored-android.headers \
+            "$production_apk_url" --output restored-android.apk
+          test -s restored-android.apk
+          actual_sha256="$(sha256sum restored-android.apk | awk '{print $1}' | tr '[:lower:]' '[:upper:]')"
+          actual_size="$(stat --printf='%s' restored-android.apk)"
+          content_type="$(awk 'BEGIN { IGNORECASE=1 } /^content-type:/ { value=$0; sub(/^[^:]*:[[:space:]]*/, "", value); gsub(/\r/, "", value); result=tolower(value) } END { print result }' restored-android.headers)"
+          content_length="$(awk 'BEGIN { IGNORECASE=1 } /^content-length:/ { value=$0; sub(/^[^:]*:[[:space:]]*/, "", value); gsub(/\r/, "", value); result=value } END { print result }' restored-android.headers)"
+          content_encoding="$(awk 'BEGIN { IGNORECASE=1 } /^content-encoding:/ { value=$0; sub(/^[^:]*:[[:space:]]*/, "", value); gsub(/\r/, "", value); result=tolower(value) } END { print result }' restored-android.headers)"
+          content_disposition="$(awk 'BEGIN { IGNORECASE=1 } /^content-disposition:/ { value=$0; sub(/^[^:]*:[[:space:]]*/, "", value); gsub(/\r/, "", value); result=tolower(value) } END { print result }' restored-android.headers)"
+          case "$content_type" in
+            application/vnd.android.package-archive*|application/x-android-package-archive*|application/octet-stream*) ;;
+            *)
+              echo "Restored Firebase Hosting returned an unsafe APK Content-Type: $content_type" >&2
+              exit 1
+              ;;
+          esac
+          case "$content_disposition" in
+            attachment|attachment\;*) ;;
+            *)
+              echo "Restored Firebase Hosting did not force an APK attachment download: $content_disposition" >&2
+              exit 1
+              ;;
+          esac
+          if [[ "$actual_sha256" != "$ANDROID_SHA256" || "$actual_size" != "$ANDROID_SIZE" || "$content_length" != "$ANDROID_SIZE" ]]; then
+            echo 'The restored Firebase APK is not the retained signed artifact.' >&2
+            exit 1
+          fi
+          if [[ -n "$content_encoding" && "$content_encoding" != 'identity' ]]; then
+            echo "Restored Firebase Hosting transformed the APK with Content-Encoding: $content_encoding" >&2
+            exit 1
+          fi
+
+      - name: Restore the prior live Hosting version if rollback health checks fail
+        if: steps.rollback_health.outcome == 'failure'
+        shell: bash
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_TOOLS_VERSION: '13.35.1'
+          PREVIOUS_VERSION_ID: ${{ steps.live_before_rollback.outputs.version_id }}
+        run: |
+          set -euo pipefail
+          hosting_site_id='cashly-lao'
+          test -n "$PREVIOUS_VERSION_ID"
+          npx --yes "firebase-tools@${FIREBASE_TOOLS_VERSION}" hosting:clone \
+            "${hosting_site_id}:@${PREVIOUS_VERSION_ID}" \
+            "${hosting_site_id}:live" \
+            --project "$FIREBASE_PROJECT_ID" \
+            --non-interactive
+          access_token="$(gcloud auth print-access-token)"
+          curl --fail --silent --show-error \
+            --header "Authorization: Bearer $access_token" \
+            "https://firebasehosting.googleapis.com/v1beta1/sites/${hosting_site_id}/channels/live" \
+            > restored-live-channel.json
+          restored_version="$(jq -r '.release.version.name // empty' restored-live-channel.json)"
+          if [[ "$restored_version" != "sites/${hosting_site_id}/versions/${PREVIOUS_VERSION_ID}" ]]; then
+            echo 'Firebase Hosting did not confirm restoration of the pre-rollback live version.' >&2
+            exit 1
+          fi
+          curl --fail --silent --show-error --retry 5 --retry-delay 5 --max-time 30 \
+            "https://${hosting_site_id}.web.app/" > pre-rollback-index.html
+          grep -q 'main.dart.js' pre-rollback-index.html
+          echo 'The rollback version failed health checks and the prior live Firebase Hosting version was restored.' >&2
+          exit 1
+
+      - name: Write rollback completion report
+        if: success()
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ needs.validate_rollback.outputs.tag }}
+        run: |
+          {
+            echo "# Production website rollback complete"
+            echo
+            echo "- **Restored release:** $RELEASE_TAG"
+            echo "- **Website:** https://cashly-lao.web.app"
+            echo "- **APK:** restored only after anonymous Firebase preview and production checksum, size, and header checks passed."
+            echo "- **Internal release assets:** preserved in the private GitHub draft."
+          } >> "$GITHUB_STEP_SUMMARY"

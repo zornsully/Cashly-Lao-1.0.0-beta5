@@ -95,50 +95,47 @@ void main() {
     expect(result.estimatedDate, DateTime(2026, 10, 1));
   });
 
-  test(
-    'trailingAverage projects from the recent pace of transfers in when '
-    'no schedule is set',
-    () {
-      final progress = SavingsGoalProgress(
-        goal: goal(targetAmount: 1000000),
-        account: account(balance: 400000),
-      );
-      final recentContributions = [
-        TransactionEntity(
-          id: 'txn-1',
-          accountId: 'source-acc',
-          toAccountId: 'acc-1',
-          type: TransactionType.transfer,
-          amount: 200000,
-          date: DateTime(2026, 5, 2),
-          note: '',
-          createdAt: DateTime(2026, 5, 2),
-          updatedAt: DateTime(2026, 5, 2),
-        ),
-        TransactionEntity(
-          id: 'txn-2',
-          accountId: 'source-acc',
-          toAccountId: 'acc-1',
-          type: TransactionType.transfer,
-          amount: 200000,
-          date: DateTime(2026, 5, 12),
-          note: '',
-          createdAt: DateTime(2026, 5, 12),
-          updatedAt: DateTime(2026, 5, 12),
-        ),
-      ];
+  test('trailingAverage projects from the recent pace of transfers in when '
+      'no schedule is set', () {
+    final progress = SavingsGoalProgress(
+      goal: goal(targetAmount: 1000000),
+      account: account(balance: 400000),
+    );
+    final recentContributions = [
+      TransactionEntity(
+        id: 'txn-1',
+        accountId: 'source-acc',
+        toAccountId: 'acc-1',
+        type: TransactionType.transfer,
+        amount: 200000,
+        date: DateTime(2026, 5, 2),
+        note: '',
+        createdAt: DateTime(2026, 5, 2),
+        updatedAt: DateTime(2026, 5, 2),
+      ),
+      TransactionEntity(
+        id: 'txn-2',
+        accountId: 'source-acc',
+        toAccountId: 'acc-1',
+        type: TransactionType.transfer,
+        amount: 200000,
+        date: DateTime(2026, 5, 12),
+        note: '',
+        createdAt: DateTime(2026, 5, 12),
+        updatedAt: DateTime(2026, 5, 12),
+      ),
+    ];
 
-      final result = useCase(
-        progress: progress,
-        recentContributions: recentContributions,
-        now: now,
-      );
+    final result = useCase(
+      progress: progress,
+      recentContributions: recentContributions,
+      now: now,
+    );
 
-      expect(result.basis, GoalCompletionEstimateBasis.trailingAverage);
-      expect(result.estimatedDate, isNotNull);
-      expect(result.estimatedDate!.isAfter(now), isTrue);
-    },
-  );
+    expect(result.basis, GoalCompletionEstimateBasis.trailingAverage);
+    expect(result.estimatedDate, isNotNull);
+    expect(result.estimatedDate!.isAfter(now), isTrue);
+  });
 
   test(
     'insufficientData when there is no schedule and no contribution history',
@@ -159,58 +156,52 @@ void main() {
     },
   );
 
-  test(
-    'insufficientData when a scheduled projection would exceed the max '
-    'period cap, rather than looping unbounded or overflowing a date',
-    () {
-      final progress = SavingsGoalProgress(
-        goal: goal(
-          targetAmount: 1000000000,
-          autoContributionAmount: 1,
-          autoContributionFrequency: GoalContributionFrequency.monthly,
-        ),
-        account: account(balance: 0),
-      );
+  test('insufficientData when a scheduled projection would exceed the max '
+      'period cap, rather than looping unbounded or overflowing a date', () {
+    final progress = SavingsGoalProgress(
+      goal: goal(
+        targetAmount: 1000000000,
+        autoContributionAmount: 1,
+        autoContributionFrequency: GoalContributionFrequency.monthly,
+      ),
+      account: account(balance: 0),
+    );
 
-      final result = useCase(
-        progress: progress,
-        recentContributions: const [],
-        now: now,
-      );
+    final result = useCase(
+      progress: progress,
+      recentContributions: const [],
+      now: now,
+    );
 
-      expect(result.basis, GoalCompletionEstimateBasis.insufficientData);
-    },
-  );
+    expect(result.basis, GoalCompletionEstimateBasis.insufficientData);
+  });
 
-  test(
-    'insufficientData when a trailing-average projection would land too '
-    'far in the future',
-    () {
-      final progress = SavingsGoalProgress(
-        goal: goal(targetAmount: 1000000000),
-        account: account(balance: 0),
-      );
-      final recentContributions = [
-        TransactionEntity(
-          id: 'txn-1',
-          accountId: 'source-acc',
-          toAccountId: 'acc-1',
-          type: TransactionType.transfer,
-          amount: 1,
-          date: DateTime(2026, 5, 2),
-          note: '',
-          createdAt: DateTime(2026, 5, 2),
-          updatedAt: DateTime(2026, 5, 2),
-        ),
-      ];
+  test('insufficientData when a trailing-average projection would land too '
+      'far in the future', () {
+    final progress = SavingsGoalProgress(
+      goal: goal(targetAmount: 1000000000),
+      account: account(balance: 0),
+    );
+    final recentContributions = [
+      TransactionEntity(
+        id: 'txn-1',
+        accountId: 'source-acc',
+        toAccountId: 'acc-1',
+        type: TransactionType.transfer,
+        amount: 1,
+        date: DateTime(2026, 5, 2),
+        note: '',
+        createdAt: DateTime(2026, 5, 2),
+        updatedAt: DateTime(2026, 5, 2),
+      ),
+    ];
 
-      final result = useCase(
-        progress: progress,
-        recentContributions: recentContributions,
-        now: now,
-      );
+    final result = useCase(
+      progress: progress,
+      recentContributions: recentContributions,
+      now: now,
+    );
 
-      expect(result.basis, GoalCompletionEstimateBasis.insufficientData);
-    },
-  );
+    expect(result.basis, GoalCompletionEstimateBasis.insufficientData);
+  });
 }

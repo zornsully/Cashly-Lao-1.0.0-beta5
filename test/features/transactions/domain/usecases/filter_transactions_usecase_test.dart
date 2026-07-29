@@ -130,11 +130,7 @@ void main() {
       filter: const TransactionFilter(),
     );
 
-    expect(result.map((t) => t.id), [
-      salary.id,
-      transfer.id,
-      groceries.id,
-    ]);
+    expect(result.map((t) => t.id), [salary.id, transfer.id, groceries.id]);
   });
 
   test('filters by type', () {
@@ -216,11 +212,7 @@ void main() {
       ),
     );
 
-    expect(result.map((t) => t.id), [
-      groceries.id,
-      transfer.id,
-      salary.id,
-    ]);
+    expect(result.map((t) => t.id), [groceries.id, transfer.id, salary.id]);
   });
 
   test('sorts by date ascending', () {
@@ -233,11 +225,7 @@ void main() {
       ),
     );
 
-    expect(result.map((t) => t.id), [
-      groceries.id,
-      transfer.id,
-      salary.id,
-    ]);
+    expect(result.map((t) => t.id), [groceries.id, transfer.id, salary.id]);
   });
 
   test('combines a type filter with search', () {

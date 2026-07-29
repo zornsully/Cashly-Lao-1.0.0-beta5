@@ -86,9 +86,7 @@ void main() {
   });
 
   test('updateAppLockEnabled returns Right(unit) on success', () async {
-    when(
-      () => dataSource.updateAppLockEnabled(any()),
-    ).thenAnswer((_) async {});
+    when(() => dataSource.updateAppLockEnabled(any())).thenAnswer((_) async {});
 
     final result = await repository.updateAppLockEnabled(true);
 

@@ -41,9 +41,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            authStateChangesProvider.overrideWith(
-              (ref) => Stream.value(user),
-            ),
+            authStateChangesProvider.overrideWith((ref) => Stream.value(user)),
             userPreferencesRepositoryProvider.overrideWithValue(repository),
           ],
           child: const MaterialApp(

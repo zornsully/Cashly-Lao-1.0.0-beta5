@@ -99,21 +99,16 @@ void main() {
     },
   );
 
-  test(
-    'updateNotificationsEnabled merges the field without clobbering '
-    'existing data',
-    () async {
-      await firestore.collection('users').doc('uid-1').set({
-        'email': 'a@b.com',
-      });
+  test('updateNotificationsEnabled merges the field without clobbering '
+      'existing data', () async {
+    await firestore.collection('users').doc('uid-1').set({'email': 'a@b.com'});
 
-      await dataSource.updateNotificationsEnabled(true);
+    await dataSource.updateNotificationsEnabled(true);
 
-      final doc = await firestore.collection('users').doc('uid-1').get();
-      expect(doc.data()!['notificationsEnabled'], isTrue);
-      expect(doc.data()!['email'], 'a@b.com');
-    },
-  );
+    final doc = await firestore.collection('users').doc('uid-1').get();
+    expect(doc.data()!['notificationsEnabled'], isTrue);
+    expect(doc.data()!['email'], 'a@b.com');
+  });
 
   test('watchPreferences reflects updates in real time', () async {
     final stream = dataSource.watchPreferences();

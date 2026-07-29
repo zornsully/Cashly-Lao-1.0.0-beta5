@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cashly_lao/core/error/exceptions.dart';
 import 'package:cashly_lao/features/transactions/data/datasources/transaction_remote_datasource.dart';
 import 'package:cashly_lao/features/transactions/domain/entities/transaction_type.dart';
@@ -10,10 +11,34 @@ class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
 class _MockUser extends Mock implements User {}
 
+/// Forces the same error the native SDK returns before an offline
+/// transaction can start. The inherited datasource still uses the real
+/// [FakeFirebaseFirestore] batch path, so assertions below exercise the
+/// cached-read + queued-write fallback rather than a mock implementation.
+class _OfflineTransactionRemoteDataSource
+    extends FirestoreTransactionRemoteDataSource {
+  _OfflineTransactionRemoteDataSource({
+    required super.firestore,
+    required super.firebaseAuth,
+  });
+
+  @override
+  Future<T> runAtomicTransaction<T>(TransactionHandler<T> transactionHandler) {
+    return Future<T>.error(
+      FirebaseException(
+        plugin: 'cloud_firestore',
+        code: 'unavailable',
+        message: 'The client is offline.',
+      ),
+    );
+  }
+}
+
 void main() {
   late FakeFirebaseFirestore firestore;
   late _MockFirebaseAuth firebaseAuth;
   late FirestoreTransactionRemoteDataSource dataSource;
+  late FirestoreTransactionRemoteDataSource offlineDataSource;
 
   Future<String> seedAccount(double balance) async {
     final ref = firestore
@@ -35,6 +60,14 @@ void main() {
     return (doc.data()!['balance'] as num).toDouble();
   }
 
+  Future<void> settleQueuedWrite() async {
+    // FakeFirestore applies a WriteBatch asynchronously, just like the
+    // native SDK's local persistence queue. Two turns keep this test focused
+    // on the visible local result without depending on implementation timing.
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+  }
+
   setUp(() {
     firestore = FakeFirebaseFirestore();
     firebaseAuth = _MockFirebaseAuth();
@@ -44,6 +77,121 @@ void main() {
     dataSource = FirestoreTransactionRemoteDataSource(
       firestore: firestore,
       firebaseAuth: firebaseAuth,
+    );
+    offlineDataSource = _OfflineTransactionRemoteDataSource(
+      firestore: firestore,
+      firebaseAuth: firebaseAuth,
+    );
+  });
+
+  group('offline mutation fallback', () {
+    test(
+      'queues a create from cached account data and updates local state',
+      () async {
+        final accountId = await seedAccount(100);
+
+        final created = await offlineDataSource.createTransaction(
+          accountId: accountId,
+          categoryId: 'cat-1',
+          type: TransactionType.expense,
+          amount: 30,
+          date: DateTime(2026, 3, 10),
+          note: 'Queued coffee',
+        );
+        await settleQueuedWrite();
+
+        expect(await readBalance(accountId), 70);
+        final transaction = await firestore
+            .collection('users')
+            .doc('uid-1')
+            .collection('transactions')
+            .doc(created.id)
+            .get();
+        expect(transaction.exists, isTrue);
+        expect(transaction.data()!['note'], 'Queued coffee');
+      },
+    );
+
+    test('queues an update using the cached old transaction shape', () async {
+      final accountId = await seedAccount(100);
+      final created = await dataSource.createTransaction(
+        accountId: accountId,
+        categoryId: 'cat-1',
+        type: TransactionType.expense,
+        amount: 20,
+        date: DateTime(2026, 3, 10),
+        note: '',
+      );
+
+      await offlineDataSource.updateTransaction(
+        id: created.id,
+        accountId: accountId,
+        categoryId: 'cat-1',
+        type: TransactionType.expense,
+        amount: 50,
+        date: DateTime(2026, 3, 10),
+        note: 'Queued correction',
+      );
+      await settleQueuedWrite();
+
+      expect(await readBalance(accountId), 50);
+      final transaction = await firestore
+          .collection('users')
+          .doc('uid-1')
+          .collection('transactions')
+          .doc(created.id)
+          .get();
+      expect(transaction.data()!['amount'], 50);
+      expect(transaction.data()!['note'], 'Queued correction');
+    });
+
+    test('queues a delete using the cached transaction shape', () async {
+      final accountId = await seedAccount(100);
+      final created = await dataSource.createTransaction(
+        accountId: accountId,
+        categoryId: 'cat-1',
+        type: TransactionType.income,
+        amount: 40,
+        date: DateTime(2026, 3, 10),
+        note: '',
+      );
+
+      await offlineDataSource.deleteTransaction(created.id);
+      await settleQueuedWrite();
+
+      expect(await readBalance(accountId), 100);
+      final transaction = await firestore
+          .collection('users')
+          .doc('uid-1')
+          .collection('transactions')
+          .doc(created.id)
+          .get();
+      expect(transaction.exists, isFalse);
+    });
+
+    test(
+      'refuses an offline edit or delete when the transaction is not cached',
+      () async {
+        final accountId = await seedAccount(100);
+
+        await expectLater(
+          offlineDataSource.updateTransaction(
+            id: 'not-cached',
+            accountId: accountId,
+            categoryId: 'cat-1',
+            type: TransactionType.expense,
+            amount: 10,
+            date: DateTime(2026, 3, 10),
+            note: '',
+          ),
+          throwsA(isA<ServerException>()),
+        );
+
+        await expectLater(
+          offlineDataSource.deleteTransaction('not-cached'),
+          throwsA(isA<ServerException>()),
+        );
+      },
     );
   });
 
@@ -227,25 +375,22 @@ void main() {
       },
     );
 
-    test(
-      'createTransaction throws when the destination account does not '
-      'exist',
-      () async {
-        final accountA = await seedAccount(100);
+    test('createTransaction throws when the destination account does not '
+        'exist', () async {
+      final accountA = await seedAccount(100);
 
-        expect(
-          () => dataSource.createTransaction(
-            accountId: accountA,
-            toAccountId: 'missing-account',
-            type: TransactionType.transfer,
-            amount: 30,
-            date: DateTime(2026, 3, 10),
-            note: '',
-          ),
-          throwsA(isA<ServerException>()),
-        );
-      },
-    );
+      expect(
+        () => dataSource.createTransaction(
+          accountId: accountA,
+          toAccountId: 'missing-account',
+          type: TransactionType.transfer,
+          amount: 30,
+          date: DateTime(2026, 3, 10),
+          note: '',
+        ),
+        throwsA(isA<ServerException>()),
+      );
+    });
 
     test(
       'createTransaction throws when the destination equals the source',
@@ -319,136 +464,124 @@ void main() {
       expect(await readBalance(accountB), 100);
     });
 
-    test(
-      'updateTransaction reconciles all three balances when the '
-      'destination account changes',
-      () async {
-        final accountA = await seedAccount(100);
-        final accountB = await seedAccount(50);
-        final accountC = await seedAccount(200);
-        final created = await dataSource.createTransaction(
-          accountId: accountA,
-          toAccountId: accountB,
-          type: TransactionType.transfer,
-          amount: 30,
-          date: DateTime(2026, 3, 10),
-          note: '',
-        );
-        expect(await readBalance(accountA), 70);
-        expect(await readBalance(accountB), 80);
+    test('updateTransaction reconciles all three balances when the '
+        'destination account changes', () async {
+      final accountA = await seedAccount(100);
+      final accountB = await seedAccount(50);
+      final accountC = await seedAccount(200);
+      final created = await dataSource.createTransaction(
+        accountId: accountA,
+        toAccountId: accountB,
+        type: TransactionType.transfer,
+        amount: 30,
+        date: DateTime(2026, 3, 10),
+        note: '',
+      );
+      expect(await readBalance(accountA), 70);
+      expect(await readBalance(accountB), 80);
 
-        await dataSource.updateTransaction(
+      await dataSource.updateTransaction(
+        id: created.id,
+        accountId: accountA,
+        toAccountId: accountC,
+        type: TransactionType.transfer,
+        amount: 30,
+        date: DateTime(2026, 3, 10),
+        note: '',
+      );
+
+      // A stays debited by the same 30; B is refunded; C receives it.
+      expect(await readBalance(accountA), 70);
+      expect(await readBalance(accountB), 50);
+      expect(await readBalance(accountC), 230);
+    });
+
+    test('updateTransaction reconciles balances when a transfer becomes an '
+        'expense', () async {
+      final accountA = await seedAccount(100);
+      final accountB = await seedAccount(50);
+      final created = await dataSource.createTransaction(
+        accountId: accountA,
+        toAccountId: accountB,
+        type: TransactionType.transfer,
+        amount: 30,
+        date: DateTime(2026, 3, 10),
+        note: '',
+      );
+      expect(await readBalance(accountA), 70);
+      expect(await readBalance(accountB), 80);
+
+      await dataSource.updateTransaction(
+        id: created.id,
+        accountId: accountA,
+        categoryId: 'cat-1',
+        type: TransactionType.expense,
+        amount: 20,
+        date: DateTime(2026, 3, 10),
+        note: '',
+      );
+
+      // As if only a standalone 20 expense from A had ever happened; B
+      // is fully refunded back to its starting balance.
+      expect(await readBalance(accountA), 80);
+      expect(await readBalance(accountB), 50);
+    });
+
+    test('updateTransaction reconciles balances when an expense becomes a '
+        'transfer', () async {
+      final accountA = await seedAccount(100);
+      final accountB = await seedAccount(50);
+      final created = await dataSource.createTransaction(
+        accountId: accountA,
+        categoryId: 'cat-1',
+        type: TransactionType.expense,
+        amount: 20,
+        date: DateTime(2026, 3, 10),
+        note: '',
+      );
+      expect(await readBalance(accountA), 80);
+
+      await dataSource.updateTransaction(
+        id: created.id,
+        accountId: accountA,
+        toAccountId: accountB,
+        type: TransactionType.transfer,
+        amount: 30,
+        date: DateTime(2026, 3, 10),
+        note: '',
+      );
+
+      // As if only a standalone 30 transfer had ever happened.
+      expect(await readBalance(accountA), 70);
+      expect(await readBalance(accountB), 80);
+    });
+
+    test('updateTransaction throws when edited to the same source and '
+        'destination', () async {
+      final accountA = await seedAccount(100);
+      final accountB = await seedAccount(50);
+      final created = await dataSource.createTransaction(
+        accountId: accountA,
+        toAccountId: accountB,
+        type: TransactionType.transfer,
+        amount: 30,
+        date: DateTime(2026, 3, 10),
+        note: '',
+      );
+
+      expect(
+        () => dataSource.updateTransaction(
           id: created.id,
           accountId: accountA,
-          toAccountId: accountC,
+          toAccountId: accountA,
           type: TransactionType.transfer,
           amount: 30,
           date: DateTime(2026, 3, 10),
           note: '',
-        );
-
-        // A stays debited by the same 30; B is refunded; C receives it.
-        expect(await readBalance(accountA), 70);
-        expect(await readBalance(accountB), 50);
-        expect(await readBalance(accountC), 230);
-      },
-    );
-
-    test(
-      'updateTransaction reconciles balances when a transfer becomes an '
-      'expense',
-      () async {
-        final accountA = await seedAccount(100);
-        final accountB = await seedAccount(50);
-        final created = await dataSource.createTransaction(
-          accountId: accountA,
-          toAccountId: accountB,
-          type: TransactionType.transfer,
-          amount: 30,
-          date: DateTime(2026, 3, 10),
-          note: '',
-        );
-        expect(await readBalance(accountA), 70);
-        expect(await readBalance(accountB), 80);
-
-        await dataSource.updateTransaction(
-          id: created.id,
-          accountId: accountA,
-          categoryId: 'cat-1',
-          type: TransactionType.expense,
-          amount: 20,
-          date: DateTime(2026, 3, 10),
-          note: '',
-        );
-
-        // As if only a standalone 20 expense from A had ever happened; B
-        // is fully refunded back to its starting balance.
-        expect(await readBalance(accountA), 80);
-        expect(await readBalance(accountB), 50);
-      },
-    );
-
-    test(
-      'updateTransaction reconciles balances when an expense becomes a '
-      'transfer',
-      () async {
-        final accountA = await seedAccount(100);
-        final accountB = await seedAccount(50);
-        final created = await dataSource.createTransaction(
-          accountId: accountA,
-          categoryId: 'cat-1',
-          type: TransactionType.expense,
-          amount: 20,
-          date: DateTime(2026, 3, 10),
-          note: '',
-        );
-        expect(await readBalance(accountA), 80);
-
-        await dataSource.updateTransaction(
-          id: created.id,
-          accountId: accountA,
-          toAccountId: accountB,
-          type: TransactionType.transfer,
-          amount: 30,
-          date: DateTime(2026, 3, 10),
-          note: '',
-        );
-
-        // As if only a standalone 30 transfer had ever happened.
-        expect(await readBalance(accountA), 70);
-        expect(await readBalance(accountB), 80);
-      },
-    );
-
-    test(
-      'updateTransaction throws when edited to the same source and '
-      'destination',
-      () async {
-        final accountA = await seedAccount(100);
-        final accountB = await seedAccount(50);
-        final created = await dataSource.createTransaction(
-          accountId: accountA,
-          toAccountId: accountB,
-          type: TransactionType.transfer,
-          amount: 30,
-          date: DateTime(2026, 3, 10),
-          note: '',
-        );
-
-        expect(
-          () => dataSource.updateTransaction(
-            id: created.id,
-            accountId: accountA,
-            toAccountId: accountA,
-            type: TransactionType.transfer,
-            amount: 30,
-            date: DateTime(2026, 3, 10),
-            note: '',
-          ),
-          throwsA(isA<ServerException>()),
-        );
-      },
-    );
+        ),
+        throwsA(isA<ServerException>()),
+      );
+    });
   });
 
   group('watchTransactionsForMonth', () {

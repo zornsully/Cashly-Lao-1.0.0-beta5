@@ -114,27 +114,24 @@ void main() {
     expect(result, const Right<Failure, Unit>(unit));
   });
 
-  test(
-    'deleteAccount maps a ServerException to Left(ServerFailure)',
-    () async {
-      when(() => dataSource.deleteAccount('1')).thenThrow(
-        const ServerException(
-          "This account has transactions and can't be deleted — archive it "
-          'instead.',
-        ),
-      );
+  test('deleteAccount maps a ServerException to Left(ServerFailure)', () async {
+    when(() => dataSource.deleteAccount('1')).thenThrow(
+      const ServerException(
+        "This account has transactions and can't be deleted — archive it "
+        'instead.',
+      ),
+    );
 
-      final result = await repository.deleteAccount('1');
+    final result = await repository.deleteAccount('1');
 
-      expect(
-        result,
-        const Left<Failure, Unit>(
-          ServerFailure(
-            "This account has transactions and can't be deleted — archive "
-            'it instead.',
-          ),
+    expect(
+      result,
+      const Left<Failure, Unit>(
+        ServerFailure(
+          "This account has transactions and can't be deleted — archive "
+          'it instead.',
         ),
-      );
-    },
-  );
+      ),
+    );
+  });
 }

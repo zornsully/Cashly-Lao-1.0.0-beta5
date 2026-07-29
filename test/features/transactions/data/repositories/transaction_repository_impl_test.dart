@@ -92,45 +92,42 @@ void main() {
     },
   );
 
-  test(
-    'createTransaction passes toAccountId through for a transfer, with '
-    'no categoryId',
-    () async {
-      final transfer = TransactionModel(
-        id: 'txn-2',
+  test('createTransaction passes toAccountId through for a transfer, with '
+      'no categoryId', () async {
+    final transfer = TransactionModel(
+      id: 'txn-2',
+      accountId: 'acc-1',
+      toAccountId: 'acc-2',
+      type: TransactionType.transfer,
+      amount: 30,
+      date: DateTime(2026, 3, 10),
+      note: '',
+      createdAt: DateTime(2026),
+      updatedAt: DateTime(2026),
+    );
+    when(
+      () => dataSource.createTransaction(
         accountId: 'acc-1',
-        toAccountId: 'acc-2',
+        categoryId: null,
         type: TransactionType.transfer,
+        toAccountId: 'acc-2',
         amount: 30,
         date: DateTime(2026, 3, 10),
         note: '',
-        createdAt: DateTime(2026),
-        updatedAt: DateTime(2026),
-      );
-      when(
-        () => dataSource.createTransaction(
-          accountId: 'acc-1',
-          categoryId: null,
-          type: TransactionType.transfer,
-          toAccountId: 'acc-2',
-          amount: 30,
-          date: DateTime(2026, 3, 10),
-          note: '',
-        ),
-      ).thenAnswer((_) async => transfer);
+      ),
+    ).thenAnswer((_) async => transfer);
 
-      final result = await repository.createTransaction(
-        accountId: 'acc-1',
-        toAccountId: 'acc-2',
-        type: TransactionType.transfer,
-        amount: 30,
-        date: DateTime(2026, 3, 10),
-        note: '',
-      );
+    final result = await repository.createTransaction(
+      accountId: 'acc-1',
+      toAccountId: 'acc-2',
+      type: TransactionType.transfer,
+      amount: 30,
+      date: DateTime(2026, 3, 10),
+      note: '',
+    );
 
-      expect(result, Right(transfer));
-    },
-  );
+    expect(result, Right(transfer));
+  });
 
   test('deleteTransaction returns Right(unit) on success', () async {
     when(() => dataSource.deleteTransaction('txn-1')).thenAnswer((_) async {});

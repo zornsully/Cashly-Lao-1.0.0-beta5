@@ -139,9 +139,7 @@ class FirestoreSavingsGoalRemoteDataSource
     } on ServerException {
       rethrow;
     } on FirebaseException catch (e) {
-      throw ServerException(
-        e.message ?? 'Could not create the savings goal.',
-      );
+      throw ServerException(e.message ?? 'Could not create the savings goal.');
     }
   }
 
@@ -166,9 +164,7 @@ class FirestoreSavingsGoalRemoteDataSource
         'updatedAt': FieldValue.serverTimestamp(),
       });
     } on FirebaseException catch (e) {
-      throw ServerException(
-        e.message ?? 'Could not update the savings goal.',
-      );
+      throw ServerException(e.message ?? 'Could not update the savings goal.');
     }
   }
 
@@ -176,8 +172,7 @@ class FirestoreSavingsGoalRemoteDataSource
   Future<void> archiveGoal(String id) => _setArchived(id, archived: true);
 
   @override
-  Future<void> unarchiveGoal(String id) =>
-      _setArchived(id, archived: false);
+  Future<void> unarchiveGoal(String id) => _setArchived(id, archived: false);
 
   Future<void> _setArchived(String id, {required bool archived}) async {
     try {
@@ -186,9 +181,7 @@ class FirestoreSavingsGoalRemoteDataSource
         'updatedAt': FieldValue.serverTimestamp(),
       });
     } on FirebaseException catch (e) {
-      throw ServerException(
-        e.message ?? 'Could not update the savings goal.',
-      );
+      throw ServerException(e.message ?? 'Could not update the savings goal.');
     }
   }
 
@@ -197,9 +190,7 @@ class FirestoreSavingsGoalRemoteDataSource
     try {
       await _collection.doc(id).delete();
     } on FirebaseException catch (e) {
-      throw ServerException(
-        e.message ?? 'Could not delete the savings goal.',
-      );
+      throw ServerException(e.message ?? 'Could not delete the savings goal.');
     }
   }
 
@@ -214,9 +205,7 @@ class FirestoreSavingsGoalRemoteDataSource
         'updatedAt': FieldValue.serverTimestamp(),
       });
     } on FirebaseException catch (e) {
-      throw ServerException(
-        e.message ?? 'Could not record the contribution.',
-      );
+      throw ServerException(e.message ?? 'Could not record the contribution.');
     }
   }
 }

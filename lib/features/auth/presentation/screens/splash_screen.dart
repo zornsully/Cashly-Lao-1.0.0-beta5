@@ -72,10 +72,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     if (authState.hasError) {
       content = ErrorView(message: '${authState.error}', onRetry: _retry);
     } else if (_timedOut && !authState.hasValue) {
-      content = ErrorView(
-        message: l10n.splashTimeoutMessage,
-        onRetry: _retry,
-      );
+      content = ErrorView(message: l10n.splashTimeoutMessage, onRetry: _retry);
     } else {
       content = Column(
         mainAxisSize: MainAxisSize.min,

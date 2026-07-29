@@ -25,6 +25,11 @@ abstract final class FirestorePaths {
   /// Subcollection of `users/{uid}`: `users/{uid}/savingsGoals/{goalId}`.
   static const String savingsGoals = 'savingsGoals';
 
+  /// Subcollection of `users/{uid}`: one immutable-opening Smart Money Score
+  /// document per `{yyyy-MM}_{currency}`. These documents form the durable
+  /// monthly score history shared by every signed-in device.
+  static const String smartMoneyScores = 'smartMoneyScores';
+
   /// Subcollection of `users/{uid}`: `users/{uid}/fcmTokens/{tokenId}`.
   /// Document ID is the token string itself — see `firestore.rules`.
   static const String fcmTokens = 'fcmTokens';
