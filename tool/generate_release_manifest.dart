@@ -1,9 +1,9 @@
 /// Generates a schema-v2 Cashly Lao release manifest from verified artifacts
-/// staged for an approved Firebase Hosting publication.
+/// prepared for an approved public GitHub distribution release.
 ///
 /// The command is deliberately offline and credential-free. It only writes a
-/// local JSON file; publication and Firebase Hosting deployment remain gated
-/// by GitHub Actions jobs that require the protected `production` environment.
+/// local JSON file; publication and Firebase Spark metadata deployment remain
+/// manual owner actions after their separate explicit approvals.
 library;
 
 import 'dart:convert';
@@ -46,9 +46,24 @@ Future<void> main(List<String> arguments) async {
         'Provide --commit with the exact lowercase release commit SHA.',
       );
     }
+    final distributionRepository = options.requireValue(
+      'distribution-repository',
+    );
+    final distributionPolicy = _readDistributionPolicy(
+      File(
+        options.value('distribution-policy') ??
+            'assets/release/distribution_policy.json',
+      ),
+    );
+    if (!distributionPolicy.approvesRepository(distributionRepository)) {
+      throw const FormatException(
+        '--distribution-repository must exactly match the reviewed bundled distribution policy.',
+      );
+    }
     final releaseUri = _githubReleaseUri(
       options.requireValue('release-url'),
       tag,
+      distributionPolicy,
     );
     final output = File(options.requireValue('output'));
     final template = File(
@@ -77,13 +92,13 @@ Future<void> main(List<String> arguments) async {
         : _parseArtifacts(File(artifactFile));
     if (channel == 'stable' && artifacts.isEmpty) {
       throw const FormatException(
-        'A stable production manifest needs at least one verified Firebase Hosting artifact.',
+        'A stable manifest needs at least one verified public GitHub artifact.',
       );
     }
     if (channel == 'stable' &&
         artifacts.keys.any((platform) => platform != 'android')) {
       throw const FormatException(
-        'Only Android is currently eligible for the public Firebase Hosting release channel.',
+        'Only Android is currently eligible for the public development release channel.',
       );
     }
 
@@ -113,8 +128,10 @@ Future<void> main(List<String> arguments) async {
               notes ??
               _string(existing['releaseNotes']) ??
               'Cashly Lao $version is ready to download.',
-          downloadUrl: _firebaseAndroidDownloadUrl(
+          downloadUrl: _githubAndroidDownloadUrl(
             version: version,
+            tag: tag,
+            policy: distributionPolicy,
             artifact: artifact,
           ),
           minimumOsVersion:
@@ -139,6 +156,7 @@ Future<void> main(List<String> arguments) async {
         'commitSha': commit,
         'channel': channel,
         'publishedAt': DateTime.now().toUtc().toIso8601String(),
+        'distributionRepository': distributionRepository,
         'releaseUrl': releaseUri.toString(),
       },
       'platforms': resultPlatforms,
@@ -166,20 +184,23 @@ Usage:
   dart run tool/generate_release_manifest.dart \\
     --version 1.2.3 \\
     --commit <sha> \\
-    --release-url https://github.com/owner/repo/releases/tag/v1.2.3 \\
+    --distribution-repository owner/public-release-repository \\
+    --release-url https://github.com/owner/public-release-repository/releases/tag/v1.2.3 \\
     --artifacts release-artifacts.json \\
     --output build/web/release-manifest.json
 
 Required:
   --version <version>           Version from pubspec.yaml, without v.
-  --release-url <https URL>     Private GitHub Release record URL.
+  --distribution-repository     Approved public GitHub owner/repository.
+  --release-url <https URL>     Public GitHub Release page URL.
   --output <path>               Generated manifest location.
 
 Options:
   --commit <sha>                Release commit SHA (defaults to GITHUB_SHA).
   --tag <tag>                   Git tag (defaults to v<version>).
   --channel <stable|prerelease> Release channel (auto-detected by default).
-  --artifacts <json>            Verified Firebase Hosting artifact manifest.
+  --artifacts <json>            Verified public GitHub release artifact manifest.
+  --distribution-policy <path>  Reviewed bundled distribution policy JSON.
   --template <path>             Current manifest template.
   --notes <path>                Reviewed release-notes Markdown file.
   --pubspec <path>              pubspec.yaml path.
@@ -187,7 +208,7 @@ Options:
 
 Artifact JSON uses `artifacts` (or `platforms`) containing entries with:
 platform, artifactName (or fileName), fileSizeBytes, sha256, and optional
-downloadUrl (which must be the canonical Firebase Hosting URL when supplied),
+downloadUrl (which must be the canonical public GitHub asset URL when supplied),
 minimumOsVersion, packageFormat, installationNote.
 ''';
 
@@ -260,32 +281,46 @@ Map<String, _PublishedArtifact> _parseArtifacts(File source) {
   return result;
 }
 
-Uri _githubReleaseUri(String value, String expectedTag) {
-  final uri = Uri.tryParse(value);
-  if (uri == null || uri.scheme != 'https' || uri.host != 'github.com') {
-    throw const FormatException('Release URL must be an HTTPS github.com URL.');
+landing.ReleaseDistributionPolicy _readDistributionPolicy(File source) {
+  if (!source.existsSync()) {
+    throw StateError(
+      'Release distribution policy was not found at ${source.path}.',
+    );
   }
-  final segments = uri.pathSegments
-      .where((segment) => segment.isNotEmpty)
-      .toList();
-  if (segments.length != 5 ||
-      segments[2] != 'releases' ||
-      segments[3] != 'tag' ||
-      segments[4] != expectedTag) {
+  return landing.ReleaseDistributionPolicy.fromJson(
+    _decodeObject(source.readAsStringSync()),
+  );
+}
+
+Uri _githubReleaseUri(
+  String value,
+  String expectedTag,
+  landing.ReleaseDistributionPolicy policy,
+) {
+  final uri = Uri.tryParse(value);
+  if (uri == null ||
+      !landing.ReleaseManifestTrustPolicy.isTrustedReleasePage(
+        uri,
+        expectedTag,
+        policy: policy,
+        rawUri: value,
+      )) {
     throw FormatException(
-      'Release URL must point to a GitHub Release tagged $expectedTag.',
+      'Release URL must exactly match the approved public GitHub Release tagged $expectedTag.',
     );
   }
   return uri;
 }
 
-String _firebaseAndroidDownloadUrl({
+String _githubAndroidDownloadUrl({
   required String version,
+  required String tag,
+  required landing.ReleaseDistributionPolicy policy,
   required _PublishedArtifact artifact,
 }) {
   if (artifact.platform != 'android') {
     throw FormatException(
-      '${artifact.platform} is not eligible for the public Firebase Hosting release channel.',
+      '${artifact.platform} is not eligible for the public development release channel.',
     );
   }
 
@@ -298,13 +333,21 @@ String _firebaseAndroidDownloadUrl({
     );
   }
 
+  final repository = policy.repository;
+  if (repository == null) {
+    throw const FormatException(
+      'A reviewed public distribution repository is required for a stable manifest.',
+    );
+  }
   final canonicalUri = landing.ReleaseManifestTrustPolicy.androidDownloadUri(
-    version,
+    repository: repository,
+    tag: tag,
+    version: version,
   );
   final suppliedUri = artifact.downloadUrl;
   if (suppliedUri != null && suppliedUri != canonicalUri.toString()) {
     throw FormatException(
-      'Android artifact downloadUrl must exactly match $canonicalUri when supplied.',
+      'Android artifact downloadUrl must exactly match the public GitHub asset $canonicalUri when supplied.',
     );
   }
   return canonicalUri.toString();

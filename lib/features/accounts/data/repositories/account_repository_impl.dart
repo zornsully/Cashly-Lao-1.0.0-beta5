@@ -50,7 +50,6 @@ class AccountRepositoryImpl with RepositoryGuard implements AccountRepository {
     required String name,
     required AccountType type,
     required double balance,
-    required String currencyCode,
     required AppIconKey icon,
     required AppColorKey color,
   }) {
@@ -60,7 +59,6 @@ class AccountRepositoryImpl with RepositoryGuard implements AccountRepository {
         name: name,
         type: type,
         balance: balance,
-        currencyCode: currencyCode,
         icon: icon,
         color: color,
       ),

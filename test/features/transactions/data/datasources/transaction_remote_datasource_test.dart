@@ -40,13 +40,13 @@ void main() {
   late FirestoreTransactionRemoteDataSource dataSource;
   late FirestoreTransactionRemoteDataSource offlineDataSource;
 
-  Future<String> seedAccount(double balance) async {
+  Future<String> seedAccount(double balance, {String? currencyCode}) async {
     final ref = firestore
         .collection('users')
         .doc('uid-1')
         .collection('accounts')
         .doc();
-    await ref.set({'balance': balance});
+    await ref.set({'balance': balance, 'currencyCode': ?currencyCode});
     return ref.id;
   }
 
@@ -555,6 +555,88 @@ void main() {
       expect(await readBalance(accountA), 70);
       expect(await readBalance(accountB), 80);
     });
+
+    test(
+      'createTransaction succeeds when source and destination share a '
+      'currency',
+      () async {
+        final accountA = await seedAccount(100, currencyCode: 'USD');
+        final accountB = await seedAccount(50, currencyCode: 'USD');
+
+        await dataSource.createTransaction(
+          accountId: accountA,
+          toAccountId: accountB,
+          type: TransactionType.transfer,
+          amount: 30,
+          date: DateTime(2026, 3, 10),
+          note: '',
+        );
+
+        expect(await readBalance(accountA), 70);
+        expect(await readBalance(accountB), 80);
+      },
+    );
+
+    test(
+      'createTransaction throws and leaves balances untouched when source '
+      'and destination use different currencies',
+      () async {
+        final accountA = await seedAccount(100, currencyCode: 'USD');
+        final accountB = await seedAccount(50, currencyCode: 'LAK');
+
+        await expectLater(
+          dataSource.createTransaction(
+            accountId: accountA,
+            toAccountId: accountB,
+            type: TransactionType.transfer,
+            amount: 30,
+            date: DateTime(2026, 3, 10),
+            note: '',
+          ),
+          throwsA(isA<ServerException>()),
+        );
+
+        expect(await readBalance(accountA), 100);
+        expect(await readBalance(accountB), 50);
+      },
+    );
+
+    test(
+      'updateTransaction throws when edited to a destination in a '
+      'different currency, leaving balances untouched',
+      () async {
+        final accountA = await seedAccount(100, currencyCode: 'USD');
+        final accountB = await seedAccount(50, currencyCode: 'USD');
+        final accountC = await seedAccount(200, currencyCode: 'LAK');
+        final created = await dataSource.createTransaction(
+          accountId: accountA,
+          toAccountId: accountB,
+          type: TransactionType.transfer,
+          amount: 30,
+          date: DateTime(2026, 3, 10),
+          note: '',
+        );
+        expect(await readBalance(accountA), 70);
+        expect(await readBalance(accountB), 80);
+
+        await expectLater(
+          dataSource.updateTransaction(
+            id: created.id,
+            accountId: accountA,
+            toAccountId: accountC,
+            type: TransactionType.transfer,
+            amount: 30,
+            date: DateTime(2026, 3, 10),
+            note: '',
+          ),
+          throwsA(isA<ServerException>()),
+        );
+
+        expect(await readBalance(accountA), 70);
+        expect(await readBalance(accountB), 80);
+        expect(await readBalance(accountC), 200);
+      },
+    );
 
     test('updateTransaction throws when edited to the same source and '
         'destination', () async {

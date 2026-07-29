@@ -2,7 +2,7 @@
 ///
 /// This tool never publishes notes. A maintainer must review and edit the
 /// generated draft (or the checked-in RELEASE_NOTES.md) before approving the
-/// protected production publication job.
+/// manual public release publication.
 library;
 
 import 'dart:io';

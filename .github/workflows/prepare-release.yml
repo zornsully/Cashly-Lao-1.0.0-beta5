@@ -1,79 +1,58 @@
-name: Prepare release candidates
+name: Prepare manual release evidence
 
 on:
   workflow_call:
     inputs:
       release_tag:
-        description: Existing, immutable Git tag to validate and build.
         required: true
         type: string
       source_ref:
-        description: Optional ref that must resolve to the same commit as the tag.
         required: false
-        type: string
         default: ''
+        type: string
     outputs:
       tag:
-        description: Validated release tag.
-        value: ${{ jobs.collect.outputs.tag }}
+        description: Validated immutable tag.
+        value: ${{ jobs.validate.outputs.tag }}
       version:
-        description: Validated semantic version without the v prefix.
-        value: ${{ jobs.collect.outputs.version }}
+        description: Version without v prefix.
+        value: ${{ jobs.validate.outputs.version }}
       commit:
-        description: Immutable commit checked out for every candidate build.
-        value: ${{ jobs.collect.outputs.commit }}
-      prerelease:
-        description: Whether this tag represents a prerelease.
-        value: ${{ jobs.collect.outputs.prerelease }}
+        description: Commit resolved from the tag.
+        value: ${{ jobs.validate.outputs.commit }}
       release_notes_sha256:
-        description: SHA-256 of the reviewed RELEASE_NOTES.md in the immutable tag.
-        value: ${{ jobs.collect.outputs.release_notes_sha256 }}
-      android_availability:
-        description: Candidate Android availability status.
-        value: ${{ jobs.collect.outputs.android_availability }}
-      ios_availability:
-        description: Held iOS public availability status.
-        value: ${{ jobs.collect.outputs.ios_availability }}
-      windows_availability:
-        description: Held Windows public availability status.
-        value: ${{ jobs.collect.outputs.windows_availability }}
-      macos_availability:
-        description: Held macOS public availability status.
-        value: ${{ jobs.collect.outputs.macos_availability }}
-      web_availability:
-        description: Candidate web availability status.
-        value: ${{ jobs.collect.outputs.web_availability }}
+        description: SHA-256 of checked-in review notes.
+        value: ${{ jobs.validate.outputs.release_notes_sha256 }}
   workflow_dispatch:
     inputs:
       release_tag:
-        description: Existing immutable Git tag to validate (for example v1.0.2).
+        description: Existing immutable Git tag to validate.
         required: true
         type: string
       source_ref:
-        description: Optional ref that must resolve to the same commit as the tag.
+        description: Optional ref that must resolve to the same commit.
         required: false
         default: ''
         type: string
 
-# Candidate builds never receive production credentials. Publication and
-# deployment are handled by release.yml after the protected environment gate.
+# GitHub Actions is intentionally read-only. It receives no signing key,
+# Firebase token, deployment identity, environment approval, or write scope.
 permissions:
   contents: read
 
 concurrency:
-  group: cashly-release-candidates-${{ inputs.release_tag }}
+  group: cashly-manual-release-candidate-${{ inputs.release_tag }}
   cancel-in-progress: false
 
 jobs:
   validate:
-    name: Validate tag, version, and immutable source
+    name: Validate immutable tag and source
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     outputs:
       tag: ${{ steps.release.outputs.tag }}
       version: ${{ steps.release.outputs.version }}
       commit: ${{ steps.release.outputs.commit }}
-      prerelease: ${{ steps.release.outputs.prerelease }}
       release_notes_sha256: ${{ steps.release.outputs.release_notes_sha256 }}
     steps:
       - name: Check out source and tags
@@ -83,13 +62,13 @@ jobs:
           persist-credentials: false
 
       - name: Set up Flutter
-        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
         with:
           flutter-version: '3.44.6'
           channel: stable
           cache: true
 
-      - name: Validate release identity and project version
+      - name: Validate release identity
         id: release
         shell: bash
         env:
@@ -97,93 +76,65 @@ jobs:
           SOURCE_REF: ${{ inputs.source_ref }}
         run: |
           set -euo pipefail
-
           if ! [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z][0-9A-Za-z.-]*)?$ ]]; then
-            echo "Release tags must use vMAJOR.MINOR.PATCH or a valid prerelease suffix." >&2
+            echo 'Release tag must use vMAJOR.MINOR.PATCH or a valid prerelease suffix.' >&2
             exit 1
           fi
-
-          if ! git show-ref --verify --quiet "refs/tags/$RELEASE_TAG"; then
-            echo "The requested release tag does not exist on the remote: $RELEASE_TAG" >&2
-            exit 1
-          fi
-
+          git show-ref --verify --quiet "refs/tags/$RELEASE_TAG"
           tag_commit="$(git rev-list -n 1 "$RELEASE_TAG")"
-          if [[ -n "$SOURCE_REF" ]]; then
-            source_commit="$(git rev-parse "$SOURCE_REF^{commit}")"
-            if [[ "$source_commit" != "$tag_commit" ]]; then
-              echo "The requested source ref does not resolve to the release tag commit." >&2
-              exit 1
-            fi
-          fi
-
-          git checkout --detach "$tag_commit"
-          checked_out_commit="$(git rev-parse HEAD)"
-          if [[ "$checked_out_commit" != "$tag_commit" ]]; then
-            echo "Checkout did not resolve to the immutable tag commit." >&2
+          if [[ -n "$SOURCE_REF" && "$(git rev-parse "$SOURCE_REF^{commit}")" != "$tag_commit" ]]; then
+            echo 'The requested source ref does not resolve to the release tag commit.' >&2
             exit 1
           fi
-
-          # Resolve dependencies only after the immutable tag is checked out;
-          # a manual dispatch may begin from a different branch.
+          git checkout --detach "$tag_commit"
           flutter pub get
-
+          dart run tool/verify_release.dart --tag "$RELEASE_TAG" --ref "$tag_commit"
           test -s RELEASE_NOTES.md
-          release_notes_sha256="$(sha256sum RELEASE_NOTES.md | awk '{print $1}')"
-
-          # The verifier validates pubspec, native platform metadata, and all
-          # provided artifact names. It intentionally fails on any mismatch.
-          dart run tool/verify_release.dart \
-            --tag "$RELEASE_TAG" \
-            --ref "$checked_out_commit"
-
-          version="${RELEASE_TAG#v}"
-          prerelease=false
-          if [[ "$version" == *-* ]]; then
-            prerelease=true
-          fi
-
           {
             echo "tag=$RELEASE_TAG"
-            echo "version=$version"
-            echo "commit=$checked_out_commit"
-            echo "prerelease=$prerelease"
-            echo "release_notes_sha256=$release_notes_sha256"
+            echo "version=${RELEASE_TAG#v}"
+            echo "commit=$tag_commit"
+            echo "release_notes_sha256=$(sha256sum RELEASE_NOTES.md | awk '{print $1}')"
           } >> "$GITHUB_OUTPUT"
 
   quality:
-    name: Required quality gate
+    name: Run quality checks and build website
     needs: validate
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 35
     steps:
-      - name: Check out the validated commit
+      - name: Check out the immutable commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           ref: ${{ needs.validate.outputs.commit }}
           persist-credentials: false
 
       - name: Set up Flutter
-        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
         with:
           flutter-version: '3.44.6'
           channel: stable
           cache: true
 
-      - name: Restore Dart dependencies
-        run: flutter pub get
+      - name: Check source quality
+        run: |
+          flutter pub get
+          flutter gen-l10n
+          dart format --output=none --set-exit-if-changed lib test tool
+          flutter analyze
+          flutter test
 
-      - name: Generate localizations
-        run: flutter gen-l10n
+      - name: Build review-only web candidate
+        run: flutter build web --release
 
-      - name: Check Dart formatting
-        run: dart format --output=none --set-exit-if-changed lib test tool
-
-      - name: Analyze source
-        run: flutter analyze
-
-      - name: Run automated tests
-        run: flutter test
+      - name: Confirm Spark web bundle has no binary installers
+        shell: bash
+        run: |
+          set -euo pipefail
+          if find build/web -type f \( -iname '*.apk' -o -iname '*.ipa' -o -iname '*.exe' -o -iname '*.msi' -o -iname '*.dmg' \) -print -quit | grep -q .; then
+            echo 'Firebase Spark web bundle must not contain a binary installer.' >&2
+            exit 1
+          fi
 
   release_notes:
     name: Generate review-only release notes draft
@@ -191,286 +142,20 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - name: Check out the validated commit and tags
+      - name: Check out immutable history
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           ref: ${{ needs.validate.outputs.commit }}
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Generate a draft for human review
-        shell: bash
-        env:
-          RELEASE_TAG: ${{ needs.validate.outputs.tag }}
-          RELEASE_VERSION: ${{ needs.validate.outputs.version }}
-          RELEASE_COMMIT: ${{ needs.validate.outputs.commit }}
-        run: |
-          set -euo pipefail
-          previous_tag="$(git tag --merged "$RELEASE_COMMIT" --sort=-v:refname |
-            grep -E '^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z][0-9A-Za-z.-]*)?$' |
-            grep -Fxv "$RELEASE_TAG" |
-            head -n 1 || true)"
+      - name: Generate a local-style review draft
+        run: dart run tool/generate_release_notes.dart --to ${{ needs.validate.outputs.commit }} --output release-notes-draft.md
 
-          {
-            echo "# Cashly Lao $RELEASE_VERSION - draft release notes"
-            echo
-            echo "> Review and edit these notes before starting a protected production publication."
-            echo
-            echo "## New features"
-            echo "- _Add reviewed notes._"
-            echo
-            echo "## Improvements"
-            echo "- _Add reviewed notes._"
-            echo
-            echo "## Bug fixes"
-            echo "- _Add reviewed notes._"
-            echo
-            echo "## Security updates"
-            echo "- _None reported._"
-            echo
-            echo "## Breaking changes"
-            echo "- _None reported._"
-            echo
-            echo "## Known issues"
-            echo "- iOS, Windows, and macOS distribution remain unavailable until their signing requirements are configured."
-            echo
-            echo "## Commit reference"
-            if [[ -n "$previous_tag" ]]; then
-              echo "Changes since $previous_tag:"
-              git log --no-merges --pretty=format:'- %s (%h)' "$previous_tag..$RELEASE_COMMIT" || true
-            else
-              echo "No previous semantic version tag was found."
-              git log --no-merges --pretty=format:'- %s (%h)' -n 50 "$RELEASE_COMMIT" || true
-            fi
-            echo
-          } > release-notes.md
-
-      - name: Upload release notes draft
+      - name: Upload review-only notes artifact
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
         with:
           name: cashly-lao-release-notes-${{ needs.validate.outputs.version }}
-          path: release-notes.md
-          if-no-files-found: error
-          retention-days: 30
-
-  android:
-    name: Android release candidate
-    needs: [validate, quality]
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    outputs:
-      availability: ${{ steps.status.outputs.availability }}
-    steps:
-      - name: Check out the validated commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          ref: ${{ needs.validate.outputs.commit }}
-          persist-credentials: false
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
-        with:
-          flutter-version: '3.44.6'
-          channel: stable
-          cache: true
-
-      - name: Restore Dart dependencies and generated code
-        run: |
-          flutter pub get
-          flutter gen-l10n
-
-      - name: Confirm a release build requires protected signing
-        id: status
-        shell: bash
-        env:
-          RELEASE_VERSION: ${{ needs.validate.outputs.version }}
-        run: |
-          set -euo pipefail
-          mkdir -p artifacts
-
-          # CI intentionally has no Android signing secrets. A successful
-          # release build here would be unsafe, because it could be debug
-          # signed. The Gradle configuration must reject it explicitly.
-          set +e
-          flutter build apk --release > android-release-build.log 2>&1
-          build_exit_code="$?"
-          set -e
-
-          if [[ "$build_exit_code" -eq 0 ]]; then
-            echo "A release APK was built outside the protected signing job." >&2
-            exit 1
-          fi
-
-          if ! grep -q "Release signing is required in CI" android-release-build.log; then
-            cat android-release-build.log >&2
-            echo "Android failed for a reason other than intentionally absent protected signing." >&2
-            exit "$build_exit_code"
-          fi
-
-          jq -n \
-            --arg platform android \
-            --arg availability unavailable \
-            --arg version "$RELEASE_VERSION" \
-            --arg reason "A signed APK is built only after the protected production approval gate." \
-            '{platform: $platform, availability: $availability, version: $version, reason: $reason}' \
-            > artifacts/android-status.json
-          echo "availability=unavailable" >> "$GITHUB_OUTPUT"
-
-      - name: Upload Android candidate status
-        if: always()
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
-        with:
-          name: cashly-lao-android-candidate-${{ needs.validate.outputs.version }}
-          path: |
-            artifacts/android-status.json
-            android-release-build.log
-          if-no-files-found: warn
-          retention-days: 14
-
-  web:
-    name: Web release candidate
-    needs: [validate, quality]
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    outputs:
-      availability: ${{ steps.status.outputs.availability }}
-    steps:
-      - name: Check out the validated commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          ref: ${{ needs.validate.outputs.commit }}
-          persist-credentials: false
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
-        with:
-          flutter-version: '3.44.6'
-          channel: stable
-          cache: true
-
-      - name: Restore Dart dependencies and generated code
-        run: |
-          flutter pub get
-          flutter gen-l10n
-
-      - name: Build the web release candidate
-        run: flutter build web --release
-
-      - name: Package web candidate and record status
-        id: status
-        shell: bash
-        env:
-          RELEASE_VERSION: ${{ needs.validate.outputs.version }}
-        run: |
-          set -euo pipefail
-          mkdir -p artifacts
-          (
-            cd build/web
-            zip -qr "../../artifacts/Cashly-Lao-Web-${RELEASE_VERSION}.zip" .
-          )
-          size="$(stat --printf='%s' "artifacts/Cashly-Lao-Web-${RELEASE_VERSION}.zip")"
-          checksum="$(sha256sum "artifacts/Cashly-Lao-Web-${RELEASE_VERSION}.zip" | awk '{print $1}')"
-          jq -n \
-            --arg platform web \
-            --arg availability available \
-            --arg version "$RELEASE_VERSION" \
-            --arg file "Cashly-Lao-Web-${RELEASE_VERSION}.zip" \
-            --arg sha256 "$checksum" \
-            --argjson size "$size" \
-            '{platform: $platform, availability: $availability, version: $version, file: $file, fileSizeBytes: $size, sha256: $sha256}' \
-            > artifacts/web-status.json
-          echo "availability=available" >> "$GITHUB_OUTPUT"
-
-      - name: Upload web candidate
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
-        with:
-          name: cashly-lao-web-candidate-${{ needs.validate.outputs.version }}
-          path: |
-            build/web
-            artifacts/Cashly-Lao-Web-${{ needs.validate.outputs.version }}.zip
-            artifacts/web-status.json
+          path: release-notes-draft.md
           if-no-files-found: error
           retention-days: 14
-
-  collect:
-    name: Record candidate availability
-    needs: [validate, quality, release_notes, android, web]
-    if: always()
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    outputs:
-      tag: ${{ steps.summary.outputs.tag }}
-      version: ${{ steps.summary.outputs.version }}
-      commit: ${{ steps.summary.outputs.commit }}
-      prerelease: ${{ steps.summary.outputs.prerelease }}
-      release_notes_sha256: ${{ steps.summary.outputs.release_notes_sha256 }}
-      android_availability: ${{ steps.summary.outputs.android_availability }}
-      ios_availability: ${{ steps.summary.outputs.ios_availability }}
-      windows_availability: ${{ steps.summary.outputs.windows_availability }}
-      macos_availability: ${{ steps.summary.outputs.macos_availability }}
-      web_availability: ${{ steps.summary.outputs.web_availability }}
-    steps:
-      - name: Write candidate summary
-        id: summary
-        shell: bash
-        env:
-          TAG: ${{ needs.validate.outputs.tag }}
-          VERSION: ${{ needs.validate.outputs.version }}
-          COMMIT: ${{ needs.validate.outputs.commit }}
-          PRERELEASE: ${{ needs.validate.outputs.prerelease }}
-          RELEASE_NOTES_SHA256: ${{ needs.validate.outputs.release_notes_sha256 }}
-          QUALITY_RESULT: ${{ needs.quality.result }}
-          NOTES_RESULT: ${{ needs.release_notes.result }}
-          ANDROID_RESULT: ${{ needs.android.result }}
-          WEB_RESULT: ${{ needs.web.result }}
-          ANDROID_AVAILABILITY: ${{ needs.android.outputs.availability }}
-          WEB_AVAILABILITY: ${{ needs.web.outputs.availability }}
-          IOS_AVAILABILITY: coming_soon
-          WINDOWS_AVAILABILITY: coming_soon
-          MACOS_AVAILABILITY: coming_soon
-        run: |
-          set -euo pipefail
-          failed=false
-          for result in \
-            "$QUALITY_RESULT" "$NOTES_RESULT" "$ANDROID_RESULT" "$WEB_RESULT"; do
-            if [[ "$result" != "success" ]]; then
-              failed=true
-            fi
-          done
-
-          {
-            echo "# Cashly Lao release candidate"
-            echo
-            echo "- **Tag:** \`$TAG\`"
-            echo "- **Version:** \`$VERSION\`"
-            echo "- **Commit:** \`$COMMIT\`"
-            echo "- **Prerelease:** \`$PRERELEASE\`"
-            echo
-            echo "| Platform | Build result | Publication availability |"
-            echo "| --- | --- | --- |"
-            echo "| Android | $ANDROID_RESULT | ${ANDROID_AVAILABILITY:-unknown} |"
-            echo "| iOS | held (not built) | $IOS_AVAILABILITY |"
-            echo "| Windows | held (not built) | $WINDOWS_AVAILABILITY |"
-            echo "| macOS | held (not built) | $MACOS_AVAILABILITY |"
-            echo "| Web | $WEB_RESULT | ${WEB_AVAILABILITY:-unknown} |"
-            echo
-            echo "Only Android and web candidates are built for this release. iOS, Windows, and macOS remain held and Coming soon; no candidate artifacts are created for them. No production release, download metadata, or live Hosting site is changed by this workflow."
-          } >> "$GITHUB_STEP_SUMMARY"
-
-          {
-            echo "tag=$TAG"
-            echo "version=$VERSION"
-            echo "commit=$COMMIT"
-            echo "prerelease=$PRERELEASE"
-            echo "release_notes_sha256=$RELEASE_NOTES_SHA256"
-            echo "android_availability=${ANDROID_AVAILABILITY:-unknown}"
-            echo "ios_availability=${IOS_AVAILABILITY:-unknown}"
-            echo "windows_availability=${WINDOWS_AVAILABILITY:-unknown}"
-            echo "macos_availability=${MACOS_AVAILABILITY:-unknown}"
-            echo "web_availability=${WEB_AVAILABILITY:-unknown}"
-          } >> "$GITHUB_OUTPUT"
-
-          if [[ "$failed" == true ]]; then
-            echo "At least one required candidate build failed. Production publication is blocked." >&2
-            exit 1
-          fi

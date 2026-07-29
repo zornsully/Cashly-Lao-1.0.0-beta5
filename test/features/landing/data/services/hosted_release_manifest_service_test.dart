@@ -7,6 +7,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 
+final _approvedPolicy = ReleaseDistributionPolicy.fromJson(const {
+  'schemaVersion': 1,
+  'repository': 'zornsully/Cashly-Lao-Releases',
+});
+
 void main() {
   group('HostedReleaseManifestService', () {
     test(
@@ -18,6 +23,7 @@ void main() {
           assetBundle: _StringAssetBundle(_manifestJson(version: '1.0.1')),
           cache: cache,
           manifestUri: Uri.parse('https://example.com/release-manifest.json'),
+          distributionPolicy: _approvedPolicy,
         );
 
         final manifest = await service.loadLatest();
@@ -29,14 +35,15 @@ void main() {
         expect(android?.version, '9.2.0');
         expect(
           android?.downloadUrl.toString(),
-          'https://cashly-lao.web.app/downloads/'
-          'Cashly-Lao-Android-9.2.0.apk',
+          'https://github.com/zornsully/Cashly-Lao-Releases/releases/'
+          'download/v9.2.0/Cashly-Lao-Android-9.2.0.apk',
         );
         expect(android?.isAvailable, isTrue);
         expect(cache.value, isNotNull);
         expect(
           ReleaseManifest.fromJson(
             jsonDecode(cache.value!) as Map<String, dynamic>,
+            distributionPolicy: _approvedPolicy,
           ).release?.tag,
           'v9.2.0',
         );
@@ -52,6 +59,7 @@ void main() {
         assetBundle: _StringAssetBundle(_manifestJson(version: '1.0.1')),
         cache: cache,
         manifestUri: Uri.parse('https://example.com/release-manifest.json'),
+        distributionPolicy: _approvedPolicy,
       );
 
       final manifest = await service.loadLatest();
@@ -68,6 +76,7 @@ void main() {
         assetBundle: _StringAssetBundle(_manifestJson(version: '1.0.1')),
         cache: cache,
         manifestUri: Uri.parse('https://example.com/release-manifest.json'),
+        distributionPolicy: _approvedPolicy,
       );
 
       final manifest = await service.loadLatest();
@@ -91,6 +100,7 @@ void main() {
           assetBundle: _StringAssetBundle(_manifestJson(version: '1.0.1')),
           cache: cache,
           manifestUri: Uri.parse('https://example.com/release-manifest.json'),
+          distributionPolicy: _approvedPolicy,
         );
 
         final manifest = await service.loadLatest();
@@ -109,6 +119,7 @@ void main() {
           assetBundle: _StringAssetBundle(_manifestJson(version: '1.0.1')),
           cache: _MemoryReleaseManifestCache('{not json'),
           manifestUri: Uri.parse('https://example.com/release-manifest.json'),
+          distributionPolicy: _approvedPolicy,
         );
 
         final manifest = await service.loadLatest();
@@ -132,6 +143,7 @@ void main() {
           ),
           cache: _MemoryReleaseManifestCache(),
           manifestUri: Uri.parse('https://example.com/release-manifest.json'),
+          distributionPolicy: _approvedPolicy,
         );
 
         final manifest = await service.loadLatest();
@@ -153,6 +165,7 @@ void main() {
           assetBundle: _FailingAssetBundle(),
           cache: _MemoryReleaseManifestCache(),
           manifestUri: Uri.parse('https://example.com/release-manifest.json'),
+          distributionPolicy: _approvedPolicy,
         );
 
         expect(
@@ -237,7 +250,7 @@ class _FailingAssetBundle extends AssetBundle {
 String _manifestJson({
   required String version,
   String channel = 'stable',
-  int schemaVersion = 2,
+  int schemaVersion = ReleaseManifest.currentSchemaVersion,
   String? generatedAt,
 }) {
   final timestamp = generatedAt ?? DateTime.now().toUtc().toIso8601String();
@@ -267,8 +280,9 @@ Map<String, dynamic> _manifestMap({
         'commitSha': 'b9234493d7f92b32f191c87ac4b2988e24f9ca7b',
         'channel': channel,
         'publishedAt': generatedAt,
+        'distributionRepository': 'zornsully/Cashly-Lao-Releases',
         'releaseUrl':
-            'https://github.com/zornsully/Cashly-Lao-1.0.0-beta5/releases/'
+            'https://github.com/zornsully/Cashly-Lao-Releases/releases/'
             'tag/v$version',
       },
     'platforms': [
@@ -285,7 +299,9 @@ Map<String, dynamic> _manifestMap({
         'fileSizeBytes': 1048576,
         'minimumOsVersion': 'Android 7.0+',
         'releaseNotes': 'Signed release.',
-        'downloadUrl': 'https://cashly-lao.web.app/downloads/$artifactName',
+        'downloadUrl':
+            'https://github.com/zornsully/Cashly-Lao-Releases/releases/'
+            'download/v$version/$artifactName',
         'packageFormat': 'APK',
         'installationNote': 'Install the signed APK.',
         'sha256': 'A' * 64,

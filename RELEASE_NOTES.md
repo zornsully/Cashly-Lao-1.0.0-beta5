@@ -1,7 +1,8 @@
 # Cashly Lao 1.0.2
 
-> Approved release notes for the `v1.0.2` candidate. Publication remains
-> subject to the protected signing and deployment checks.
+> Reviewed notes for the `v1.0.2` candidate. Publication remains subject to
+> local signed-artifact validation and explicit owner approval. No release is
+> published or deployed automatically.
 
 ## New features
 
@@ -24,8 +25,8 @@
 
 ## Security updates
 
-- Production releases are prepared for approval-gated publishing with verified
-  checksums and a fail-closed Android signing requirement.
+- Development releases use verified local signing, certificate validation,
+  SHA-256 checksums, and a fail-closed public-download policy.
 
 ## Breaking changes
 

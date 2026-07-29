@@ -137,6 +137,7 @@
   "currentBalanceLabel": "Current balance",
   "initialBalanceLabel": "Initial balance",
   "currencyLabel": "Currency",
+  "accountCurrencyLockedHelper": "Currency can't be changed after an account is created.",
   "saveAccountFailedMessage": "Could not save the account. Please try again.",
   "accountTypeCashLabel": "Cash",
   "accountTypeWalletLabel": "Wallet",
@@ -411,5 +412,89 @@
   "deleteAccountButtonLabel": "Delete account",
 
   "iconLabel": "Icon",
-  "colorLabel": "Color"
+  "colorLabel": "Color",
+
+  "smartMoneyScoreCardTitle": "Cashly Smart Money Score",
+  "smartMoneyScoreCardSubtitle": "Balance movement leads. Habits provide the context.",
+  "smartMoneyScoreWhatIsShapingLabel": "What is shaping this month",
+  "smartMoneyScorePracticalNextStepLabel": "A practical next step",
+  "smartMoneyScoreWhyThisScore": "Why this score?",
+  "smartMoneyScoreComparedWithOpening": "Compared with your month opening balance",
+  "smartMoneyScoreNeutralBaseline": "Using a neutral baseline until enough data is available",
+  "smartMoneyScoreMonthlyHeroLabel": "MONTHLY SCORE · / {max}",
+  "@smartMoneyScoreMonthlyHeroLabel": {
+    "placeholders": {"max": {"type": "int"}}
+  },
+  "smartMoneyScoreStatusNotEnoughData": "Not enough data",
+  "smartMoneyScoreStatusExcellentGrowth": "Excellent Growth",
+  "smartMoneyScoreStatusGrowing": "Growing",
+  "smartMoneyScoreStatusStable": "Stable",
+  "smartMoneyScoreStatusDeclining": "Declining",
+  "smartMoneyScoreStatusNeedsAttention": "Needs Attention",
+  "smartMoneyScoreStatusExcellent": "Excellent",
+  "smartMoneyScoreStatusGood": "Good",
+  "smartMoneyScoreStatusFair": "Fair",
+  "smartMoneyScoreStatusHighRisk": "High Risk",
+  "financialInsightPeriodToday": "Today",
+  "financialInsightPeriodWeek": "Week",
+  "financialInsightPeriodMonth": "Month",
+  "smartMoneyScoreBudgetNoneSet": "No budgets set",
+  "smartMoneyScoreBudgetOverCount": "{count} over budget",
+  "@smartMoneyScoreBudgetOverCount": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "smartMoneyScoreBudgetNearlyFullCount": "{count} nearly full",
+  "@smartMoneyScoreBudgetNearlyFullCount": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "smartMoneyScoreBudgetOnTrack": "On track",
+  "smartMoneyScoreBreakdownSheetDescription": "The monthly score is calculated from the same synced financial data shown in your dashboard. Balance movement is always the main factor.",
+  "smartMoneyScoreBreakdownUnavailableFallback": "Cashly needs a reliable month opening balance before it can give a full comparison. The score stays neutral rather than guessing.",
+  "smartMoneyScoreSectionBalanceMovement": "Balance movement",
+  "smartMoneyScoreSectionMonthActivity": "This month's financial activity",
+  "smartMoneyScoreSectionFormula": "Formula",
+  "smartMoneyScoreRowOpeningBalance": "Opening balance",
+  "smartMoneyScoreRowCurrentBalance": "Current balance",
+  "smartMoneyScoreRowBalanceChange": "Balance change",
+  "smartMoneyScoreRowBalanceGrowthContribution": "Balance-growth contribution",
+  "smartMoneyScoreRowIncome": "Income",
+  "smartMoneyScoreRowExpenses": "Expenses",
+  "smartMoneyScoreRowNetCashFlowSavings": "Net cash flow / savings",
+  "smartMoneyScoreRowBudgetPerformance": "Budget performance",
+  "smartMoneyScoreRowPreviousPeriodComparison": "Previous-period comparison",
+  "smartMoneyScoreRowOverdueBills": "Overdue bills",
+  "smartMoneyScoreRowStartingScore": "Starting score",
+  "smartMoneyScoreRowBehaviourModifier": "Behaviour modifier",
+  "smartMoneyScoreRowFinalMonthlyScore": "Final monthly score",
+  "smartMoneyScoreValueNotIncludedYet": "Not included yet",
+  "smartMoneyScoreValueNeutralUntilBaseline": "Neutral until a baseline is available",
+  "smartMoneyScoreValueBehaviourModifierPoints": "{points} points (capped at ±10)",
+  "@smartMoneyScoreValueBehaviourModifierPoints": {
+    "placeholders": {"points": {"type": "String"}}
+  },
+  "smartMoneyScorePointsSuffix": "{points} points",
+  "@smartMoneyScorePointsSuffix": {
+    "placeholders": {"points": {"type": "String"}}
+  },
+  "smartMoneyScoreValueNoComparisonYet": "No comparison yet",
+  "smartMoneyScoreImpactIncomePositive": "Income is ahead of expenses.",
+  "smartMoneyScoreImpactIncomeNegative": "Expenses are ahead of income.",
+  "smartMoneyScoreImpactIncomeNeutral": "Income and expenses are currently even or unavailable.",
+  "smartMoneyScoreImpactSavingsPositive": "Positive cash flow supports the score.",
+  "smartMoneyScoreImpactSavingsNegative": "Negative cash flow lowers the behaviour modifier slightly.",
+  "smartMoneyScoreImpactSavingsNeutral": "No cash-flow modifier was applied.",
+  "smartMoneyScoreImpactBudgetPositive": "Current budgets remain on track.",
+  "smartMoneyScoreImpactBudgetNegative": "Budget room is tight or a budget is exceeded.",
+  "smartMoneyScoreImpactBudgetNeutral": "No active budget modifier was applied.",
+  "smartMoneyScoreImpactTrendPositive": "Spending is lower than the comparable period.",
+  "smartMoneyScoreImpactTrendNegative": "Spending is notably higher than the comparable period.",
+  "smartMoneyScoreImpactTrendNeutral": "There is not enough comparable spending data yet.",
+  "smartMoneyScoreImpactBillsSupporting": "No verified bill or reminder record is available, so no bill penalty was added.",
+  "smartMoneyScoreMetricNetCashFlow": "Net cash flow",
+  "smartMoneyScoreMetricComparedLastMonth": "Compared with last month",
+  "smartMoneyScoreMetricExpensesChange": "{percent} expenses",
+  "@smartMoneyScoreMetricExpensesChange": {
+    "placeholders": {"percent": {"type": "String"}}
+  },
+  "smartMoneyScoreFormulaFootnote": "Monthly score = clamp(0–150, 100 + balance change % + financial behaviour modifier)."
 }

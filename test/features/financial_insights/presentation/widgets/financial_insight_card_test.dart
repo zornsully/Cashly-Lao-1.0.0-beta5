@@ -1,5 +1,6 @@
 import 'package:cashly_lao/features/financial_insights/domain/entities/financial_insight.dart';
 import 'package:cashly_lao/features/financial_insights/presentation/widgets/financial_insight_card.dart';
+import 'package:cashly_lao/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -72,6 +73,8 @@ void main() {
 
     await tester.pumpWidget(
       const MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SingleChildScrollView(
             child: FinancialInsightCard(insight: insight),

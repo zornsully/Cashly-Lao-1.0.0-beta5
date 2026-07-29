@@ -7,8 +7,8 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# Every job starts read-only. Deployment and release permissions live only in
-# the protected production jobs in the dedicated workflows.
+# Every job is read-only. Releases and Firebase Spark deploys are performed
+# locally only after explicit owner approval; no workflow receives credentials.
 permissions:
   contents: read
 

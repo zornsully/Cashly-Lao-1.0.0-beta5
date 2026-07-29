@@ -20,12 +20,14 @@ abstract interface class AccountRepository {
     required AppColorKey color,
   });
 
+  /// currencyCode is deliberately not an editable field here — see
+  /// `firestore.rules`' accounts.update rule, which pins it immutable after
+  /// creation.
   Future<Either<Failure, Unit>> updateAccount({
     required String id,
     required String name,
     required AccountType type,
     required double balance,
-    required String currencyCode,
     required AppIconKey icon,
     required AppColorKey color,
   });

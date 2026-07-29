@@ -346,6 +346,40 @@ transition rather than an instant cut.
 - Nothing gets committed or opened as a PR without the user's explicit
   go-ahead for that specific batch of work.
 
+### Free-tier manual release policy
+
+During development, Cashly Lao uses Firebase Spark and GitHub Free only.
+Firebase Hosting serves the website and `release-manifest.json`; it must never
+serve an APK or another installer. GitHub Actions may perform read-only checks
+and build review artifacts, but must never receive signing material, create a
+release, upload an asset, deploy Hosting, or change download metadata.
+
+The source repository remains private. A public Android download can use only
+a separate, owner-approved public GitHub distribution repository recorded in
+`assets/release/distribution_policy.json`. That policy is deliberately
+unconfigured by default, so the landing page remains fail-closed as “Coming
+soon” until a repository is reviewed and committed.
+
+The required manual sequence is non-negotiable:
+
+1. Check out a clean immutable source tag and build the signed APK locally.
+2. Verify package ID, version name/code, APK signature, approved certificate
+   fingerprint, size, and SHA-256; generate `SHA256SUMS.txt`, evidence, and
+   reviewed notes.
+3. Stop for explicit owner approval.
+4. After approval only, upload a draft GitHub Release to the approved public
+   distribution repository, verify the uploaded APK, publish it, then verify
+   an anonymous public download's size and SHA-256.
+5. Stop for a second explicit owner approval before generating/deploying
+   Firebase Spark website metadata. Deploy only `hosting:cashly-lao`, then
+   validate the live manifest.
+
+Never overwrite or retag a versioned public APK, never delete release evidence
+automatically, and never change the website link if public-asset verification
+fails. A rollback changes only the website manifest back to a previously
+verified public release; it cannot retract or alter an existing GitHub asset.
+macOS, Windows, and iOS releases remain held until separately authorized.
+
 ## Quality Assurance Checklist
 
 Before calling any screen or feature "done," confirm:
@@ -367,6 +401,349 @@ Before calling any screen or feature "done," confirm:
       pinned)
 - [ ] Any balance-affecting write uses `firestore.runTransaction`
 - [ ] No breaking change to an existing feature's behavior
+
+## Project Memory and Progress
+
+### 2026-07-29 — Free-tier manual release redesign (validated; pending owner decisions)
+
+Summary:
+
+- Replaced the paid/protected-environment release design with a manual
+  Firebase Spark + GitHub Free design.
+- Kept the private source repository separate from a future public,
+  owner-approved distribution repository.
+- Added a fail-closed release-distribution policy. It is unconfigured by
+  default, so no public APK download can be enabled accidentally.
+- Added local preparation, public-release, website-metadata, and rollback
+  tooling. None has been run to publish, deploy, create a release, or change a
+  public download link.
+
+Files created:
+
+- `assets/release/distribution_policy.json`
+- `tool/prepare_manual_release.ps1`
+- `tool/publish_github_release.ps1`
+- `tool/publish_web_metadata.ps1`
+- `tool/rollback_web_metadata.ps1`
+
+Files modified:
+
+- `.github/workflows/ci.yml`
+- `.github/workflows/prepare-release.yml`
+- `.github/workflows/release.yml`
+- `.github/workflows/rollback-production.yml`
+- `.github/workflows/web-preview.yml`
+- `CLAUDE.md`
+- `README.md`
+- `RELEASE_NOTES.md`
+- `assets/release/release_manifest.json`
+- `docs/FIREBASE_HOSTING_APK_DELIVERY.md`
+- `docs/PRODUCTION_ENVIRONMENT.md`
+- `docs/RELEASE_PIPELINE.md`
+- `docs/RELEASE_SECRETS.md`
+- `docs/REPOSITORY_HARDENING.md`
+- `docs/ROLLBACK.md`
+- `firebase.json`
+- `lib/features/landing/data/services/hosted_release_manifest_service.dart`
+- `lib/features/landing/domain/entities/release_manifest.dart`
+- `pubspec.yaml`
+- `test/features/landing/data/services/hosted_release_manifest_service_test.dart`
+- `test/features/landing/domain/entities/release_manifest_test.dart`
+- `test/features/landing/presentation/screens/landing_page_test.dart`
+- `tool/generate_release_manifest.dart`
+- `tool/generate_release_notes.dart`
+- `tool/verify_release.dart`
+- `web/release-manifest.json`
+
+Files removed:
+
+- `tool/stage_release_apk.ps1`
+- `tool/sync_release_manifest.ps1`
+
+Implementation decisions:
+
+- Firebase Spark hosts only static web content and `release-manifest.json`.
+  APK hosting and Firebase binary-delivery rules were removed.
+- GitHub Actions are read-only: no signing credentials, release-write scope,
+  environments, OIDC, Firebase deployment, or automatic publication.
+- A schema-v3 manifest accepts an Android download only when the bundled policy
+  approves the exact public `owner/repository`, release tag, and canonical
+  GitHub asset URL. Schema-v1 and schema-v2 documents remain non-downloadable
+  fallbacks.
+- The manual sequence requires local signing/validation/checksums/notes, owner
+  approval for public GitHub publication, anonymous asset verification, then a
+  separate owner approval for Spark metadata deployment.
+
+Validation:
+
+- `firebase.json` parsed successfully after removal of APK Hosting headers.
+- The bundled Dart analyzer completed with no issues.
+- `flutter analyze` completed with no issues.
+- The focused release-manifest and landing-page suite passed: 33 tests.
+- The full Flutter suite completed successfully: 366 tests.
+- PowerShell parser validation passed for all four manual release scripts.
+- JSON parsing passed for `firebase.json`, the distribution policy, and both
+  bundled/hosted manifest files. `git diff --check` passed with only existing
+  line-ending warnings.
+- A read-only workflow security scan found no deployment command, release-write
+  command, protected environment, OIDC, or write-permission pattern.
+- No end-to-end signed release dry run was run: it requires an immutable
+  release tag and the owner's local signing material. No public release,
+  website deployment, production metadata update, or Git commit was performed.
+
+Known limitations:
+
+- No public distribution repository has been approved or created. Keep
+  `assets/release/distribution_policy.json` as `repository: null` and the
+  landing page as “Coming soon” until the owner explicitly approves one.
+- The public-release and Spark metadata scripts remain deliberately unexecuted;
+  they are approval-gated and would change external state.
+
+Required approvals and setup:
+
+- Owner approval is required before naming or creating the public distribution
+  repository, publishing an APK, changing production metadata, deploying
+  Firebase Spark, committing this batch, or opening a pull request.
+- Local Android signing material, a local `gh auth` session, and a local
+  `firebase login` session are required only when their corresponding approved
+  manual step is run. Do not record credential values here.
+
+Next steps:
+
+- Obtain the owner's decision on a separate public distribution repository
+  (the private source repository must remain private), then set it through a
+  reviewed policy change.
+- Build and validate a signed immutable-tag candidate locally. Review the APK,
+  package/version, signing certificate, checksum, size, and generated notes.
+- Obtain separate owner approvals for (1) public GitHub Release publication and
+  (2) the later Firebase Spark metadata/website deployment.
+
+### 2026-07-29 — Post-audit Phase 1: account-currency and transfer-currency correctness (done)
+
+Summary:
+
+A full project audit (architecture, Firebase/security, business logic,
+design system, localization/testing, release pipeline) found two
+High-severity money-correctness gaps, both pre-existing and unrelated to
+the release-pipeline redesign above. Both are now closed.
+
+1. **`accounts.currencyCode` was editable after creation and unpinned in
+   `firestore.rules`.** Since currency is attributed via the *account*
+   (never the transaction — see Coding Standards), editing an existing
+   account's currency silently reclassified every historical
+   transaction/budget/report/Smart-Money-Score figure tied to it into a
+   different currency, with no conversion and no warning.
+2. **A transfer's same-currency requirement (source and destination
+   accounts must match) was enforced only in `transaction_form_screen.dart`
+   — never in `firestore.rules`.** A direct Firestore write bypassing the
+   form could create a mismatched-currency transfer, moving an unconverted
+   raw number between currencies.
+
+Files modified:
+
+- `firestore.rules` — `accounts.update` now pins `currencyCode` unchanged
+  (same pattern as categories' `isDefault` and budgets'
+  `categoryId`/`month`); `transactions.create`/`update` now requires a
+  `get()`-verified currency match between a transfer's `accountId` and
+  `toAccountId`, matching the categories/budgets precedent of closing a
+  rules gap with a real check rather than a comment.
+- `lib/features/accounts/domain/usecases/update_account_usecase.dart`,
+  `domain/repositories/account_repository.dart`,
+  `data/repositories/account_repository_impl.dart`,
+  `data/datasources/account_remote_datasource.dart`,
+  `presentation/providers/account_controller.dart` — `currencyCode` removed
+  from the entire `updateAccount` call chain (the established codebase
+  pattern for a pinned field — see `UpdateBudgetUseCase`, which likewise
+  never exposes `categoryId`/`month`).
+- `lib/features/accounts/presentation/screens/account_form_screen.dart` —
+  the currency dropdown is only interactive when creating a new account;
+  editing an existing account shows it as a locked, read-only field
+  (`InputDecorator` with `enabled: false`) plus a new helper string, so the
+  currency stays visible (money is never ambiguous) without being
+  editable.
+- `lib/features/transactions/data/datasources/transaction_remote_datasource.dart`
+  — added `_requireMatchingTransferCurrency` (online, reads both account
+  docs inside the same `runTransaction`) and
+  `_requireCachedMatchingTransferCurrency` (offline queue counterpart,
+  reads from cache like the existing `_requireCachedAccounts`) as
+  defense-in-depth alongside the new rules check — matches the project's
+  existing double-gating pattern (see Sprint 9's Reports/Premium gate).
+- `lib/l10n/app_en.arb` / `app_lo.arb` — new key
+  `accountCurrencyLockedHelper` (Lao translation is a draft, same
+  unreviewed status as the rest of `app_lo.arb` — see `TODO.md`).
+- Tests: `test/features/accounts/data/datasources/account_remote_datasource_test.dart`
+  (new: `updateAccount does not modify currencyCode`),
+  `test/features/accounts/data/repositories/account_repository_impl_test.dart`
+  (new: `updateAccount returns Right(unit) on success` — there was
+  previously no test at all for `updateAccount` at either layer),
+  `test/features/transactions/data/datasources/transaction_remote_datasource_test.dart`
+  (new: same-currency transfer succeeds; different-currency transfer
+  rejected on create; different-currency transfer rejected on update,
+  with balances confirmed untouched in both rejection cases).
+
+Implementation decisions:
+
+- Removing `currencyCode` from `updateAccount`'s signature entirely
+  (rather than accepting it and just pinning it in rules) follows the
+  codebase's own established precedent for pinned fields
+  (`UpdateBudgetUseCase` only exposes `limitAmount`/`currencyCode`, never
+  the pinned `categoryId`/`month`) instead of introducing a new pattern.
+- The transfer-currency check lives in the **datasource** layer, not a
+  usecase, because `CreateTransactionUseCase`/`UpdateTransactionUseCase`
+  only take account *IDs* — giving them account *data* would mean
+  injecting an `AccountRepository` into the Transactions domain layer,
+  exactly the cross-feature domain dependency `CLAUDE.md`'s Architecture
+  Principles say to avoid. The datasource already reads both account docs
+  directly inside the same atomic transaction for balance deltas (see
+  `_applyDeltas`); the currency check reuses that same access pattern.
+- No data migration was written for any transfer that might already exist
+  with mismatched currencies from before this fix — the app has no
+  real users yet (pre-launch), so this was judged unnecessary scope.
+
+Validation:
+
+- `flutter analyze` — 0 issues.
+- `flutter test` — full suite, 371 passing, 0 failing, 0 skipped.
+- No `firestore.rules` test harness exists in this repo (confirmed
+  absent during the audit, consistent with `TODO.md`) — the two rules
+  changes were verified by manual review against the existing
+  `isDefault`/`categoryId`+`month` pinning precedent and Firestore rules
+  syntax, not by an emulator test. Standing up a rules-test harness was
+  offered as an option for this phase and deliberately deferred (owner
+  chose to proceed without it) — worth reconsidering before the next
+  `firestore.rules` change of comparable risk.
+
+Known limitations:
+
+- Pre-existing Firestore data (if any) with a transfer between
+  already-mismatched-currency accounts, or an account whose currency was
+  already changed before this fix, is not retroactively corrected.
+- The two rules changes add Firestore `get()` reads on every
+  account create/update and every transfer create/update — expected to be
+  negligible at this app's realistic usage volume, not benchmarked.
+
+Next recommended phase: Phase 2 — localize the Smart Money Score feature
+(`financial_insight_card.dart` and its generation engine currently render
+100% in English regardless of the app's language setting, undocumented
+anywhere until this audit). See the audit's phased roadmap for Phases 2–4.
+
+### 2026-07-29 — Post-audit Phase 2a: localize Smart Money Score card chrome (done; dynamic engine text deferred to 2b)
+
+Summary:
+
+Phase 2 ("localize the Smart Money Score feature") turned out to be two
+architecturally distinct problems, discovered while reading the actual
+code rather than assuming the original one-line audit description:
+
+1. **Static UI chrome in `financial_insight_card.dart`** — section
+   headers, status-badge labels, breakdown-sheet row labels, impact
+   descriptions, the formula footnote, etc. — roughly 65 hardcoded
+   English strings, all living directly in the presentation layer with
+   zero domain involvement. Straightforward to localize the same way
+   every other screen in the app already is.
+2. **Dynamic, engine-generated text** — `FinancialInsight.headline`/
+   `explanation`/`scoreReasons`/`actions` and `FinancialPeriodScore
+   .reasons`, produced by `rule_based_financial_insight_engine.dart`
+   (~50 templates with interpolated amounts/percentages/category names)
+   and `short_horizon_balance_movement_calculator.dart`. This needs a
+   structured-message domain type (kind + params) so the domain layer
+   stays framework-free and localization happens in the presentation
+   layer — a real architecture change, not a mechanical string swap.
+
+There's also a data-model wrinkle worth recording: `SmartMoneyScoreCalculation
+.reasons` and `SmartMoneyScoreOpening.baselineNote` are **persisted** to
+Firestore (`smartMoneyScores/{scoreId}`) as English prose, kept as an
+auditable historical calculation record (confirmed in
+`smart_money_score_model.dart`). `FinancialInsight` itself is never
+persisted — it's recomputed live every session — so it's safe to restructure
+freely, but the persisted calculation fields are a separate, deliberately
+out-of-scope concern (see Known limitations).
+
+Given the split was materially bigger than originally scoped, the user chose
+to split it into 2a (this phase — the static chrome, item 1 above, done now)
+and 2b (the engine restructuring, item 2 above, a future phase).
+
+Files modified:
+
+- `lib/features/financial_insights/presentation/widgets/financial_insight_card.dart`
+  — every static string now routed through `AppLocalizations`. Helper
+  functions that were previously plain (`_statusFor`, `_budgetSummary`,
+  `_periodLabel`, `_expenseComparisonLabel`) now take an `AppLocalizations`
+  parameter, the same pattern `Validators` already established for
+  threading locale-awareness into a non-widget function. Also fixed the
+  monthly-score-hero label to read `score.maximum` instead of a hardcoded
+  `150`.
+- `lib/l10n/app_en.arb` / `app_lo.arb` — ~68 new keys (`smartMoneyScore*`,
+  `financialInsightPeriod*`), including 4 parameterized ones (`{max}`,
+  `{count}`, `{points}`, `{percent}`). Lao translations are drafts, same
+  unreviewed status as the rest of `app_lo.arb` (see `TODO.md`).
+- `test/features/financial_insights/presentation/widgets/financial_insight_card_test.dart`
+  — added the `localizationsDelegates`/`supportedLocales` the test's
+  `MaterialApp` needed once the widget started calling
+  `AppLocalizations.of(context)` (it had none before, since the widget
+  used zero localization previously).
+
+What's still English-only after this phase (by design, deferred to 2b):
+
+- `insight.headline`, `insight.explanation`, each `action.title`/
+  `.detail`, and every string inside `insight.scoreReasons`/
+  `score.reasons` (shown via `_ReasonLine` and the score-tile tooltip) —
+  all engine-generated dynamic text, unchanged in this phase.
+- The persisted `SmartMoneyScoreCalculation.reasons`/`unavailableReason`
+  and `SmartMoneyScoreOpening.baselineNote` — deliberately out of scope,
+  see Known limitations.
+
+Implementation decisions:
+
+- Did **not** touch `SmartMoneyScoreCalculation.reasons`/`baselineNote`'s
+  persistence shape or the `smartMoneyScores` Firestore schema — those
+  are an auditable historical record, and localizing them would mean
+  either a schema migration or storing a structured representation
+  instead of prose, both bigger decisions than this phase's scope.
+  2b's structured-message design (once built) can still choose to feed
+  the *live* display path from a freshly-generated structured message
+  instead of the persisted string, without touching what's persisted —
+  this phase didn't need to resolve that yet since it never touched
+  engine-generated text.
+- Reused `score.maximum` (already on `FinancialPeriodScore`) instead of
+  a hardcoded `150` for the monthly hero label — a small correctness
+  improvement that fell out of touching that line anyway.
+
+Validation:
+
+- `flutter analyze` — 0 issues.
+- `flutter test` — full suite, 371 passing, 0 failing, 0 skipped (test
+  count unchanged from Phase 1: no new test cases added, one existing
+  widget test's harness updated to supply localization delegates).
+
+Known limitations:
+
+- The majority of *dynamically generated* Smart Money Score text (the
+  headline, explanation, actions, and score reasons — arguably the most
+  prominent content on the card) is still English-only. This phase only
+  closes the static-chrome portion. See Phase 2b below.
+- `SmartMoneyScoreCalculation.reasons`/`baselineNote` (persisted,
+  auditable) remain English-only indefinitely unless a future phase
+  deliberately takes on the schema-migration question — not tracked as
+  a bug, just an explicit, documented boundary.
+- New Lao strings are drafts, not reviewed by a native speaker (same
+  standing item as the rest of `app_lo.arb`).
+
+Next recommended phase: **Phase 2b** — give the domain layer a
+framework-free structured-message type (kind enum + typed params) so
+`rule_based_financial_insight_engine.dart` and
+`short_horizon_balance_movement_calculator.dart` stop producing raw
+English strings, and have the presentation layer render that structured
+data through `AppLocalizations` with ICU placeholders. Real files
+touched: `financial_insight.dart` (entity shape), the two calculator/
+engine files above, `financial_insight_card.dart` again (to consume the
+new structured types), ~50 new ARB key pairs, and test-assertion
+rewrites in `rule_based_financial_insight_engine_test.dart`,
+`smart_money_score_calculator_test.dart`,
+`short_horizon_balance_movement_calculator_test.dart`,
+`build_financial_insight_snapshots_usecase_test.dart`. This is a bigger,
+more architecturally novel change than 2a — get explicit sign-off on
+the structured-message design before starting.
 
 ## Product Roadmap
 

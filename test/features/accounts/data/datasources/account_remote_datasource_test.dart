@@ -70,6 +70,37 @@ void main() {
     expect(accounts.first.name, 'Wallet');
   });
 
+  test('updateAccount does not modify currencyCode', () async {
+    final created = await dataSource.createAccount(
+      name: 'USD account',
+      type: AccountType.bank,
+      initialBalance: 100,
+      currencyCode: 'USD',
+      icon: AppIconKey.bank,
+      color: AppColorKey.blue,
+    );
+
+    await dataSource.updateAccount(
+      id: created.id,
+      name: 'USD account renamed',
+      type: AccountType.bank,
+      balance: 150,
+      icon: AppIconKey.bank,
+      color: AppColorKey.blue,
+    );
+
+    final doc = await firestore
+        .collection('users')
+        .doc('uid-1')
+        .collection('accounts')
+        .doc(created.id)
+        .get();
+
+    expect(doc.data()!['currencyCode'], 'USD');
+    expect(doc.data()!['name'], 'USD account renamed');
+    expect(doc.data()!['balance'], 150);
+  });
+
   test('archiveAccount then unarchiveAccount toggles isArchived', () async {
     final created = await dataSource.createAccount(
       name: 'Savings',

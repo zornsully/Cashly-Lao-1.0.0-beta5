@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_currency.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/financial_insight.dart';
 import '../../domain/entities/smart_money_score.dart';
 
@@ -18,11 +19,13 @@ class FinancialInsightCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     final currency = SupportedCurrencies.byCode(insight.currencyCode);
     final monthlyStatus = _statusFor(
       insight.monthScore,
       colors,
+      l10n,
       calculation: insight.monthlyScoreCalculation,
     );
     final calculation = insight.monthlyScoreCalculation;
@@ -96,7 +99,7 @@ class FinancialInsightCard extends StatelessWidget {
               if (insight.scoreReasons.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.md),
                 Text(
-                  'What is shaping this month',
+                  l10n.smartMoneyScoreWhatIsShapingLabel,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
                     color: monthlyStatus.color,
                     fontWeight: FontWeight.w800,
@@ -108,7 +111,7 @@ class FinancialInsightCard extends StatelessWidget {
               ],
               const SizedBox(height: AppSpacing.md),
               Text(
-                'A practical next step',
+                l10n.smartMoneyScorePracticalNextStepLabel,
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
                   color: monthlyStatus.color,
                   fontWeight: FontWeight.w800,
@@ -166,6 +169,7 @@ class _CardHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     return Row(
       children: [
@@ -180,13 +184,13 @@ class _CardHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Cashly Smart Money Score',
+                l10n.smartMoneyScoreCardTitle,
                 style: Theme.of(
                   context,
                 ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
               ),
               Text(
-                'Balance movement leads. Habits provide the context.',
+                l10n.smartMoneyScoreCardSubtitle,
                 style: Theme.of(
                   context,
                 ).textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
@@ -216,6 +220,7 @@ class _MonthlyScoreHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
@@ -253,7 +258,7 @@ class _MonthlyScoreHero extends StatelessWidget {
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'MONTHLY SCORE · / 150',
+                        l10n.smartMoneyScoreMonthlyHeroLabel(score.maximum),
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: colors.onSurfaceVariant,
                           fontWeight: FontWeight.w800,
@@ -274,12 +279,12 @@ class _MonthlyScoreHero extends StatelessWidget {
               TextButton.icon(
                 onPressed: onWhyPressed,
                 icon: const Icon(Icons.info_outline_rounded, size: 18),
-                label: const Text('Why this score?'),
+                label: Text(l10n.smartMoneyScoreWhyThisScore),
               ),
               Text(
                 hasReliableBaseline
-                    ? 'Compared with your month opening balance'
-                    : 'Using a neutral baseline until enough data is available',
+                    ? l10n.smartMoneyScoreComparedWithOpening
+                    : l10n.smartMoneyScoreNeutralBaseline,
                 textAlign: TextAlign.end,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: colors.onSurfaceVariant,
@@ -330,8 +335,9 @@ class _PeriodScoreTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
-    final status = _statusFor(score, colors, calculation: calculation);
+    final status = _statusFor(score, colors, l10n, calculation: calculation);
     final isMonth = score.period == FinancialWindowKind.month;
     return Tooltip(
       message: score.reasons.join('\n'),
@@ -352,7 +358,7 @@ class _PeriodScoreTile extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              _periodLabel(score.period),
+              _periodLabel(score.period, l10n),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -398,23 +404,24 @@ class _ScoreMetrics extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     final calculation = insight.monthlyScoreCalculation;
-    final budget = _budgetSummary(insight.budgets);
+    final budget = _budgetSummary(insight.budgets, l10n);
     final openingBalance = calculation == null || !calculation.isReliable
         ? null
         : calculation.currentBalance - calculation.balanceChange;
     final previousChange = insight.month.expenseChangePercent;
     final metrics = <_MetricItem>[
       _MetricItem(
-        label: 'Opening balance',
+        label: l10n.smartMoneyScoreRowOpeningBalance,
         value: openingBalance == null
-            ? 'Not enough data'
+            ? l10n.smartMoneyScoreStatusNotEnoughData
             : CurrencyFormatter.format(openingBalance, currency),
         icon: Icons.flag_outlined,
       ),
       _MetricItem(
-        label: 'Current balance',
+        label: l10n.smartMoneyScoreRowCurrentBalance,
         value: CurrencyFormatter.format(
           calculation?.currentBalance ?? insight.totalBalance,
           currency,
@@ -422,7 +429,7 @@ class _ScoreMetrics extends StatelessWidget {
         icon: Icons.account_balance_wallet_outlined,
       ),
       _MetricItem(
-        label: 'Balance change',
+        label: l10n.smartMoneyScoreRowBalanceChange,
         value: calculation == null || !calculation.isReliable
             ? '—'
             : '${_signedAmount(calculation.balanceChange, currency)} (${_signedPercent(calculation.balanceChangePercentage)})',
@@ -436,19 +443,19 @@ class _ScoreMetrics extends StatelessWidget {
             : colors.error,
       ),
       _MetricItem(
-        label: 'Income',
+        label: l10n.smartMoneyScoreRowIncome,
         value: CurrencyFormatter.format(insight.month.income, currency),
         icon: Icons.add_chart_rounded,
         color: Colors.teal,
       ),
       _MetricItem(
-        label: 'Expenses',
+        label: l10n.smartMoneyScoreRowExpenses,
         value: CurrencyFormatter.format(insight.month.expense, currency),
         icon: Icons.shopping_bag_outlined,
         color: colors.error,
       ),
       _MetricItem(
-        label: 'Net cash flow',
+        label: l10n.smartMoneyScoreMetricNetCashFlow,
         value: _signedAmount(
           calculation?.netCashFlow ??
               (insight.month.income - insight.month.expense),
@@ -463,16 +470,18 @@ class _ScoreMetrics extends StatelessWidget {
             : colors.error,
       ),
       _MetricItem(
-        label: 'Budget performance',
+        label: l10n.smartMoneyScoreRowBudgetPerformance,
         value: budget.label,
         icon: Icons.pie_chart_outline_rounded,
         color: budget.color ?? scoreColor,
       ),
       _MetricItem(
-        label: 'Compared with last month',
+        label: l10n.smartMoneyScoreMetricComparedLastMonth,
         value: previousChange == null
-            ? 'No comparison yet'
-            : '${_signedPercent(previousChange)} expenses',
+            ? l10n.smartMoneyScoreValueNoComparisonYet
+            : l10n.smartMoneyScoreMetricExpensesChange(
+                _signedPercent(previousChange),
+              ),
         icon: Icons.compare_arrows_rounded,
         color: previousChange == null
             ? null
@@ -671,15 +680,17 @@ class _ScoreBreakdownSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     final currency = SupportedCurrencies.byCode(insight.currencyCode);
     final calculation = insight.monthlyScoreCalculation;
     final status = _statusFor(
       insight.monthScore,
       colors,
+      l10n,
       calculation: calculation,
     );
-    final budget = _budgetSummary(insight.budgets);
+    final budget = _budgetSummary(insight.budgets, l10n);
     final breakdown = calculation?.behaviourBreakdown;
 
     return SafeArea(
@@ -703,7 +714,7 @@ class _ScoreBreakdownSheet extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      'Why this score?',
+                      l10n.smartMoneyScoreWhyThisScore,
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(fontWeight: FontWeight.w900),
                     ),
@@ -713,7 +724,7 @@ class _ScoreBreakdownSheet extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                'The monthly score is calculated from the same synced financial data shown in your dashboard. Balance movement is always the main factor.',
+                l10n.smartMoneyScoreBreakdownSheetDescription,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: colors.onSurfaceVariant,
                   height: 1.45,
@@ -724,28 +735,28 @@ class _ScoreBreakdownSheet extends StatelessWidget {
                 _BreakdownNotice(
                   message:
                       calculation?.unavailableReason ??
-                      'Cashly needs a reliable month opening balance before it can give a full comparison. The score stays neutral rather than guessing.',
+                      l10n.smartMoneyScoreBreakdownUnavailableFallback,
                 )
               else ...[
                 _BreakdownSection(
-                  title: 'Balance movement',
+                  title: l10n.smartMoneyScoreSectionBalanceMovement,
                   rows: [
                     _BreakdownRow(
-                      label: 'Opening balance',
+                      label: l10n.smartMoneyScoreRowOpeningBalance,
                       value: CurrencyFormatter.format(
                         calculation.currentBalance - calculation.balanceChange,
                         currency,
                       ),
                     ),
                     _BreakdownRow(
-                      label: 'Current balance',
+                      label: l10n.smartMoneyScoreRowCurrentBalance,
                       value: CurrencyFormatter.format(
                         calculation.currentBalance,
                         currency,
                       ),
                     ),
                     _BreakdownRow(
-                      label: 'Balance change',
+                      label: l10n.smartMoneyScoreRowBalanceChange,
                       value:
                           '${_signedAmount(calculation.balanceChange, currency)} (${_signedPercent(calculation.balanceChangePercentage)})',
                       color: calculation.balanceChange >= 0
@@ -753,7 +764,7 @@ class _ScoreBreakdownSheet extends StatelessWidget {
                           : colors.error,
                     ),
                     _BreakdownRow(
-                      label: 'Balance-growth contribution',
+                      label: l10n.smartMoneyScoreRowBalanceGrowthContribution,
                       value:
                           '${_signedPoints(calculation.balanceChangePercentage)} points',
                       color: status.color,
@@ -763,31 +774,30 @@ class _ScoreBreakdownSheet extends StatelessWidget {
                 const SizedBox(height: AppSpacing.md),
               ],
               _BreakdownSection(
-                title: 'This month’s financial activity',
+                title: l10n.smartMoneyScoreSectionMonthActivity,
                 rows: [
                   _BreakdownRow(
-                    label: 'Income',
+                    label: l10n.smartMoneyScoreRowIncome,
                     value: CurrencyFormatter.format(
                       insight.month.income,
                       currency,
                     ),
                     supporting: _impactDescription(
                       breakdown?.incomeExpenseImpact,
-                      positive: 'Income is ahead of expenses.',
-                      negative: 'Expenses are ahead of income.',
-                      neutral:
-                          'Income and expenses are currently even or unavailable.',
+                      positive: l10n.smartMoneyScoreImpactIncomePositive,
+                      negative: l10n.smartMoneyScoreImpactIncomeNegative,
+                      neutral: l10n.smartMoneyScoreImpactIncomeNeutral,
                     ),
                   ),
                   _BreakdownRow(
-                    label: 'Expenses',
+                    label: l10n.smartMoneyScoreRowExpenses,
                     value: CurrencyFormatter.format(
                       insight.month.expense,
                       currency,
                     ),
                   ),
                   _BreakdownRow(
-                    label: 'Net cash flow / savings',
+                    label: l10n.smartMoneyScoreRowNetCashFlowSavings,
                     value: _signedAmount(
                       calculation?.netCashFlow ??
                           insight.month.income - insight.month.expense,
@@ -795,69 +805,73 @@ class _ScoreBreakdownSheet extends StatelessWidget {
                     ),
                     supporting: _impactDescription(
                       breakdown?.savingsImpact,
-                      positive: 'Positive cash flow supports the score.',
-                      negative:
-                          'Negative cash flow lowers the behaviour modifier slightly.',
-                      neutral: 'No cash-flow modifier was applied.',
+                      positive: l10n.smartMoneyScoreImpactSavingsPositive,
+                      negative: l10n.smartMoneyScoreImpactSavingsNegative,
+                      neutral: l10n.smartMoneyScoreImpactSavingsNeutral,
                     ),
                   ),
                   _BreakdownRow(
-                    label: 'Budget performance',
+                    label: l10n.smartMoneyScoreRowBudgetPerformance,
                     value: budget.label,
                     supporting: _impactDescription(
                       breakdown?.budgetImpact,
-                      positive: 'Current budgets remain on track.',
-                      negative: 'Budget room is tight or a budget is exceeded.',
-                      neutral: 'No active budget modifier was applied.',
+                      positive: l10n.smartMoneyScoreImpactBudgetPositive,
+                      negative: l10n.smartMoneyScoreImpactBudgetNegative,
+                      neutral: l10n.smartMoneyScoreImpactBudgetNeutral,
                     ),
                   ),
                   _BreakdownRow(
-                    label: 'Previous-period comparison',
-                    value: _expenseComparisonLabel(insight.month),
+                    label: l10n.smartMoneyScoreRowPreviousPeriodComparison,
+                    value: _expenseComparisonLabel(insight.month, l10n),
                     supporting: _impactDescription(
                       breakdown?.spendingTrendImpact,
-                      positive: 'Spending is lower than the comparable period.',
-                      negative:
-                          'Spending is notably higher than the comparable period.',
-                      neutral:
-                          'There is not enough comparable spending data yet.',
+                      positive: l10n.smartMoneyScoreImpactTrendPositive,
+                      negative: l10n.smartMoneyScoreImpactTrendNegative,
+                      neutral: l10n.smartMoneyScoreImpactTrendNeutral,
                     ),
                   ),
                   _BreakdownRow(
-                    label: 'Overdue bills',
-                    value: 'Not included yet',
-                    supporting:
-                        'No verified bill or reminder record is available, so no bill penalty was added.',
+                    label: l10n.smartMoneyScoreRowOverdueBills,
+                    value: l10n.smartMoneyScoreValueNotIncludedYet,
+                    supporting: l10n.smartMoneyScoreImpactBillsSupporting,
                   ),
                 ],
               ),
               const SizedBox(height: AppSpacing.md),
               _BreakdownSection(
-                title: 'Formula',
+                title: l10n.smartMoneyScoreSectionFormula,
                 rows: [
-                  const _BreakdownRow(label: 'Starting score', value: '100'),
                   _BreakdownRow(
-                    label: 'Balance-growth contribution',
+                    label: l10n.smartMoneyScoreRowStartingScore,
+                    value: '100',
+                  ),
+                  _BreakdownRow(
+                    label: l10n.smartMoneyScoreRowBalanceGrowthContribution,
                     value: calculation == null || !calculation.isReliable
-                        ? 'Neutral until a baseline is available'
+                        ? l10n.smartMoneyScoreValueNeutralUntilBaseline
                         : _signedPoints(calculation.balanceChangePercentage),
                   ),
                   _BreakdownRow(
-                    label: 'Behaviour modifier',
+                    label: l10n.smartMoneyScoreRowBehaviourModifier,
                     value: calculation == null
-                        ? '0 points'
-                        : '${_signedPoints(calculation.financialBehaviourModifier.toDouble())} points (capped at ±10)',
+                        ? l10n.smartMoneyScorePointsSuffix('0')
+                        : l10n.smartMoneyScoreValueBehaviourModifierPoints(
+                            _signedPoints(
+                              calculation.financialBehaviourModifier
+                                  .toDouble(),
+                            ),
+                          ),
                   ),
                   _BreakdownRow(
-                    label: 'Final monthly score',
-                    value: '${insight.monthScore.value} / 150',
+                    label: l10n.smartMoneyScoreRowFinalMonthlyScore,
+                    value: '${insight.monthScore.value} / ${insight.monthScore.maximum}',
                     color: status.color,
                   ),
                 ],
               ),
               const SizedBox(height: AppSpacing.md),
               Text(
-                'Monthly score = clamp(0–150, 100 + balance change % + financial behaviour modifier).',
+                l10n.smartMoneyScoreFormulaFootnote,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: colors.onSurfaceVariant,
                   fontStyle: FontStyle.italic,
@@ -1007,58 +1021,98 @@ class _BudgetSummary {
 
 _ScoreStatus _statusFor(
   FinancialPeriodScore score,
-  ColorScheme colors, {
+  ColorScheme colors,
+  AppLocalizations l10n, {
   SmartMoneyScoreCalculation? calculation,
 }) {
   if (score.period == FinancialWindowKind.month) {
     if (calculation != null && !calculation.isReliable) {
-      return _ScoreStatus(label: 'Not enough data', color: colors.primary);
+      return _ScoreStatus(
+        label: l10n.smartMoneyScoreStatusNotEnoughData,
+        color: colors.primary,
+      );
     }
     return switch (score.value) {
-      >= 120 => const _ScoreStatus(
-        label: 'Excellent Growth',
+      >= 120 => _ScoreStatus(
+        label: l10n.smartMoneyScoreStatusExcellentGrowth,
         color: Colors.teal,
       ),
-      >= 105 => const _ScoreStatus(label: 'Growing', color: Colors.green),
-      >= 95 => _ScoreStatus(label: 'Stable', color: colors.primary),
-      >= 75 => _ScoreStatus(label: 'Declining', color: Colors.orange),
-      _ => _ScoreStatus(label: 'Needs Attention', color: colors.error),
+      >= 105 => _ScoreStatus(
+        label: l10n.smartMoneyScoreStatusGrowing,
+        color: Colors.green,
+      ),
+      >= 95 => _ScoreStatus(
+        label: l10n.smartMoneyScoreStatusStable,
+        color: colors.primary,
+      ),
+      >= 75 => _ScoreStatus(
+        label: l10n.smartMoneyScoreStatusDeclining,
+        color: Colors.orange,
+      ),
+      _ => _ScoreStatus(
+        label: l10n.smartMoneyScoreStatusNeedsAttention,
+        color: colors.error,
+      ),
     };
   }
 
   return switch (score.value) {
-    >= 80 => const _ScoreStatus(label: 'Excellent', color: Colors.teal),
-    >= 65 => _ScoreStatus(label: 'Good', color: colors.primary),
-    >= 50 => const _ScoreStatus(label: 'Fair', color: Colors.orange),
-    >= 30 => const _ScoreStatus(label: 'Needs Attention', color: Colors.orange),
-    _ => _ScoreStatus(label: 'High Risk', color: colors.error),
+    >= 80 => _ScoreStatus(
+      label: l10n.smartMoneyScoreStatusExcellent,
+      color: Colors.teal,
+    ),
+    >= 65 => _ScoreStatus(
+      label: l10n.smartMoneyScoreStatusGood,
+      color: colors.primary,
+    ),
+    >= 50 => _ScoreStatus(
+      label: l10n.smartMoneyScoreStatusFair,
+      color: Colors.orange,
+    ),
+    >= 30 => _ScoreStatus(
+      label: l10n.smartMoneyScoreStatusNeedsAttention,
+      color: Colors.orange,
+    ),
+    _ => _ScoreStatus(
+      label: l10n.smartMoneyScoreStatusHighRisk,
+      color: colors.error,
+    ),
   };
 }
 
-_BudgetSummary _budgetSummary(List<FinancialBudgetStatus> budgets) {
-  if (budgets.isEmpty) return const _BudgetSummary(label: 'No budgets set');
+_BudgetSummary _budgetSummary(
+  List<FinancialBudgetStatus> budgets,
+  AppLocalizations l10n,
+) {
+  if (budgets.isEmpty) {
+    return _BudgetSummary(label: l10n.smartMoneyScoreBudgetNoneSet);
+  }
   final overBudget = budgets.where((budget) => budget.usage >= 1).length;
   if (overBudget > 0) {
     return _BudgetSummary(
-      label: '$overBudget budget${overBudget == 1 ? '' : 's'} over',
+      label: l10n.smartMoneyScoreBudgetOverCount(overBudget),
       color: Colors.red,
     );
   }
   final nearBudget = budgets.where((budget) => budget.usage >= .85).length;
   if (nearBudget > 0) {
     return _BudgetSummary(
-      label: '$nearBudget nearly full',
+      label: l10n.smartMoneyScoreBudgetNearlyFullCount(nearBudget),
       color: Colors.orange,
     );
   }
-  return const _BudgetSummary(label: 'On track', color: Colors.teal);
+  return _BudgetSummary(
+    label: l10n.smartMoneyScoreBudgetOnTrack,
+    color: Colors.teal,
+  );
 }
 
-String _periodLabel(FinancialWindowKind period) => switch (period) {
-  FinancialWindowKind.today => 'Today',
-  FinancialWindowKind.week => 'Week',
-  FinancialWindowKind.month => 'Month',
-};
+String _periodLabel(FinancialWindowKind period, AppLocalizations l10n) =>
+    switch (period) {
+      FinancialWindowKind.today => l10n.financialInsightPeriodToday,
+      FinancialWindowKind.week => l10n.financialInsightPeriodWeek,
+      FinancialWindowKind.month => l10n.financialInsightPeriodMonth,
+    };
 
 String _signedAmount(double amount, AppCurrency currency) {
   final prefix = amount > 0
@@ -1101,8 +1155,11 @@ String _impactDescription(
   return impact > 0 ? '$positive (+$impact)' : '$negative ($impact)';
 }
 
-String _expenseComparisonLabel(FinancialSpendingWindow month) {
+String _expenseComparisonLabel(
+  FinancialSpendingWindow month,
+  AppLocalizations l10n,
+) {
   final change = month.expenseChangePercent;
-  if (change == null) return 'No comparison yet';
-  return '${_signedPercent(change)} expenses';
+  if (change == null) return l10n.smartMoneyScoreValueNoComparisonYet;
+  return l10n.smartMoneyScoreMetricExpensesChange(_signedPercent(change));
 }

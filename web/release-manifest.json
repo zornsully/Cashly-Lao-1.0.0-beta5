@@ -8,7 +8,7 @@
       "availability": "coming_soon",
       "statusLabel": "Preparing verified release",
       "actionLabel": "Coming soon",
-      "availabilityMessage": "The signed Android download will appear here after publication checks finish."
+      "availabilityMessage": "The signed Android download will appear here after public release checks finish."
     },
     {
       "platform": "ios",

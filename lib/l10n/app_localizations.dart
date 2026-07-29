@@ -728,6 +728,12 @@ abstract class AppLocalizations {
   /// **'Currency'**
   String get currencyLabel;
 
+  /// No description provided for @accountCurrencyLockedHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency can\'t be changed after an account is created.'**
+  String get accountCurrencyLockedHelper;
+
   /// No description provided for @saveAccountFailedMessage.
   ///
   /// In en, this message translates to:
@@ -1877,6 +1883,396 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Color'**
   String get colorLabel;
+
+  /// No description provided for @smartMoneyScoreCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cashly Smart Money Score'**
+  String get smartMoneyScoreCardTitle;
+
+  /// No description provided for @smartMoneyScoreCardSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance movement leads. Habits provide the context.'**
+  String get smartMoneyScoreCardSubtitle;
+
+  /// No description provided for @smartMoneyScoreWhatIsShapingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'What is shaping this month'**
+  String get smartMoneyScoreWhatIsShapingLabel;
+
+  /// No description provided for @smartMoneyScorePracticalNextStepLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'A practical next step'**
+  String get smartMoneyScorePracticalNextStepLabel;
+
+  /// No description provided for @smartMoneyScoreWhyThisScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Why this score?'**
+  String get smartMoneyScoreWhyThisScore;
+
+  /// No description provided for @smartMoneyScoreComparedWithOpening.
+  ///
+  /// In en, this message translates to:
+  /// **'Compared with your month opening balance'**
+  String get smartMoneyScoreComparedWithOpening;
+
+  /// No description provided for @smartMoneyScoreNeutralBaseline.
+  ///
+  /// In en, this message translates to:
+  /// **'Using a neutral baseline until enough data is available'**
+  String get smartMoneyScoreNeutralBaseline;
+
+  /// No description provided for @smartMoneyScoreMonthlyHeroLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'MONTHLY SCORE · / {max}'**
+  String smartMoneyScoreMonthlyHeroLabel(int max);
+
+  /// No description provided for @smartMoneyScoreStatusNotEnoughData.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough data'**
+  String get smartMoneyScoreStatusNotEnoughData;
+
+  /// No description provided for @smartMoneyScoreStatusExcellentGrowth.
+  ///
+  /// In en, this message translates to:
+  /// **'Excellent Growth'**
+  String get smartMoneyScoreStatusExcellentGrowth;
+
+  /// No description provided for @smartMoneyScoreStatusGrowing.
+  ///
+  /// In en, this message translates to:
+  /// **'Growing'**
+  String get smartMoneyScoreStatusGrowing;
+
+  /// No description provided for @smartMoneyScoreStatusStable.
+  ///
+  /// In en, this message translates to:
+  /// **'Stable'**
+  String get smartMoneyScoreStatusStable;
+
+  /// No description provided for @smartMoneyScoreStatusDeclining.
+  ///
+  /// In en, this message translates to:
+  /// **'Declining'**
+  String get smartMoneyScoreStatusDeclining;
+
+  /// No description provided for @smartMoneyScoreStatusNeedsAttention.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs Attention'**
+  String get smartMoneyScoreStatusNeedsAttention;
+
+  /// No description provided for @smartMoneyScoreStatusExcellent.
+  ///
+  /// In en, this message translates to:
+  /// **'Excellent'**
+  String get smartMoneyScoreStatusExcellent;
+
+  /// No description provided for @smartMoneyScoreStatusGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Good'**
+  String get smartMoneyScoreStatusGood;
+
+  /// No description provided for @smartMoneyScoreStatusFair.
+  ///
+  /// In en, this message translates to:
+  /// **'Fair'**
+  String get smartMoneyScoreStatusFair;
+
+  /// No description provided for @smartMoneyScoreStatusHighRisk.
+  ///
+  /// In en, this message translates to:
+  /// **'High Risk'**
+  String get smartMoneyScoreStatusHighRisk;
+
+  /// No description provided for @financialInsightPeriodToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get financialInsightPeriodToday;
+
+  /// No description provided for @financialInsightPeriodWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Week'**
+  String get financialInsightPeriodWeek;
+
+  /// No description provided for @financialInsightPeriodMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get financialInsightPeriodMonth;
+
+  /// No description provided for @smartMoneyScoreBudgetNoneSet.
+  ///
+  /// In en, this message translates to:
+  /// **'No budgets set'**
+  String get smartMoneyScoreBudgetNoneSet;
+
+  /// No description provided for @smartMoneyScoreBudgetOverCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} over budget'**
+  String smartMoneyScoreBudgetOverCount(int count);
+
+  /// No description provided for @smartMoneyScoreBudgetNearlyFullCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} nearly full'**
+  String smartMoneyScoreBudgetNearlyFullCount(int count);
+
+  /// No description provided for @smartMoneyScoreBudgetOnTrack.
+  ///
+  /// In en, this message translates to:
+  /// **'On track'**
+  String get smartMoneyScoreBudgetOnTrack;
+
+  /// No description provided for @smartMoneyScoreBreakdownSheetDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The monthly score is calculated from the same synced financial data shown in your dashboard. Balance movement is always the main factor.'**
+  String get smartMoneyScoreBreakdownSheetDescription;
+
+  /// No description provided for @smartMoneyScoreBreakdownUnavailableFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Cashly needs a reliable month opening balance before it can give a full comparison. The score stays neutral rather than guessing.'**
+  String get smartMoneyScoreBreakdownUnavailableFallback;
+
+  /// No description provided for @smartMoneyScoreSectionBalanceMovement.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance movement'**
+  String get smartMoneyScoreSectionBalanceMovement;
+
+  /// No description provided for @smartMoneyScoreSectionMonthActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'This month\'s financial activity'**
+  String get smartMoneyScoreSectionMonthActivity;
+
+  /// No description provided for @smartMoneyScoreSectionFormula.
+  ///
+  /// In en, this message translates to:
+  /// **'Formula'**
+  String get smartMoneyScoreSectionFormula;
+
+  /// No description provided for @smartMoneyScoreRowOpeningBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening balance'**
+  String get smartMoneyScoreRowOpeningBalance;
+
+  /// No description provided for @smartMoneyScoreRowCurrentBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Current balance'**
+  String get smartMoneyScoreRowCurrentBalance;
+
+  /// No description provided for @smartMoneyScoreRowBalanceChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance change'**
+  String get smartMoneyScoreRowBalanceChange;
+
+  /// No description provided for @smartMoneyScoreRowBalanceGrowthContribution.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance-growth contribution'**
+  String get smartMoneyScoreRowBalanceGrowthContribution;
+
+  /// No description provided for @smartMoneyScoreRowIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get smartMoneyScoreRowIncome;
+
+  /// No description provided for @smartMoneyScoreRowExpenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses'**
+  String get smartMoneyScoreRowExpenses;
+
+  /// No description provided for @smartMoneyScoreRowNetCashFlowSavings.
+  ///
+  /// In en, this message translates to:
+  /// **'Net cash flow / savings'**
+  String get smartMoneyScoreRowNetCashFlowSavings;
+
+  /// No description provided for @smartMoneyScoreRowBudgetPerformance.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget performance'**
+  String get smartMoneyScoreRowBudgetPerformance;
+
+  /// No description provided for @smartMoneyScoreRowPreviousPeriodComparison.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous-period comparison'**
+  String get smartMoneyScoreRowPreviousPeriodComparison;
+
+  /// No description provided for @smartMoneyScoreRowOverdueBills.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue bills'**
+  String get smartMoneyScoreRowOverdueBills;
+
+  /// No description provided for @smartMoneyScoreRowStartingScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting score'**
+  String get smartMoneyScoreRowStartingScore;
+
+  /// No description provided for @smartMoneyScoreRowBehaviourModifier.
+  ///
+  /// In en, this message translates to:
+  /// **'Behaviour modifier'**
+  String get smartMoneyScoreRowBehaviourModifier;
+
+  /// No description provided for @smartMoneyScoreRowFinalMonthlyScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Final monthly score'**
+  String get smartMoneyScoreRowFinalMonthlyScore;
+
+  /// No description provided for @smartMoneyScoreValueNotIncludedYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not included yet'**
+  String get smartMoneyScoreValueNotIncludedYet;
+
+  /// No description provided for @smartMoneyScoreValueNeutralUntilBaseline.
+  ///
+  /// In en, this message translates to:
+  /// **'Neutral until a baseline is available'**
+  String get smartMoneyScoreValueNeutralUntilBaseline;
+
+  /// No description provided for @smartMoneyScoreValueBehaviourModifierPoints.
+  ///
+  /// In en, this message translates to:
+  /// **'{points} points (capped at ±10)'**
+  String smartMoneyScoreValueBehaviourModifierPoints(String points);
+
+  /// No description provided for @smartMoneyScorePointsSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **'{points} points'**
+  String smartMoneyScorePointsSuffix(String points);
+
+  /// No description provided for @smartMoneyScoreValueNoComparisonYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No comparison yet'**
+  String get smartMoneyScoreValueNoComparisonYet;
+
+  /// No description provided for @smartMoneyScoreImpactIncomePositive.
+  ///
+  /// In en, this message translates to:
+  /// **'Income is ahead of expenses.'**
+  String get smartMoneyScoreImpactIncomePositive;
+
+  /// No description provided for @smartMoneyScoreImpactIncomeNegative.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses are ahead of income.'**
+  String get smartMoneyScoreImpactIncomeNegative;
+
+  /// No description provided for @smartMoneyScoreImpactIncomeNeutral.
+  ///
+  /// In en, this message translates to:
+  /// **'Income and expenses are currently even or unavailable.'**
+  String get smartMoneyScoreImpactIncomeNeutral;
+
+  /// No description provided for @smartMoneyScoreImpactSavingsPositive.
+  ///
+  /// In en, this message translates to:
+  /// **'Positive cash flow supports the score.'**
+  String get smartMoneyScoreImpactSavingsPositive;
+
+  /// No description provided for @smartMoneyScoreImpactSavingsNegative.
+  ///
+  /// In en, this message translates to:
+  /// **'Negative cash flow lowers the behaviour modifier slightly.'**
+  String get smartMoneyScoreImpactSavingsNegative;
+
+  /// No description provided for @smartMoneyScoreImpactSavingsNeutral.
+  ///
+  /// In en, this message translates to:
+  /// **'No cash-flow modifier was applied.'**
+  String get smartMoneyScoreImpactSavingsNeutral;
+
+  /// No description provided for @smartMoneyScoreImpactBudgetPositive.
+  ///
+  /// In en, this message translates to:
+  /// **'Current budgets remain on track.'**
+  String get smartMoneyScoreImpactBudgetPositive;
+
+  /// No description provided for @smartMoneyScoreImpactBudgetNegative.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget room is tight or a budget is exceeded.'**
+  String get smartMoneyScoreImpactBudgetNegative;
+
+  /// No description provided for @smartMoneyScoreImpactBudgetNeutral.
+  ///
+  /// In en, this message translates to:
+  /// **'No active budget modifier was applied.'**
+  String get smartMoneyScoreImpactBudgetNeutral;
+
+  /// No description provided for @smartMoneyScoreImpactTrendPositive.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending is lower than the comparable period.'**
+  String get smartMoneyScoreImpactTrendPositive;
+
+  /// No description provided for @smartMoneyScoreImpactTrendNegative.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending is notably higher than the comparable period.'**
+  String get smartMoneyScoreImpactTrendNegative;
+
+  /// No description provided for @smartMoneyScoreImpactTrendNeutral.
+  ///
+  /// In en, this message translates to:
+  /// **'There is not enough comparable spending data yet.'**
+  String get smartMoneyScoreImpactTrendNeutral;
+
+  /// No description provided for @smartMoneyScoreImpactBillsSupporting.
+  ///
+  /// In en, this message translates to:
+  /// **'No verified bill or reminder record is available, so no bill penalty was added.'**
+  String get smartMoneyScoreImpactBillsSupporting;
+
+  /// No description provided for @smartMoneyScoreMetricNetCashFlow.
+  ///
+  /// In en, this message translates to:
+  /// **'Net cash flow'**
+  String get smartMoneyScoreMetricNetCashFlow;
+
+  /// No description provided for @smartMoneyScoreMetricComparedLastMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Compared with last month'**
+  String get smartMoneyScoreMetricComparedLastMonth;
+
+  /// No description provided for @smartMoneyScoreMetricExpensesChange.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent} expenses'**
+  String smartMoneyScoreMetricExpensesChange(String percent);
+
+  /// No description provided for @smartMoneyScoreFormulaFootnote.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly score = clamp(0–150, 100 + balance change % + financial behaviour modifier).'**
+  String get smartMoneyScoreFormulaFootnote;
 }
 
 class _AppLocalizationsDelegate

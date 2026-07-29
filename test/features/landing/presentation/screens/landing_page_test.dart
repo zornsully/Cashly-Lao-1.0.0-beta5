@@ -156,13 +156,18 @@ class _StaticReleaseManifestService implements ReleaseManifestService {
         schemaVersion: ReleaseManifest.currentSchemaVersion,
         generatedAt: DateTime.utc(2026, 7, 26),
         source: source,
+        distributionPolicy: ReleaseDistributionPolicy.fromJson(const {
+          'schemaVersion': 1,
+          'repository': 'zornsully/Cashly-Lao-Releases',
+        }),
         release: ReleaseDescriptor(
           tag: 'v1.0.1',
           commitSha: 'b9234493d7f92b32f191c87ac4b2988e24f9ca7b',
           channel: ReleaseChannel.stable,
           publishedAt: DateTime.utc(2026, 7, 26),
+          distributionRepository: 'zornsully/Cashly-Lao-Releases',
           releaseUrl: Uri.parse(
-            'https://github.com/zornsully/Cashly-Lao-1.0.0-beta5/releases/'
+            'https://github.com/zornsully/Cashly-Lao-Releases/releases/'
             'tag/v1.0.1',
           ),
         ),
@@ -181,8 +186,8 @@ class _StaticReleaseManifestService implements ReleaseManifestService {
             minimumOsVersion: 'Android 7.0+',
             releaseNotes: 'Signed release.',
             downloadUrl: Uri.parse(
-              'https://cashly-lao.web.app/downloads/'
-              'Cashly-Lao-Android-1.0.1.apk',
+              'https://github.com/zornsully/Cashly-Lao-Releases/releases/'
+              'download/v1.0.1/Cashly-Lao-Android-1.0.1.apk',
             ),
             packageFormat: 'APK package',
             installationNote: 'Install the signed APK.',
