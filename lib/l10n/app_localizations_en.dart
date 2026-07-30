@@ -994,6 +994,20 @@ class AppLocalizationsEn extends AppLocalizations {
       'Could not update app lock. Please try again.';
 
   @override
+  String get disableAppLockTitle => 'Turn off app lock?';
+
+  @override
+  String get disableAppLockMessage =>
+      'Anyone with access to your device will be able to open Cashly without authenticating.';
+
+  @override
+  String get turnOffButton => 'Turn off';
+
+  @override
+  String get securityUnavailableOnWebMessage =>
+      'App lock and notifications aren\'t available in the web app. Use the mobile app to manage them.';
+
+  @override
   String get appLockTitle => 'Cashly is locked';
 
   @override
@@ -1069,6 +1083,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String currencyDisplayFormat(String code, String name) {
     return '$code — $name';
   }
+
+  @override
+  String get accountSectionTitle => 'Account';
+
+  @override
+  String get manageAccountLabel => 'Manage your account';
+
+  @override
+  String get manageAccountHelperMessage => 'Name, email, and account deletion.';
+
+  @override
+  String get aboutSectionTitle => 'About';
+
+  @override
+  String appVersionLabel(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get privacyPolicyLabel => 'Privacy Policy';
+
+  @override
+  String get termsOfServiceLabel => 'Terms of Service';
 
   @override
   String get profileTitle => 'Profile';

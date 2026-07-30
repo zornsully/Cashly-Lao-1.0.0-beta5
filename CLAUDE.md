@@ -1827,6 +1827,147 @@ Next recommended phase: Settings (not yet scoped) or Reports (the large
 item, still needs its own scoping conversation first) — this closes out
 every "similar size" page-level phase from the original master prompt.
 
+### 2026-08-01 — Product polish Phase 6: Settings (done)
+
+Summary:
+
+First full pass on Settings (`lib/features/settings/`) — never touched by
+any prior phase this session. Unlike Dashboard/Transactions/Accounts/Budgets/
+Categories, this was a genuine first audit rather than a re-check: five
+preference toggles (theme, language, default currency, app lock,
+notifications), each already correctly localized, token-compliant, and
+persisted via a real-time Firestore stream. What was missing was mostly
+*structural* — sections a premium finance app's Settings screen is expected
+to have that simply didn't exist yet:
+
+1. **No Account section.** Settings had zero link back to the Profile screen
+   (name/email/sign-out/delete-account) — the only way there was Dashboard →
+   Profile icon → Settings, one-directional. Added an "Account" section at
+   the top linking to `AppRoutes.profile`.
+2. **No About section at all** — CLAUDE.md's own Branding section already
+   flagged "About/Settings screen branding" as a known unapplied-branding
+   gap, and `CashlyLogoMark`'s own doc comment already said "this one asset
+   covers every in-app use: Splash, auth screens, Settings, About" — an
+   intent the code never actually delivered on. Added one: `CashlyLogoMark`
+   + app name + version/build number (new `packageInfoProvider`, backed by
+   the newly added `package_info_plus` dependency), plus Privacy Policy and
+   Terms of Service rows reusing the existing public `AppRoutes.privacy`/
+   `AppRoutes.terms` routes (confirmed these are `_marketingRoutes` in
+   `app_router.dart`, reachable regardless of auth state — no new routes
+   needed).
+3. **No confirmation before disabling app lock** — a security-relevant
+   toggle that could be silently flipped off with one tap, unlike every
+   other destructive/risk-bearing action in this app (delete, archive-
+   adjacent flows). Added an `AppDialog.confirm` gate, only on the
+   *disable* direction (turning it on is safe, no confirmation needed).
+4. **Security/Notifications sections vanished silently on web** (`kIsWeb`
+   gate) with no explanation — a user switching between the mobile and web
+   app would see settings just disappear with no stated reason. Added a
+   short explanatory line in their place.
+5. **3 raw `Icons.*` uses** (theme-mode segmented-button icons) — none had
+   an `AppSymbols` equivalent (this app had no light/dark/auto icons at
+   all yet); added `brightnessAuto`/`lightMode`/`darkMode`, codepoints
+   sourced from the installed `material_symbols_icons` package, same
+   discipline as every prior icon addition. Also added `chevronRight`
+   (`matchTextDirection: true`, matching the existing directional-icon
+   pattern already used for `trendingDown`/`notes`/`helpOutline`) for the
+   three new tappable rows (Account, Privacy, Terms).
+
+Files created:
+
+- None (no new screens/widgets — everything added inline into the existing
+  `SettingsScreen`, consistent with that file not having a `widgets/`
+  subdirectory of its own yet).
+
+Files modified:
+
+- `pubspec.yaml` — added `package_info_plus` (via `flutter pub add`, not
+  hand-typed, so the resolved version is real: `^10.2.1`). Pure client-side
+  package, no backend/cost implications, fully Spark-compatible — flagging
+  this addition explicitly since it's a new dependency, not just a code
+  change.
+- `lib/core/constants/app_symbols.dart` — 4 new constants
+  (`brightnessAuto`, `lightMode`, `darkMode`, `chevronRight`).
+- `lib/features/settings/presentation/providers/settings_providers.dart` —
+  new `packageInfoProvider` (`FutureProvider<PackageInfo>`, no stream
+  needed since the installed version never changes mid-session).
+- `lib/features/settings/presentation/screens/settings_screen.dart` — icon
+  sweep; app-lock-disable confirmation; web-unavailable explanatory text;
+  new Account section (top) and About section (bottom).
+- `lib/l10n/app_en.arb` / `app_lo.arb` — 11 new keys (`accountSectionTitle`,
+  `manageAccountLabel`, `manageAccountHelperMessage`, `aboutSectionTitle`,
+  `appVersionLabel`, `privacyPolicyLabel`, `termsOfServiceLabel`,
+  `disableAppLockTitle`, `disableAppLockMessage`, `turnOffButton`,
+  `securityUnavailableOnWebMessage`).
+- Tests: `test/features/settings/presentation/screens/settings_screen_test.dart`
+  — new test covering the Account/About sections and the version string
+  (via `PackageInfo.setMockInitialValues`), plus the import of
+  `package_info_plus` needed for that mock.
+
+Implementation decisions:
+
+- **Reused `l10n.appName`** ("Cashly") for the About row's title instead of
+  hardcoding "Cashly Lao" — caught by checking `splash_screen.dart`'s own
+  precedent first rather than assuming; avoided introducing a second,
+  inconsistent app-name string.
+- **Did not extract a shared `SettingsTile`/`SettingsSectionCard`
+  component** despite the repeated `Card > Padding > Column` shape across
+  every section — unlike the `_SummaryCard` precedent (Transactions →
+  Budgets, a pattern repeating *across screens*), this repetition is
+  entirely *within one file*, a much weaker case for extraction per this
+  project's own "don't abstract from a single usage" standard.
+- **Did not touch `profile_screen.dart`** even though the audit that scoped
+  this phase found real `Icons.*` violations there too (`Icons
+  .settings_outlined`, `Icons.warning_amber_outlined`,
+  `Icons.edit_outlined` — two of which already have `AppSymbols`
+  equivalents: `AppSymbols.settings`, `AppSymbols.warningAmberRounded`).
+  Profile is a different feature (`lib/features/auth/`), not Settings —
+  out of scope for this phase's "one page at a time" discipline. Recorded
+  here so it isn't lost; a quick, low-risk icon-only fix whenever Profile
+  itself gets a pass, or as part of the still-open app-wide `Icons.*`
+  sweep.
+- **Did not add biometric-method detail, notification-category
+  granularity, or data export** — real gaps the audit surfaced, but each
+  is a genuinely new feature (not polish) with its own scoping questions
+  (e.g. data export needs a format decision), sized well beyond this pass.
+
+Validation:
+
+- `flutter analyze` — 0 issues.
+- `dart format --set-exit-if-changed lib test tool` — clean.
+- `flutter test` — full suite, 387 passing (1 new), 0 failing, 0 skipped.
+  One real test-infra bug found and fixed while adding coverage (not a
+  product bug): the new test's assertions on the About section (now near
+  the bottom of a much longer list) failed against the default test
+  surface size, since `ListView`/`Sliver` machinery only builds children
+  near the viewport — fixed by setting a taller test surface rather than
+  scrolling, matching the pattern already used by other tests in this
+  session with long scrollable content.
+- `flutter build web --release` — compiles clean end-to-end, confirming
+  `package_info_plus` resolves correctly on web too (it has a web
+  implementation bundled/endorsed, no separate package needed).
+
+Known limitations:
+
+- **Not visually verified on-device or in-browser**, same standing caveat
+  as every prior UI phase this session — particularly the About section's
+  `CashlyLogoMark` sizing/spacing next to the version text, and the new
+  Account row's placement above Appearance.
+- New Lao strings are drafts, same unreviewed status as the rest of
+  `app_lo.arb`.
+- `profile_screen.dart`'s own `Icons.*` uses remain unfixed (see
+  Implementation decisions) — a small, contained, separate follow-up.
+- Biometric-method detail, notification-category granularity, and data
+  export all remain open, real gaps — not built this phase.
+
+Next recommended phase: Reports (the last large item — needs its own
+scoping conversation first, given new summary metrics, new charts, export
+formats, and the anomaly-detection "Expense Watch" engine), or the
+cross-cutting items still open (full responsive breakpoint system, shared
+`PageHeader`/`QuickActions` component, PDF export, native-vs-web app entry
+behavior, the app-wide `Icons.*` sweep, a native-speaker `app_lo.arb`
+review).
+
 ## Product Roadmap
 
 The full staged roadmap — objectives, features, deliverables,

@@ -993,6 +993,20 @@ class AppLocalizationsLo extends AppLocalizations {
       'ບໍ່ສາມາດອັບເດດການລັອກແອັບໄດ້. ກະລຸນາລອງໃໝ່ອີກຄັ້ງ.';
 
   @override
+  String get disableAppLockTitle => 'ປິດການລັອກແອັບບໍ?';
+
+  @override
+  String get disableAppLockMessage =>
+      'ຜູ້ທີ່ສາມາດເຂົ້າເຖິງອຸປະກອນຂອງທ່ານຈະສາມາດເປີດ Cashly ໄດ້ໂດຍບໍ່ຕ້ອງຢືນຢັນຕົວຕົນ.';
+
+  @override
+  String get turnOffButton => 'ປິດ';
+
+  @override
+  String get securityUnavailableOnWebMessage =>
+      'ການລັອກແອັບ ແລະ ການແຈ້ງເຕືອນບໍ່ສາມາດໃຊ້ໄດ້ໃນເວັບແອັບ. ກະລຸນາໃຊ້ແອັບມືຖືເພື່ອຈັດການ.';
+
+  @override
   String get appLockTitle => 'Cashly ຖືກລັອກ';
 
   @override
@@ -1069,6 +1083,29 @@ class AppLocalizationsLo extends AppLocalizations {
   String currencyDisplayFormat(String code, String name) {
     return '$code — $name';
   }
+
+  @override
+  String get accountSectionTitle => 'ບັນຊີ';
+
+  @override
+  String get manageAccountLabel => 'ຈັດການບັນຊີຂອງທ່ານ';
+
+  @override
+  String get manageAccountHelperMessage => 'ຊື່, ອີເມວ, ແລະ ການລຶບບັນຊີ.';
+
+  @override
+  String get aboutSectionTitle => 'ກ່ຽວກັບ';
+
+  @override
+  String appVersionLabel(String version) {
+    return 'ເວີຊັນ $version';
+  }
+
+  @override
+  String get privacyPolicyLabel => 'ນະໂຍບາຍຄວາມເປັນສ່ວນຕົວ';
+
+  @override
+  String get termsOfServiceLabel => 'ເງື່ອນໄຂການໃຫ້ບໍລິການ';
 
   @override
   String get profileTitle => 'ໂປຣໄຟລ໌';

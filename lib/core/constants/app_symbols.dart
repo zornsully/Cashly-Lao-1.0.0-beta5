@@ -300,4 +300,25 @@ abstract final class AppSymbols {
     fontFamily: _family,
     fontPackage: _package,
   );
+  static const IconData brightnessAuto = IconData(
+    0xe1ab,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData lightMode = IconData(
+    0xe518,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData darkMode = IconData(
+    0xe51c,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData chevronRight = IconData(
+    0xe5cc,
+    fontFamily: _family,
+    fontPackage: _package,
+    matchTextDirection: true,
+  );
 }

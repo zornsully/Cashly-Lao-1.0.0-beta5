@@ -1,14 +1,19 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_currency.dart';
 import '../../../../core/constants/app_language.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/app_symbols.dart';
 import '../../../../core/constants/app_theme_mode.dart';
 import '../../../../core/providers/local_notifications_providers.dart';
+import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/app_snackbar.dart';
+import '../../../../core/widgets/app_dialog.dart';
 import '../../../../core/widgets/app_loading_indicator.dart';
+import '../../../../core/widgets/cashly_logo_mark.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/responsive_center.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -75,6 +80,18 @@ class SettingsScreen extends ConsumerWidget {
     bool enabled,
   ) async {
     final l10n = AppLocalizations.of(context)!;
+
+    if (!enabled) {
+      final confirmed = await AppDialog.confirm(
+        context,
+        title: l10n.disableAppLockTitle,
+        message: l10n.disableAppLockMessage,
+        confirmLabel: l10n.turnOffButton,
+        cancelLabel: l10n.cancel,
+      );
+      if (!confirmed || !context.mounted) return;
+    }
+
     final success = await ref
         .read(settingsControllerProvider.notifier)
         .updateAppLockEnabled(enabled);
@@ -136,6 +153,23 @@ class SettingsScreen extends ConsumerWidget {
           data: (preferences) => ListView(
             padding: const EdgeInsets.all(AppSpacing.md),
             children: [
+              _SectionHeader(title: l10n.accountSectionTitle),
+              Card(
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                  ),
+                  leading: Icon(
+                    AppSymbols.personOutline,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  title: Text(l10n.manageAccountLabel),
+                  subtitle: Text(l10n.manageAccountHelperMessage),
+                  trailing: const Icon(AppSymbols.chevronRight),
+                  onTap: () => context.push(AppRoutes.profile),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
               _SectionHeader(title: l10n.appearanceSectionTitle),
               Card(
                 child: Padding(
@@ -153,17 +187,17 @@ class SettingsScreen extends ConsumerWidget {
                           ButtonSegment(
                             value: AppThemeModePreference.system,
                             label: Text(l10n.themeSystemLabel),
-                            icon: const Icon(Icons.brightness_auto_outlined),
+                            icon: const Icon(AppSymbols.brightnessAuto),
                           ),
                           ButtonSegment(
                             value: AppThemeModePreference.light,
                             label: Text(l10n.themeLightLabel),
-                            icon: const Icon(Icons.light_mode_outlined),
+                            icon: const Icon(AppSymbols.lightMode),
                           ),
                           ButtonSegment(
                             value: AppThemeModePreference.dark,
                             label: Text(l10n.themeDarkLabel),
-                            icon: const Icon(Icons.dark_mode_outlined),
+                            icon: const Icon(AppSymbols.darkMode),
                           ),
                         ],
                         selected: {preferences.themeMode},
@@ -224,6 +258,14 @@ class SettingsScreen extends ConsumerWidget {
                               value,
                             ),
                     ),
+                  ),
+                ),
+              ] else ...[
+                const SizedBox(height: AppSpacing.lg),
+                Text(
+                  l10n.securityUnavailableOnWebMessage,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -300,6 +342,52 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              _SectionHeader(title: l10n.aboutSectionTitle),
+              Card(
+                child: Column(
+                  children: [
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final packageInfo = ref.watch(packageInfoProvider);
+                        return ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                          ),
+                          leading: const CashlyLogoMark(size: 36),
+                          title: Text(l10n.appName),
+                          subtitle: switch (packageInfo) {
+                            AsyncData(:final value) => Text(
+                              l10n.appVersionLabel(
+                                '${value.version}+${value.buildNumber}',
+                              ),
+                            ),
+                            _ => null,
+                          },
+                        );
+                      },
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                      ),
+                      title: Text(l10n.privacyPolicyLabel),
+                      trailing: const Icon(AppSymbols.chevronRight),
+                      onTap: () => context.push(AppRoutes.privacy),
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                      ),
+                      title: Text(l10n.termsOfServiceLabel),
+                      trailing: const Icon(AppSymbols.chevronRight),
+                      onTap: () => context.push(AppRoutes.terms),
+                    ),
+                  ],
                 ),
               ),
             ],

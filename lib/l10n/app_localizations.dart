@@ -1860,6 +1860,30 @@ abstract class AppLocalizations {
   /// **'Could not update app lock. Please try again.'**
   String get appLockUpdateFailedMessage;
 
+  /// No description provided for @disableAppLockTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off app lock?'**
+  String get disableAppLockTitle;
+
+  /// No description provided for @disableAppLockMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone with access to your device will be able to open Cashly without authenticating.'**
+  String get disableAppLockMessage;
+
+  /// No description provided for @turnOffButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off'**
+  String get turnOffButton;
+
+  /// No description provided for @securityUnavailableOnWebMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'App lock and notifications aren\'t available in the web app. Use the mobile app to manage them.'**
+  String get securityUnavailableOnWebMessage;
+
   /// No description provided for @appLockTitle.
   ///
   /// In en, this message translates to:
@@ -1985,6 +2009,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{code} — {name}'**
   String currencyDisplayFormat(String code, String name);
+
+  /// No description provided for @accountSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get accountSectionTitle;
+
+  /// No description provided for @manageAccountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage your account'**
+  String get manageAccountLabel;
+
+  /// No description provided for @manageAccountHelperMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Name, email, and account deletion.'**
+  String get manageAccountHelperMessage;
+
+  /// No description provided for @aboutSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get aboutSectionTitle;
+
+  /// No description provided for @appVersionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version}'**
+  String appVersionLabel(String version);
+
+  /// No description provided for @privacyPolicyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get privacyPolicyLabel;
+
+  /// No description provided for @termsOfServiceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of Service'**
+  String get termsOfServiceLabel;
 
   /// No description provided for @profileTitle.
   ///
