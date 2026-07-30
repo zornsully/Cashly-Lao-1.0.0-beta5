@@ -109,6 +109,7 @@ try {
     } | ConvertTo-Json -Depth 6
     Write-Utf8NoBom -Path $artifactMetadataPath -Content ($artifactMetadata + "`n")
 
+    $websiteManifest = Join-Path $projectRoot 'web\release-manifest.json'
     $manifestPath = Join-Path $packagePath 'generated-release-manifest.json'
     & dart run tool/generate_release_manifest.dart `
         --version $evidence.version `
@@ -119,6 +120,7 @@ try {
         --release-url $expectedReleaseUrl `
         --artifacts $artifactMetadataPath `
         --notes $notesPath `
+        --template $websiteManifest `
         --output $manifestPath
     if ($LASTEXITCODE -ne 0) { throw 'Release manifest generation failed. The website remains unchanged.' }
     & dart run tool/verify_release.dart `
@@ -128,7 +130,6 @@ try {
         --distribution-policy $policyPath
     if ($LASTEXITCODE -ne 0) { throw 'Generated release manifest validation failed. The website remains unchanged.' }
 
-    $websiteManifest = Join-Path $projectRoot 'web\release-manifest.json'
     $backupPath = Join-Path $packagePath 'previous-web-release-manifest.json'
     if (-not (Test-Path -LiteralPath $backupPath)) { Copy-Item -LiteralPath $websiteManifest -Destination $backupPath }
     Copy-Item -LiteralPath $manifestPath -Destination $websiteManifest -Force

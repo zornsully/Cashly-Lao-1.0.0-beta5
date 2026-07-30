@@ -242,11 +242,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.transactionNew,
-        builder: (context, state) => TransactionFormScreen(
-          initialType: state.extra is TransactionType
-              ? state.extra as TransactionType
-              : null,
-        ),
+        builder: (context, state) {
+          final extra = state.extra;
+          return TransactionFormScreen(
+            initialType: extra is TransactionType ? extra : null,
+            duplicateFrom: extra is TransactionEntity ? extra : null,
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.transactionEdit,

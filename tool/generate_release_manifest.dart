@@ -1,4 +1,4 @@
-/// Generates a schema-v2 Cashly Lao release manifest from verified artifacts
+/// Generates a schema-v3 Cashly Lao release manifest from verified artifacts
 /// prepared for an approved public GitHub distribution release.
 ///
 /// The command is deliberately offline and credential-free. It only writes a
@@ -148,8 +148,16 @@ Future<void> main(List<String> arguments) async {
       );
     }
 
+    final history = _buildHistory(
+      templateJson: templateJson,
+      existingPlatforms: existingPlatforms,
+      newVersion: version,
+      replacingWithAvailableAndroid:
+          channel == 'stable' && artifacts.containsKey('android'),
+    );
+
     final outputJson = <String, Object?>{
-      'schemaVersion': 2,
+      'schemaVersion': landing.ReleaseManifest.currentSchemaVersion,
       'generatedAt': DateTime.now().toUtc().toIso8601String(),
       'release': {
         'tag': tag,
@@ -160,13 +168,15 @@ Future<void> main(List<String> arguments) async {
         'releaseUrl': releaseUri.toString(),
       },
       'platforms': resultPlatforms,
+      if (history.isNotEmpty) 'history': history,
     };
     await output.parent.create(recursive: true);
     await output.writeAsString(
       '${const JsonEncoder.withIndent('  ').convert(outputJson)}\n',
     );
     stdout.writeln(
-      'Generated schema-v2 release manifest at ${output.path} for $tag.',
+      'Generated schema-v${landing.ReleaseManifest.currentSchemaVersion} '
+      'release manifest at ${output.path} for $tag.',
     );
   } on _UsageException catch (error) {
     stderr.writeln('Release manifest generation error: ${error.message}');
@@ -416,6 +426,61 @@ Map<String, Object?> _availablePlatform({
   };
 }
 
+/// Maximum number of history entries this script will carry forward. Keeps
+/// the generated manifest from growing without bound across many releases —
+/// each GitHub Release page already preserves the full history independently.
+const _maxGeneratedHistoryEntries = 10;
+
+/// Carries forward `history` already present in the template (normally the
+/// currently deployed manifest, passed via `--template`), and — when this run
+/// is about to replace the current available Android release with a
+/// different version — prepends that outgoing release as a new history entry
+/// with `isLatest` forced to false. A prerelease, a coming-soon Android
+/// entry, or an unchanged version never becomes (or displaces) a history
+/// entry.
+List<Map<String, Object?>> _buildHistory({
+  required Map<String, Object?> templateJson,
+  required Map<String, Map<String, Object?>> existingPlatforms,
+  required String newVersion,
+  required bool replacingWithAvailableAndroid,
+}) {
+  final carried = <Map<String, Object?>>[];
+  final rawHistory = templateJson['history'];
+  if (rawHistory is List) {
+    for (final entry in rawHistory) {
+      if (entry is! Map) continue;
+      carried.add(entry.map((key, value) => MapEntry('$key', value)));
+    }
+  }
+
+  if (replacingWithAvailableAndroid) {
+    final previousRelease = templateJson['release'];
+    final previousAndroid = existingPlatforms['android'];
+    if (previousRelease is Map &&
+        previousAndroid != null &&
+        _string(previousAndroid['availability']) == 'available' &&
+        _string(previousRelease['channel']) == 'stable') {
+      final previousVersion = _string(previousAndroid['version']);
+      if (previousVersion != null && previousVersion != newVersion) {
+        carried.insert(0, {
+          'release': previousRelease.map(
+            (key, value) => MapEntry('$key', value),
+          ),
+          'platform': {
+            ...Map<String, Object?>.from(previousAndroid),
+            'isLatest': false,
+          },
+        });
+      }
+    }
+  }
+
+  if (carried.length > _maxGeneratedHistoryEntries) {
+    carried.removeRange(_maxGeneratedHistoryEntries, carried.length);
+  }
+  return carried;
+}
+
 Map<String, Object?> _normalizeExisting(
   String platform,
   Map<String, Object?> existing,
@@ -442,7 +507,7 @@ Map<String, Object?> _normalizeExisting(
         ? existing['isLatest']
         : true;
   } else {
-    // Schema v2 requires every platform to state whether it is the latest
+    // Schema v3 requires every platform to state whether it is the latest
     // public artifact. An unavailable platform is never eligible.
     normalized['isLatest'] = false;
   }

@@ -54,9 +54,12 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
+    // Material's own default minimum interactive size — deliberately never
+    // shrunk on a narrow screen (see TransactionTile._actionButtonSize and
+    // this app's 44px minimum touch-target requirement).
     expect(
       tester.getSize(find.byType(IconButton)).width,
-      lessThanOrEqualTo(40),
+      greaterThanOrEqualTo(44),
     );
   });
 }
@@ -113,6 +116,7 @@ Widget _tile({
         category: category,
         account: account,
         onTap: () {},
+        onDuplicate: () {},
         onDelete: () {},
       ),
     ),

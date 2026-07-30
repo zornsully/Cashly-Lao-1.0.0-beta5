@@ -1071,6 +1071,416 @@ already has search (`transactions_list_screen_test.dart` covers it) but
 desktop has no data-table view or filter toolbar today, so more of this
 one is genuinely new UI, not just cleanup.
 
+### 2026-07-29 — Product polish Phase 2: Transactions (done)
+
+Summary:
+
+Reading the actual code first changed scope again: the mobile list
+already had a genuinely solid filter/search system (type/account/
+category/sort, all localized) — replacing it with a new toolbar would
+have been a regression, not polish, and would have meant duplicating a
+working search box. Kept that system exactly as-is (same AppBar
+search-toggle + filter bottom sheet, at every width) and closed what
+was actually missing instead.
+
+1. **No permanent delete icon anymore.** `TransactionTile`'s bare
+   delete `IconButton` is now a three-dot `PopupMenuButton` with Edit/
+   Duplicate/Delete — used by every screen embedding this shared tile
+   (Transactions, Dashboard's two recent-transaction lists, Savings
+   Goals' account-activity history), so the change is consistent
+   app-wide, not just on this one screen.
+2. **"Duplicate" is a genuinely new feature**, not a UI reshuffle —
+   there was no way to do this before. `TransactionFormScreen` gained
+   `duplicateFrom` (distinct from `existing`/edit-mode): pre-fills
+   account/category/type/amount/note from an existing transaction but
+   still submits as a create, going through the same atomic
+   `CreateTransactionUseCase` path unchanged. The date is deliberately
+   *not* copied — a duplicate is almost always "this again, today."
+   Wired through the router (`transactionNew`'s `extra` now
+   distinguishes a `TransactionType` prefill from a full
+   `TransactionEntity` duplicate-source by runtime type).
+3. **Desktop summary cards** (Income/Expense/Net/Transaction Count),
+   added above the list on wide screens only. Computed from whatever
+   the current filter/search/month already narrowed the list to, via
+   a new `_summarizeByCurrency` helper that mirrors
+   `BuildDashboardSummaryUseCase`'s already-tested pattern exactly:
+   grouped by the transaction's *account* currency (never the
+   transaction itself), transfers excluded from income/expense,
+   orphaned-account transactions skipped. Transaction Count is the one
+   dimensionless figure shown once, spanning all currencies — everything
+   else is per-currency, never summed across currencies.
+4. Localized the few remaining strings and replaced every `Icons.*` in
+   the three touched files (`transactions_list_screen.dart`,
+   `transaction_tile.dart`, `transaction_form_screen.dart`) with
+   `AppSymbols.*` — 11 new constants, codepoints read from the
+   installed `material_symbols_icons` package, same discipline as
+   every prior icon addition this pass.
+
+Files modified:
+
+- `lib/features/transactions/presentation/widgets/transaction_tile.dart`
+  — three-dot menu; fixed the trailing action button at 48px
+  (Material's own default minimum interactive size) instead of
+  shrinking it on narrow layouts, which the old delete button did.
+- `lib/features/transactions/presentation/screens/transaction_form_screen.dart`
+  — `duplicateFrom` parameter and prefill logic.
+- `lib/features/transactions/presentation/screens/transactions_list_screen.dart`
+  — `_TransactionsSummaryRow`/`_SummaryCard`/`_summarizeByCurrency`;
+  `onDuplicate` wired into the existing `TransactionTile` call site.
+- `lib/features/dashboard/presentation/screens/dashboard_screen.dart`,
+  `lib/features/savings_goals/presentation/screens/savings_goal_detail_screen.dart`
+  — `onDuplicate` added to their own `TransactionTile` call sites (the
+  shared-widget API change touches every embedder, not just
+  Transactions).
+- `lib/core/routing/app_router.dart` — `transactionNew` route now
+  passes both `initialType` and `duplicateFrom` from `state.extra`,
+  discriminated by runtime type.
+- `lib/core/constants/app_symbols.dart` — 11 new constants.
+- `lib/l10n/app_en.arb` / `app_lo.arb` — 5 new keys.
+
+Implementation decisions:
+
+- Did **not** build a persistent inline desktop toolbar (search +
+  filter fields always visible, replacing the AppBar icons) — the
+  existing AppBar search-toggle and filter-bottom-sheet already work
+  correctly at every width and are already covered by a passing test.
+  Duplicating that into a second, always-visible search box would
+  have been redundant UI, not an improvement — genuinely additive
+  scope (the summary cards) was worth doing; replacing working,
+  tested UI for its own sake was not.
+- The Transaction Count card intentionally spans all currencies in one
+  number (unlike Income/Expense/Net, which are always per-currency) —
+  a count is dimensionless, so combining it across currencies isn't a
+  money-correctness violation the way summing amounts would be.
+- Fixed the trailing action button at a flat 48px instead of the old
+  compact/standard variable sizing — `PopupMenuButton`'s internal
+  `IconButton` enforces Material's default minimum interactive size
+  regardless of an explicit smaller `constraints`, and this app's own
+  accessibility requirement (44px minimum touch target) argues for
+  embracing that rather than fighting it. The pre-existing test
+  asserting an upper bound was rewritten to assert the actual
+  accessibility-meaningful property (`>= 44`) instead.
+
+Validation:
+
+- `flutter analyze` — 0 issues.
+- `dart format --set-exit-if-changed lib test tool` — clean.
+- `flutter test` — full suite, 372/372 passing. Two real bugs were
+  caught by this pass, not by manual inspection: a 2.8px `RenderFlex`
+  overflow in `_SummaryCard` (fixed by widening its grid aspect ratio)
+  and the `PopupMenuButton` sizing issue above — both only surfaced
+  because the existing widget tests happen to run at an ~800px default
+  test surface width, which hits this phase's new wide-layout code
+  path. Concrete evidence for why the "not verified on-device" caveat
+  on prior phases matters: this is exactly the class of bug that kind
+  of check catches.
+- `flutter build web --release` — compiles clean end-to-end.
+
+Known limitations:
+
+- **Not visually verified on-device or in-browser**, same standing
+  caveat as every prior UI phase this pass, for the same reason
+  (reaching these screens requires signing in). The two bugs caught by
+  the test suite this time are a reminder that "tests pass" and
+  "looks right" are not the same claim — worth a real look next time
+  you're signed in, especially the summary-cards grid's reflow and the
+  three-dot menu's placement/tap targets on an actual touch device.
+- New Lao strings are drafts, same unreviewed status as the rest of
+  `app_lo.arb`.
+- No date-range picker was added — the existing month selector already
+  serves as the de facto date filter (same pattern Budget/Reports use),
+  and building a separate arbitrary-range picker was judged out of
+  scope for this pass.
+
+Next recommended phase: Accounts, Budgets, or Categories (all smaller,
+page-level phases per your ordering), or Reports — the master prompt's
+"major redesign" item, which is larger than every other page-level
+phase combined (new summary metrics not in `MonthlyReport` today, new
+charts, export formats, and an anomaly-detection engine) and would need
+its own scoping conversation before starting.
+
+### 2026-07-29 — Product polish Phase 3: Accounts (done)
+
+Summary:
+
+Smaller phase than Dashboard/Transactions — Accounts already had a
+solid three-dot archive/delete menu (no permanent-icon issue here) and
+was already fully localized. What was actually missing, closed this
+phase:
+
+1. **No responsive treatment at all** — a single-column list at every
+   width, even on a wide desktop window. Added a `LayoutBuilder`-driven
+   grid (same content-width-driven pattern as Dashboard's Quick
+   Actions and Transactions' summary cards): 1 column under ~360px of
+   content width, up to 3 as it widens.
+2. **Negative balances used color only** (red text, no badge) —
+   contradicts this project's own accessibility principle ("never
+   encode meaning in color alone," already followed by every chart in
+   the app). Added a genuine "Negative" badge.
+3. **No percentage-of-total-balance signal**, which the master prompt
+   explicitly asked for. Added `AccountCard.percentOfTotalBalance`,
+   computed per currency (never mixed — an account's share is only
+   ever shown against the total of *other accounts in the same
+   currency*) via a new `_totalBalanceByCurrency` helper in the
+   screen; omitted entirely (no caption) when that currency's total is
+   zero or negative, since a percentage wouldn't be meaningful there.
+4. Localized 2 new strings and replaced the remaining `Icons.*` in
+   both touched files with `AppSymbols.*`.
+
+Files modified:
+
+- `lib/core/widgets/app_badge.dart` — added an optional `color` param
+  (defaults to the existing neutral look, so all 6 pre-existing
+  call sites — Archived/Default/Completed/Due — are visually
+  unchanged) so `AccountCard` could reuse the shared badge component
+  for the new "Negative" badge instead of hand-rolling a one-off.
+- `lib/features/accounts/presentation/widgets/account_card.dart` —
+  negative badge; optional `percentOfTotalBalance` caption under the
+  balance.
+- `lib/features/accounts/presentation/screens/accounts_list_screen.dart`
+  — responsive grid/list switch; `_totalBalanceByCurrency` helper;
+  icon sweep. The archive-toggle icon now reuses one `AppSymbols.archive`
+  glyph for both states (tinted primary when active) instead of the
+  old filled/outline `Icons.archive`/`Icons.archive_outlined` pair —
+  Material Symbols Rounded, as bundled in this app, doesn't expose a
+  separate filled variant per name the way classic Material Icons did.
+- `lib/core/constants/app_symbols.dart` — 2 new constants (`archive`,
+  `addRounded` already existed from Dashboard).
+- `lib/l10n/app_en.arb` / `app_lo.arb` — 2 new keys
+  (`negativeBalanceBadgeLabel`, `accountPercentOfTotalBalance`).
+
+Implementation decisions:
+
+- Percentage is computed from whatever `accounts` list is already
+  being rendered (respects the existing `showArchived` toggle) rather
+  than a second, independently-fetched "all accounts" total — keeps
+  the percentage consistent with what the user is actually looking at.
+- Extending the shared `AppBadge` (rather than a local one-off in
+  `account_card.dart`) follows the same "shared design system" reasoning
+  as every prior phase's component reuse — the negative-badge use case
+  isn't unique to Accounts and the same `color` param is available if
+  a future phase needs a semantic badge elsewhere (e.g. Budget's "Over
+  Budget" status).
+
+Validation:
+
+- `flutter analyze` — 0 issues.
+- `dart format --set-exit-if-changed lib test tool` — clean.
+- `flutter test` — full suite, 372/372 passing (no new test cases —
+  the existing `accounts_list_screen_test.dart` already covers
+  name/balance rendering and passed unchanged, confirming the new grid/
+  badge/percentage additions didn't disturb existing behavior; no
+  dedicated widget test was added for the new percentage/badge
+  rendering itself, which is a real coverage gap worth closing before
+  this screen is next touched).
+- `flutter build web --release` — compiles clean end-to-end.
+
+Known limitations:
+
+- **Not visually verified on-device or in-browser**, same standing
+  caveat as every prior UI phase this pass.
+- New Lao strings are drafts, same unreviewed status as the rest of
+  `app_lo.arb`.
+- No widget test added for the negative badge or percentage caption
+  specifically (see Validation) — the existing test suite doesn't
+  construct a negative-balance or multi-account-same-currency fixture
+  today.
+
+Next recommended phase: Budgets or Categories (similar size to this
+one), or Reports (the large item, still needs its own scoping
+conversation first).
+
+### 2026-07-30 — Release manifest: schema-v3 generator bug fix + version history (done)
+
+Summary:
+
+You asked for fully automated, centralized release management (auto-upload,
+auto-metadata, auto-"latest" marking, multi-platform, suggested new backing
+services). That conflicts directly with this project's non-negotiable
+[free-tier manual release policy](#free-tier-manual-release-policy) — no new
+services, two mandatory owner-approval gates, GitHub Actions staying
+read-only. You chose **"Enrich the manual pipeline"** via AskUserQuestion:
+keep both approval gates and the Spark/GitHub-Free-only model exactly as-is,
+and instead expand the existing manifest schema and add version history,
+still fully manual.
+
+Investigating that surfaced a real, pre-existing defect unrelated to the
+enrichment itself: `tool/generate_release_manifest.dart` hardcoded
+`'schemaVersion': 2` in its output, while
+`ReleaseManifest.currentSchemaVersion` (the value every validator —
+`_validatePlatformRelease`, `isTrustedForPublicDownload`,
+`HostedReleaseManifestService._requirePublicStableManifest`,
+`tool/verify_release.dart` — checks against) has been `3` since the Phase 1
+currency-integrity work. `docs/RELEASE_PIPELINE.md` and the generator's own
+`--help` text already documented "schema-v3" throughout — only the actual
+JSON output was stale. Any manifest the script produced today would have
+silently failed `isTrustedForPublicDownload` and never unlocked a real public
+download button. Per this file's own priority order (release-integrity
+problems before feature work), this was fixed as part of the same phase
+rather than building version history on top of a generator whose output the
+app would reject.
+
+Files modified:
+
+- `tool/generate_release_manifest.dart` — schema-version bug: now emits
+  `landing.ReleaseManifest.currentSchemaVersion` instead of a literal `2`
+  (matching the pattern `tool/verify_release.dart` already used). Version
+  history: new `_buildHistory()` carries forward whatever `history` array is
+  already in `--template`, and — only when this run's stable Android artifact
+  is about to replace a different, currently-`available` version — prepends
+  the outgoing release (with `isLatest` forced `false`) as a new entry,
+  capped at the 10 most recent.
+- `tool/publish_web_metadata.ps1` — now passes `--template
+  $websiteManifest` (the currently deployed `web/release-manifest.json`) to
+  the generator instead of relying on its default template
+  (`assets/release/release_manifest.json`, the static offline-fallback
+  asset, which is never the "previous release" — it's a separate,
+  deliberately-static bundled fallback, updated by the owner independently).
+  Without this the history carry-forward logic above would never see a real
+  previous release to archive.
+- `lib/features/landing/domain/entities/release_manifest.dart` — new
+  `ReleaseHistoryEntry` (a `ReleaseDescriptor` + a `PlatformRelease`) and
+  `ReleaseManifest.history` (defaults to `const []`). Parsed via
+  `_parseHistory()`, which reuses `ReleaseDescriptor.fromJson`/
+  `PlatformRelease.fromJson` per entry — the exact same
+  `ReleaseManifestTrustPolicy` checks the current release gets — but unlike
+  the current release's fail-closed all-or-nothing validation, a single
+  malformed, untrusted, prerelease, current-tag-duplicate, or
+  incorrectly-`isLatest`-flagged entry is dropped individually rather than
+  failing the whole manifest. Entries are sorted newest-first and capped at
+  10.
+- `lib/features/landing/data/services/hosted_release_manifest_service.dart`
+  — `_encode()` now round-trips `history` through the persistent cache (the
+  same entry shape, reusing the existing `_encodePlatform` helper), so a
+  cached fallback doesn't silently lose version history versus a fresh
+  network fetch.
+- `lib/features/landing/presentation/screens/landing_page.dart` — new
+  `_VersionHistorySection`/`_VersionHistoryRow`, shown only when
+  `manifest.history.isNotEmpty`, styled to match this file's own established
+  (token-free, hand-styled `_LandingColors`) local convention rather than the
+  authenticated app's `AppSpacing`/`AppSymbols` design-token system — this
+  page has never used those tokens (it's the public, pre-auth marketing
+  page), so matching its existing pattern is consistent, not a new
+  violation. Also fixed one incidental `use_null_aware_elements` lint
+  (`?release.fileSizeLabel` instead of an `if (... case final x?) x`
+  list element) and gave `_FadeInUp` a `super.key` passthrough (needed once
+  a `_FadeInUp` had to be constructed conditionally with an explicit key).
+- `docs/RELEASE_PIPELINE.md` — documents the history carry-forward behavior
+  under the website-metadata step.
+- Tests: `test/features/landing/domain/entities/release_manifest_test.dart`
+  (6 new: valid entry parses; malformed/duplicate-tag/prerelease/
+  incorrectly-latest entries are each dropped; newest-first sort + 10-entry
+  cap), `test/features/landing/data/services/hosted_release_manifest_service_test.dart`
+  (1 new: history round-trips through the cache), `test/features/landing/presentation/screens/landing_page_test.dart`
+  (1 new: the section renders when history is present).
+
+Implementation decisions:
+
+- Reused the exact same trust-chain primitives
+  (`ReleaseDescriptor.fromJson`/`PlatformRelease.fromJson`/
+  `ReleaseManifestTrustPolicy`) for history entries instead of a separate,
+  looser parser — a listed history download is exactly as verifiable as the
+  live one, not a lower-trust afterthought.
+- Per-entry drop-on-failure for history (vs. the current release's
+  fail-closed whole-manifest rejection) is a deliberate, narrower trust
+  boundary: history is informational, so one bad entry shouldn't take down
+  the live download experience, but it still can't smuggle in an unverified
+  or untrusted download link.
+- `--template` needed to change from the static bundled asset to the live
+  deployed manifest for history to ever be non-empty in practice — this was
+  discovered only by tracing where each script's inputs actually come from,
+  not assumed.
+
+Validation:
+
+- `flutter analyze` — 0 issues.
+- `dart format --set-exit-if-changed lib test tool` — clean.
+- `flutter test` — full suite, 380 passing (8 new), 0 failing, 0 skipped.
+- `flutter build web --release` — compiles clean end-to-end.
+- PowerShell parser validation passed for the modified `publish_web_metadata.ps1`.
+- One real widget-test-infra bug found and fixed while adding coverage (not
+  a product bug): a `_FadeInUp` that only mounts once the release-manifest
+  `Future` resolves creates its delay timer mid-`pump()`, too late for that
+  same `pump(duration)` call to flush it — needs an extra zero-duration
+  `pump()` first. Documented inline in the test.
+
+Known limitations:
+
+- No end-to-end dry run of the manual pipeline scripts was performed (would
+  require real signing material, a real GitHub repository, and owner
+  approval) — validated by unit/widget tests, `flutter analyze`, and
+  PowerShell parsing only.
+- The version-history UI has not been visually verified on-device/in-browser
+  — same standing caveat as every other UI phase this session.
+- History is Android-only, matching the current release channel's own
+  Android-only scope; extending it to other platforms is deferred until
+  those platforms leave "Coming soon" (see [Held platforms](docs/RELEASE_PIPELINE.md#held-platforms)).
+
+Next recommended step: none required — this closes the "enrich the manual
+pipeline" request. Resume Accounts/Budgets/Categories/Reports product-polish
+phases, or a native-speaker `app_lo.arb` review, whichever you prefer next.
+
+### 2026-07-30 — Release/website-sync spec audit (done, no active release)
+
+Summary:
+
+You sent a detailed "LATEST RELEASE AND WEBSITE DOWNLOAD SYNC" spec (required
+release flow, Download-section requirements, fail-closed behavior, platform
+rules, project-memory fields, git/deployment approval gating). Audited it
+against the existing implementation rather than assuming a gap: the required
+flow, fail-closed behavior, and platform-gating already match what
+[Phase 1](#2026-07-29--free-tier-manual-release-redesign-validated-pending-owner-decisions)
+and the [version-history phase](#2026-07-30--release-manifest-schema-v3-generator-bug-fix--version-history-done)
+built and documented. Two points were surfaced and resolved with you directly
+rather than assumed:
+
+- **Release notes link** — the Download section rendered release notes as
+  plain text only, short of the spec's "release notes link" requirement.
+  Fixed: `_ApkDownloadSection` now shows a "View full release notes on
+  GitHub →" link to `release.releaseUrl`, gated to the verified
+  latest-stable release only (`releaseNotesUrl` is `null` unless
+  `latestStableReleaseFor(...)` is non-null) — it can never point at a
+  fallback or otherwise untrusted manifest.
+- **Bundled fallback asset** (`assets/release/release_manifest.json`) — the
+  spec's step 7 says to "update any bundled release metadata" as part of the
+  approved flow, but `README.md`'s documented trust boundary deliberately
+  keeps that file owner-maintained and outside every script, specifically so
+  it can never enter the trust chain. Asked directly rather than silently
+  changing established, documented behavior; you chose to keep it separate.
+  No code change.
+
+No release is currently pending — every platform is still "coming_soon" —
+so no step of the actual release flow was executed, and per your new
+git/deployment approval instruction no commit or push happened until you
+explicitly approved this specific one.
+
+Files modified:
+
+- `lib/features/landing/presentation/screens/landing_page.dart` — the new
+  `releaseNotesUrl` local + the release-notes-link `InkWell`, both inside
+  `_ApkDownloadSection`.
+- `test/features/landing/presentation/screens/landing_page_test.dart` — one
+  new assertion on the existing fully-trusted-fixture test.
+
+Validation:
+
+- `flutter analyze` — 0 issues.
+- `dart format --set-exit-if-changed lib test tool` — clean.
+- `flutter test` — full suite, 380 passing, 0 failing, 0 skipped.
+
+Known limitations:
+
+- Not visually verified on-device/in-browser, same standing caveat as other
+  landing-page UI work this session.
+
+Next recommended step: none required. When an actual release is prepared,
+follow this file's [Free-tier manual release policy](#free-tier-manual-release-policy)
+and record the released version, tag, distribution repository, uploaded
+asset filename, file size, SHA-256, website manifest changes, validation
+performed, deployment result, known limitations, rollback target, and
+remaining platform releases in a new dated entry here — never signing
+credentials, access tokens, private keys, or certificate files.
+
 ## Product Roadmap
 
 The full staged roadmap — objectives, features, deliverables,

@@ -228,4 +228,66 @@ abstract final class AppSymbols {
     fontFamily: _family,
     fontPackage: _package,
   );
+  static const IconData category = IconData(
+    0xe72c,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData calendarToday = IconData(
+    0xe935,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData notes = IconData(
+    0xe26c,
+    fontFamily: _family,
+    fontPackage: _package,
+    matchTextDirection: true,
+  );
+  static const IconData helpOutline = IconData(
+    0xe8fd,
+    fontFamily: _family,
+    fontPackage: _package,
+    matchTextDirection: true,
+  );
+  static const IconData deleteOutline = IconData(
+    0xe92e,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData close = IconData(
+    0xe5cd,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData search = IconData(
+    0xef7a,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData tune = IconData(
+    0xe429,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData moreVert = IconData(
+    0xe5d4,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData edit = IconData(
+    0xf097,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData contentCopy = IconData(
+    0xe14d,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData archive = IconData(
+    0xe149,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
 }

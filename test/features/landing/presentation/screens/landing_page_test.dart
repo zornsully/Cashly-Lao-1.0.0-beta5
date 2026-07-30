@@ -48,6 +48,7 @@ void main() {
     expect(find.text('Private and Secure'), findsOneWidget);
     expect(find.text('Version 1.0.1'), findsOneWidget);
     expect(find.text('Android 7.0+'), findsOneWidget);
+    expect(find.text('View full release notes on GitHub →'), findsOneWidget);
     expect(find.text('Is Cashly Lao free?'), findsOneWidget);
     expect(find.text('Which platforms are supported?'), findsOneWidget);
     expect(
@@ -122,6 +123,72 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('shows verified version history when the manifest has it', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: LandingPage(
+          releaseManifestService: _StaticReleaseManifestService(
+            history: [
+              ReleaseHistoryEntry(
+                release: ReleaseDescriptor(
+                  tag: 'v1.0.0',
+                  commitSha: 'a9234493d7f92b32f191c87ac4b2988e24f9ca7b',
+                  channel: ReleaseChannel.stable,
+                  publishedAt: DateTime.utc(2026, 7, 1),
+                  distributionRepository: 'zornsully/Cashly-Lao-Releases',
+                  releaseUrl: Uri.parse(
+                    'https://github.com/zornsully/Cashly-Lao-Releases/'
+                    'releases/tag/v1.0.0',
+                  ),
+                ),
+                platformRelease: PlatformRelease(
+                  platform: ReleasePlatform.android,
+                  displayName: 'Android',
+                  availability: ReleaseAvailability.available,
+                  statusLabel: 'Latest release',
+                  actionLabel: 'Download APK',
+                  availabilityMessage: 'Android is ready to download.',
+                  version: '1.0.0',
+                  buildNumber: '1',
+                  releaseDate: DateTime.utc(2026, 6, 30),
+                  fileSizeBytes: 38000000,
+                  minimumOsVersion: 'Android 7.0+',
+                  releaseNotes: 'Signed release.',
+                  downloadUrl: Uri.parse(
+                    'https://github.com/zornsully/Cashly-Lao-Releases/'
+                    'releases/download/v1.0.0/Cashly-Lao-Android-1.0.0.apk',
+                  ),
+                  packageFormat: 'APK package',
+                  installationNote: 'Install the signed APK.',
+                  sha256:
+                      'A4D7E620ADC232342C2B52EDAE1D1EE6D291C00BC807FB86D6D8ACB1CEBFD772',
+                  artifactName: 'Cashly-Lao-Android-1.0.0.apk',
+                  isLatest: false,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    // The version history section only mounts once the release manifest
+    // future resolves, so its own _FadeInUp delay timer is created mid-pump
+    // — an extra zero-duration pump lets that resolution/rebuild happen
+    // before the following duration pump tries to flush the new timer.
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(find.text('RELEASE HISTORY'), findsOneWidget);
+    expect(find.text('Cashly Lao v1.0.0'), findsOneWidget);
+    expect(find.text('Download APK'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('shows a friendly retry state without unverified metadata', (
     tester,
   ) async {
@@ -145,9 +212,13 @@ void main() {
 }
 
 class _StaticReleaseManifestService implements ReleaseManifestService {
-  _StaticReleaseManifestService({this.source = ReleaseManifestSource.unknown});
+  _StaticReleaseManifestService({
+    this.source = ReleaseManifestSource.unknown,
+    this.history = const [],
+  });
 
   final ReleaseManifestSource source;
+  final List<ReleaseHistoryEntry> history;
 
   @override
   Future<ReleaseManifest> loadLatest() {
@@ -156,6 +227,7 @@ class _StaticReleaseManifestService implements ReleaseManifestService {
         schemaVersion: ReleaseManifest.currentSchemaVersion,
         generatedAt: DateTime.utc(2026, 7, 26),
         source: source,
+        history: history,
         distributionPolicy: ReleaseDistributionPolicy.fromJson(const {
           'schemaVersion': 1,
           'repository': 'zornsully/Cashly-Lao-Releases',

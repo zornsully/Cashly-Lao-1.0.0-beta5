@@ -365,6 +365,14 @@ class AppLocalizationsLo extends AppLocalizations {
   String get defaultBadgeLabel => 'ຄ່າເລີ່ມຕົ້ນ';
 
   @override
+  String get negativeBalanceBadgeLabel => 'ຕິດລົບ';
+
+  @override
+  String accountPercentOfTotalBalance(String percent) {
+    return '$percent% ຂອງທັງໝົດ';
+  }
+
+  @override
   String get archiveMenuItem => 'ເກັບຖາວອນ';
 
   @override
@@ -719,6 +727,18 @@ class AppLocalizationsLo extends AppLocalizations {
 
   @override
   String get filterSortTooltip => 'ກັ່ນຕອງ ແລະ ຈັດຮຽງ';
+
+  @override
+  String get moreActionsTooltip => 'ຕົວເລືອກເພີ່ມເຕີມ';
+
+  @override
+  String get editMenuItem => 'ແກ້ໄຂ';
+
+  @override
+  String get duplicateMenuItem => 'ສຳເນົາ';
+
+  @override
+  String get transactionCountLabel => 'ລາຍການທຸລະກຳ';
 
   @override
   String get filterSortSheetTitle => 'ກັ່ນຕອງ ແລະ ຈັດຮຽງ';

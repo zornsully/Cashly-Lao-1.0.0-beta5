@@ -16,11 +16,19 @@ class AccountCard extends StatelessWidget {
     required this.onTap,
     super.key,
     this.trailing,
+    this.percentOfTotalBalance,
   });
 
   final AccountEntity account;
   final VoidCallback onTap;
   final Widget? trailing;
+
+  /// This account's share of the total balance across every account shown
+  /// alongside it in the same currency (never mixed across currencies —
+  /// see `CLAUDE.md`'s Coding Standards). Omitted (no caption shown) when
+  /// the caller can't compute a meaningful share, e.g. a zero or negative
+  /// currency total.
+  final double? percentOfTotalBalance;
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +69,15 @@ class AccountCard extends StatelessWidget {
                         const SizedBox(width: AppSpacing.sm),
                         AppBadge(label: l10n.archivedBadgeLabel),
                       ],
+                      if (isNegative) ...[
+                        const SizedBox(width: AppSpacing.sm),
+                        AppBadge(
+                          label: l10n.negativeBalanceBadgeLabel,
+                          color: AppSemanticColors.of(
+                            context,
+                          ).negativeForeground,
+                        ),
+                      ],
                     ],
                   ),
                   Text(
@@ -74,15 +91,31 @@ class AccountCard extends StatelessWidget {
             ),
             const SizedBox(width: AppSpacing.sm),
             Flexible(
-              child: Text(
-                CurrencyFormatter.format(account.balance, currency),
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: isNegative
-                      ? AppSemanticColors.of(context).negativeForeground
-                      : null,
-                ),
-                overflow: TextOverflow.ellipsis,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    CurrencyFormatter.format(account.balance, currency),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: isNegative
+                          ? AppSemanticColors.of(context).negativeForeground
+                          : null,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (percentOfTotalBalance != null)
+                    Text(
+                      l10n.accountPercentOfTotalBalance(
+                        (percentOfTotalBalance! * 100).round().toString(),
+                      ),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
               ),
             ),
             ?trailing,

@@ -189,6 +189,14 @@ class _LandingPageState extends State<LandingPage> {
                             ),
                           ),
                         ),
+                        if ((manifest?.history.isNotEmpty ?? false))
+                          _FadeInUp(
+                            key: const ValueKey('versionHistorySection'),
+                            delay: const Duration(milliseconds: 250),
+                            child: _VersionHistorySection(
+                              history: manifest!.history,
+                            ),
+                          ),
                         KeyedSubtree(
                           key: _faqKey,
                           child: _FadeInUp(
@@ -1399,6 +1407,12 @@ class _ApkDownloadSection extends StatelessWidget {
             final latestStableRelease = manifest?.latestStableReleaseFor(
               ReleasePlatform.android,
             );
+            // Only ever links to the official GitHub Release page for the
+            // verified latest release — never surfaced for a fallback,
+            // legacy, or otherwise untrusted manifest.
+            final releaseNotesUrl = latestStableRelease != null
+                ? manifest?.release?.releaseUrl
+                : null;
             final supportingText = currentRelease == null
                 ? isLoading
                       ? 'Checking the latest release details…'
@@ -1464,6 +1478,25 @@ class _ApkDownloadSection extends StatelessWidget {
                         fontSize: 12,
                         height: 1.45,
                         fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                  if (releaseNotesUrl != null) ...[
+                    const SizedBox(height: 8),
+                    InkWell(
+                      onTap: () => launchUrl(
+                        releaseNotesUrl,
+                        mode: LaunchMode.platformDefault,
+                        webOnlyWindowName: '_self',
+                      ),
+                      child: const Text(
+                        'View full release notes on GitHub →',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          decoration: TextDecoration.underline,
+                        ),
                       ),
                     ),
                   ],
@@ -1640,6 +1673,111 @@ class _ReleaseDetail extends StatelessWidget {
           fontSize: 12,
           fontWeight: FontWeight.w700,
         ),
+      ),
+    );
+  }
+}
+
+class _VersionHistorySection extends StatelessWidget {
+  const _VersionHistorySection({required this.history});
+
+  final List<ReleaseHistoryEntry> history;
+
+  @override
+  Widget build(BuildContext context) {
+    return _LandingSection(
+      eyebrow: 'Release history',
+      title: 'Previous versions, still verified.',
+      description:
+          'Every past Android release listed here passed the same signature and checksum verification as the current download.',
+      child: Material(
+        color: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: const BorderSide(color: _LandingColors.line),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          children: [
+            for (var index = 0; index < history.length; index++) ...[
+              _VersionHistoryRow(entry: history[index]),
+              if (index < history.length - 1)
+                const Divider(height: 1, color: _LandingColors.line),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _VersionHistoryRow extends StatelessWidget {
+  const _VersionHistoryRow({required this.entry});
+
+  final ReleaseHistoryEntry entry;
+
+  Future<void> _open(BuildContext context) async {
+    final downloadUri = entry.platformRelease.downloadUrl;
+    if (downloadUri == null) return;
+    final opened = await launchUrl(
+      downloadUri,
+      mode: LaunchMode.platformDefault,
+      webOnlyWindowName: '_self',
+    );
+    if (!opened && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to start the download.')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final release = entry.platformRelease;
+    final detailParts = [
+      if (release.releaseDateLabel case final date?) 'Released $date',
+      ?release.fileSizeLabel,
+    ];
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Cashly Lao v${entry.version}',
+                  style: const TextStyle(
+                    color: _LandingColors.ink,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (detailParts.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    detailParts.join(' · '),
+                    style: const TextStyle(
+                      color: _LandingColors.mutedInk,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          TextButton.icon(
+            onPressed: () => _open(context),
+            style: TextButton.styleFrom(
+              foregroundColor: _LandingColors.greenDark,
+            ),
+            icon: const Icon(Icons.download_rounded, size: 17),
+            label: const Text('Download APK'),
+          ),
+        ],
       ),
     );
   }
@@ -1914,7 +2052,7 @@ class _FooterLink extends StatelessWidget {
 }
 
 class _FadeInUp extends StatefulWidget {
-  const _FadeInUp({required this.child, required this.delay});
+  const _FadeInUp({required this.child, required this.delay, super.key});
 
   final Widget child;
   final Duration delay;

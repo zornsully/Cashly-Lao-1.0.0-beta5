@@ -82,7 +82,12 @@ class AccountsListScreen extends ConsumerWidget {
             tooltip: showArchived
                 ? l10n.hideArchivedTooltip
                 : l10n.showArchivedTooltip,
-            icon: Icon(showArchived ? Icons.archive : Icons.archive_outlined),
+            icon: Icon(
+              AppSymbols.archive,
+              color: showArchived
+                  ? Theme.of(context).colorScheme.primary
+                  : null,
+            ),
             onPressed: () =>
                 ref.read(showArchivedAccountsProvider.notifier).toggle(),
           ),
@@ -103,50 +108,88 @@ class AccountsListScreen extends ConsumerWidget {
                 message: l10n.noAccountsYetMessage,
                 action: FilledButton.icon(
                   onPressed: () => context.push(AppRoutes.accountNew),
-                  icon: const Icon(Icons.add),
+                  icon: const Icon(AppSymbols.addRounded),
                   label: Text(l10n.addAccountButton),
                 ),
               );
             }
 
-            return ListView.separated(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                AppSpacing.md,
-                AppSpacing.md,
-                AppSpacing.xxl,
-              ),
-              itemCount: accounts.length,
-              separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
-              itemBuilder: (context, index) {
-                final account = accounts[index];
-                return AccountCard(
-                  account: account,
-                  onTap: () => context.push(
-                    AppRoutes.accountEditPath(account.id),
-                    extra: account,
-                  ),
-                  trailing: PopupMenuButton<String>(
-                    onSelected: (value) {
-                      switch (value) {
-                        case 'archive':
-                          _toggleArchived(context, ref, account);
-                        case 'delete':
-                          _confirmDelete(context, ref, account);
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: 'archive',
-                        child: Text(
-                          account.isArchived
-                              ? l10n.unarchiveMenuItem
-                              : l10n.archiveMenuItem,
-                        ),
+            final totalsByCurrency = _totalBalanceByCurrency(accounts);
+
+            Widget buildCard(AccountEntity account) {
+              final currencyTotal = totalsByCurrency[account.currencyCode];
+              return AccountCard(
+                account: account,
+                percentOfTotalBalance:
+                    (currencyTotal == null || currencyTotal <= 0)
+                    ? null
+                    : account.balance / currencyTotal,
+                onTap: () => context.push(
+                  AppRoutes.accountEditPath(account.id),
+                  extra: account,
+                ),
+                trailing: PopupMenuButton<String>(
+                  onSelected: (value) {
+                    switch (value) {
+                      case 'archive':
+                        _toggleArchived(context, ref, account);
+                      case 'delete':
+                        _confirmDelete(context, ref, account);
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      value: 'archive',
+                      child: Text(
+                        account.isArchived
+                            ? l10n.unarchiveMenuItem
+                            : l10n.archiveMenuItem,
                       ),
-                      PopupMenuItem(value: 'delete', child: Text(l10n.delete)),
-                    ],
+                    ),
+                    PopupMenuItem(value: 'delete', child: Text(l10n.delete)),
+                  ],
+                ),
+              );
+            }
+
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                // Content width (not window width) drives the column count,
+                // same reasoning as Dashboard's Quick Actions grid — one
+                // implementation serves phones, tablets, and desktop.
+                final columns = (constraints.maxWidth / 360).floor().clamp(
+                  1,
+                  3,
+                );
+                if (columns == 1) {
+                  return ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.md,
+                      AppSpacing.md,
+                      AppSpacing.md,
+                      AppSpacing.xxl,
+                    ),
+                    itemCount: accounts.length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(height: AppSpacing.sm),
+                    itemBuilder: (context, index) => buildCard(accounts[index]),
+                  );
+                }
+                return GridView.builder(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.md,
+                    AppSpacing.md,
+                    AppSpacing.md,
+                    AppSpacing.xxl,
                   ),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: columns,
+                    crossAxisSpacing: AppSpacing.sm,
+                    mainAxisSpacing: AppSpacing.sm,
+                    childAspectRatio: 3.4,
+                  ),
+                  itemCount: accounts.length,
+                  itemBuilder: (context, index) => buildCard(accounts[index]),
                 );
               },
             );
@@ -155,8 +198,26 @@ class AccountsListScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push(AppRoutes.accountNew),
-        child: const Icon(Icons.add),
+        child: const Icon(AppSymbols.addRounded),
       ),
     );
   }
+}
+
+/// Sums every visible account's balance per currency (never mixed across
+/// currencies — see `CLAUDE.md`'s Coding Standards), so each card can show
+/// its own share of the total. Archived accounts are included exactly when
+/// they're already part of [accounts] — this mirrors whatever the screen
+/// is currently showing rather than a second, independent definition of
+/// "total."
+Map<String, double> _totalBalanceByCurrency(List<AccountEntity> accounts) {
+  final totals = <String, double>{};
+  for (final account in accounts) {
+    totals.update(
+      account.currencyCode,
+      (value) => value + account.balance,
+      ifAbsent: () => account.balance,
+    );
+  }
+  return totals;
 }

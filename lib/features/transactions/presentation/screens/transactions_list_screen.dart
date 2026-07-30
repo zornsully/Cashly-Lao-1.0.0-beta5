@@ -3,10 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/constants/app_currency.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_symbols.dart';
 import '../../../../core/routing/app_routes.dart';
+import '../../../../core/theme/app_semantic_colors.dart';
 import '../../../../core/utils/app_snackbar.dart';
+import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/app_dialog.dart';
 import '../../../../core/widgets/app_skeleton_loader.dart';
@@ -15,6 +18,7 @@ import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/month_selector_header.dart';
 import '../../../../core/widgets/responsive_center.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../accounts/domain/entities/account_entity.dart';
 import '../../../accounts/presentation/providers/account_providers.dart';
 import '../../../categories/presentation/providers/category_providers.dart';
 import '../../domain/entities/transaction_entity.dart';
@@ -35,6 +39,8 @@ class TransactionsListScreen extends ConsumerStatefulWidget {
 
 class _TransactionsListScreenState
     extends ConsumerState<TransactionsListScreen> {
+  static const double _wideLayoutBreakpoint = 760;
+
   bool _isSearching = false;
   late final TextEditingController _searchController;
 
@@ -100,6 +106,8 @@ class _TransactionsListScreenState
 
     final accountsById = {for (final a in accounts) a.id: a};
     final categoriesById = {for (final c in categories) c.id: c};
+    final usesWideLayout =
+        MediaQuery.sizeOf(context).width >= _wideLayoutBreakpoint;
 
     return Scaffold(
       appBar: AppBar(
@@ -119,13 +127,13 @@ class _TransactionsListScreenState
         actions: [
           if (_isSearching)
             IconButton(
-              icon: const Icon(Icons.close),
+              icon: const Icon(AppSymbols.close),
               tooltip: l10n.closeSearchTooltip,
               onPressed: _stopSearching,
             )
           else ...[
             IconButton(
-              icon: const Icon(Icons.search),
+              icon: const Icon(AppSymbols.search),
               tooltip: l10n.searchTooltip,
               onPressed: () => setState(() => _isSearching = true),
             ),
@@ -133,7 +141,7 @@ class _TransactionsListScreenState
               isLabelVisible: filter.isActive,
               smallSize: 8,
               child: IconButton(
-                icon: const Icon(Icons.tune),
+                icon: const Icon(AppSymbols.tune),
                 tooltip: l10n.filterSortTooltip,
                 onPressed: () => AppBottomSheet.show(
                   context,
@@ -174,13 +182,13 @@ class _TransactionsListScreenState
                 message: l10n.addFirstTransactionMessage,
                 action: FilledButton.icon(
                   onPressed: () => context.push(AppRoutes.transactionNew),
-                  icon: const Icon(Icons.add),
+                  icon: const Icon(AppSymbols.addRounded),
                   label: Text(l10n.addTransactionButton),
                 ),
               );
             }
 
-            return ListView.builder(
+            final list = ListView.builder(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.md,
                 AppSpacing.md,
@@ -199,16 +207,44 @@ class _TransactionsListScreenState
                     AppRoutes.transactionEditPath(transaction.id),
                     extra: transaction,
                   ),
+                  onDuplicate: () => context.push(
+                    AppRoutes.transactionNew,
+                    extra: transaction,
+                  ),
                   onDelete: () => _confirmDelete(context, ref, transaction),
                 );
               },
+            );
+
+            if (!usesWideLayout) return list;
+
+            // Desktop gets an additional summary strip above the list — the
+            // existing search/filter affordances in the AppBar already work
+            // fine at any width, so this only adds what was actually
+            // missing rather than duplicating a working search box.
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.md,
+                    AppSpacing.md,
+                    AppSpacing.md,
+                    0,
+                  ),
+                  child: _TransactionsSummaryRow(
+                    transactions: transactions,
+                    accountsById: accountsById,
+                  ),
+                ),
+                Expanded(child: list),
+              ],
             );
           },
         ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push(AppRoutes.transactionNew),
-        child: const Icon(Icons.add),
+        child: const Icon(AppSymbols.addRounded),
       ),
     );
   }
@@ -324,4 +360,215 @@ class _FilterSortSheet extends ConsumerWidget {
       ],
     );
   }
+}
+
+/// Income/Expense/Net (per currency present, never summed across them —
+/// see `CLAUDE.md`'s Coding Standards) plus a single overall transaction
+/// count, computed from whatever the current filter/search/month already
+/// narrowed [transactions] down to. Desktop-only companion to the list,
+/// not a replacement for the currency-exact figures shown per row.
+class _TransactionsSummaryRow extends StatelessWidget {
+  const _TransactionsSummaryRow({
+    required this.transactions,
+    required this.accountsById,
+  });
+
+  final List<TransactionEntity> transactions;
+  final Map<String, AccountEntity> accountsById;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final semanticColors = AppSemanticColors.of(context);
+    final byCurrency = _summarizeByCurrency(transactions, accountsById);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final summary in byCurrency) ...[
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final currency = SupportedCurrencies.byCode(summary.currencyCode);
+              final columns = constraints.maxWidth >= 640 ? 4 : 2;
+              return GridView.count(
+                crossAxisCount: columns,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisSpacing: AppSpacing.sm,
+                mainAxisSpacing: AppSpacing.sm,
+                childAspectRatio: 2.0,
+                children: [
+                  _SummaryCard(
+                    label: byCurrency.length > 1
+                        ? '${l10n.incomeLabel} (${summary.currencyCode})'
+                        : l10n.incomeLabel,
+                    value: CurrencyFormatter.format(summary.income, currency),
+                    color: semanticColors.positiveForeground,
+                    icon: AppSymbols.arrowDownward,
+                  ),
+                  _SummaryCard(
+                    label: byCurrency.length > 1
+                        ? '${l10n.expenseLabel} (${summary.currencyCode})'
+                        : l10n.expenseLabel,
+                    value: CurrencyFormatter.format(summary.expense, currency),
+                    color: semanticColors.negativeForeground,
+                    icon: AppSymbols.arrowUpward,
+                  ),
+                  _SummaryCard(
+                    label: byCurrency.length > 1
+                        ? '${l10n.netLabel} (${summary.currencyCode})'
+                        : l10n.netLabel,
+                    value: CurrencyFormatter.format(summary.net, currency),
+                    color: summary.net < 0
+                        ? semanticColors.negativeForeground
+                        : semanticColors.primaryForeground,
+                    icon: summary.net < 0
+                        ? AppSymbols.trendingDown
+                        : AppSymbols.trendingUp,
+                  ),
+                  if (byCurrency.first == summary)
+                    _SummaryCard(
+                      label: l10n.transactionCountLabel,
+                      value: '${transactions.length}',
+                      color: Theme.of(context).colorScheme.primary,
+                      icon: AppSymbols.receiptLong,
+                    ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: AppSpacing.sm),
+        ],
+      ],
+    );
+  }
+}
+
+class _SummaryCard extends StatelessWidget {
+  const _SummaryCard({
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.icon,
+  });
+
+  final String label;
+  final String value;
+  final Color color;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Row(
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Icon(icon, color: color, size: 18),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: color,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CurrencySummary {
+  const _CurrencySummary({
+    required this.currencyCode,
+    required this.income,
+    required this.expense,
+  });
+
+  final String currencyCode;
+  final double income;
+  final double expense;
+
+  double get net => income - expense;
+}
+
+/// Groups [transactions] by their *account's* currency (never the
+/// transaction itself — see `CLAUDE.md`'s Coding Standards), summing
+/// income/expense separately per currency. Transfers are excluded from
+/// both, matching every other money aggregation in this app (they move
+/// money between the user's own accounts rather than earning/spending
+/// it). A transaction whose account can no longer be resolved has no
+/// currency to attribute it to and is skipped, the same handling
+/// `BuildDashboardSummaryUseCase` already uses for the same case.
+List<_CurrencySummary> _summarizeByCurrency(
+  List<TransactionEntity> transactions,
+  Map<String, AccountEntity> accountsById,
+) {
+  final incomeByCurrency = <String, double>{};
+  final expenseByCurrency = <String, double>{};
+
+  for (final transaction in transactions) {
+    if (transaction.type == TransactionType.transfer) continue;
+    final currencyCode = accountsById[transaction.accountId]?.currencyCode;
+    if (currencyCode == null) continue;
+
+    if (transaction.type == TransactionType.income) {
+      incomeByCurrency.update(
+        currencyCode,
+        (value) => value + transaction.amount,
+        ifAbsent: () => transaction.amount,
+      );
+    } else {
+      expenseByCurrency.update(
+        currencyCode,
+        (value) => value + transaction.amount,
+        ifAbsent: () => transaction.amount,
+      );
+    }
+  }
+
+  final currencyCodes = {
+    ...incomeByCurrency.keys,
+    ...expenseByCurrency.keys,
+  }.toList()..sort();
+
+  return [
+    for (final code in currencyCodes)
+      _CurrencySummary(
+        currencyCode: code,
+        income: incomeByCurrency[code] ?? 0,
+        expense: expenseByCurrency[code] ?? 0,
+      ),
+  ];
 }

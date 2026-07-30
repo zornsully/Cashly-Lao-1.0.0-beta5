@@ -336,6 +336,10 @@ class _DetailBody extends ConsumerWidget {
                       AppRoutes.transactionEditPath(transaction.id),
                       extra: transaction,
                     ),
+                    onDuplicate: () => context.push(
+                      AppRoutes.transactionNew,
+                      extra: transaction,
+                    ),
                     onDelete: () => onDeleteTransaction(transaction),
                   ),
               ],
