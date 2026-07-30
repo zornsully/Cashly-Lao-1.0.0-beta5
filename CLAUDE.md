@@ -1420,6 +1420,67 @@ Next recommended step: none required — this closes the "enrich the manual
 pipeline" request. Resume Accounts/Budgets/Categories/Reports product-polish
 phases, or a native-speaker `app_lo.arb` review, whichever you prefer next.
 
+### 2026-07-30 — Release/website-sync spec audit (done, no active release)
+
+Summary:
+
+You sent a detailed "LATEST RELEASE AND WEBSITE DOWNLOAD SYNC" spec (required
+release flow, Download-section requirements, fail-closed behavior, platform
+rules, project-memory fields, git/deployment approval gating). Audited it
+against the existing implementation rather than assuming a gap: the required
+flow, fail-closed behavior, and platform-gating already match what
+[Phase 1](#2026-07-29--free-tier-manual-release-redesign-validated-pending-owner-decisions)
+and the [version-history phase](#2026-07-30--release-manifest-schema-v3-generator-bug-fix--version-history-done)
+built and documented. Two points were surfaced and resolved with you directly
+rather than assumed:
+
+- **Release notes link** — the Download section rendered release notes as
+  plain text only, short of the spec's "release notes link" requirement.
+  Fixed: `_ApkDownloadSection` now shows a "View full release notes on
+  GitHub →" link to `release.releaseUrl`, gated to the verified
+  latest-stable release only (`releaseNotesUrl` is `null` unless
+  `latestStableReleaseFor(...)` is non-null) — it can never point at a
+  fallback or otherwise untrusted manifest.
+- **Bundled fallback asset** (`assets/release/release_manifest.json`) — the
+  spec's step 7 says to "update any bundled release metadata" as part of the
+  approved flow, but `README.md`'s documented trust boundary deliberately
+  keeps that file owner-maintained and outside every script, specifically so
+  it can never enter the trust chain. Asked directly rather than silently
+  changing established, documented behavior; you chose to keep it separate.
+  No code change.
+
+No release is currently pending — every platform is still "coming_soon" —
+so no step of the actual release flow was executed, and per your new
+git/deployment approval instruction no commit or push happened until you
+explicitly approved this specific one.
+
+Files modified:
+
+- `lib/features/landing/presentation/screens/landing_page.dart` — the new
+  `releaseNotesUrl` local + the release-notes-link `InkWell`, both inside
+  `_ApkDownloadSection`.
+- `test/features/landing/presentation/screens/landing_page_test.dart` — one
+  new assertion on the existing fully-trusted-fixture test.
+
+Validation:
+
+- `flutter analyze` — 0 issues.
+- `dart format --set-exit-if-changed lib test tool` — clean.
+- `flutter test` — full suite, 380 passing, 0 failing, 0 skipped.
+
+Known limitations:
+
+- Not visually verified on-device/in-browser, same standing caveat as other
+  landing-page UI work this session.
+
+Next recommended step: none required. When an actual release is prepared,
+follow this file's [Free-tier manual release policy](#free-tier-manual-release-policy)
+and record the released version, tag, distribution repository, uploaded
+asset filename, file size, SHA-256, website manifest changes, validation
+performed, deployment result, known limitations, rollback target, and
+remaining platform releases in a new dated entry here — never signing
+credentials, access tokens, private keys, or certificate files.
+
 ## Product Roadmap
 
 The full staged roadmap — objectives, features, deliverables,
