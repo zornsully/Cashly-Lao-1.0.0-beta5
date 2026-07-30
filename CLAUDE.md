@@ -393,10 +393,12 @@ test` (full suite), and `flutter build web --release` all pass — and the
 change touches none of `web/release-manifest.json`, `assets/release/**`, or
 any Android signing/version file — a Firebase Hosting deploy of
 `hosting:cashly-lao` may proceed without a separate per-instance approval,
-via a dedicated, guarded deploy script. That script does not exist yet;
-adding it (`tool/deploy_website.ps1`) is a separate, still-pending step
-requiring its own approval — this section documents the policy it will
-implement, not a claim that the automation already exists.
+via `tool/deploy_website.ps1` (see
+[docs/RELEASE_PIPELINE.md](docs/RELEASE_PIPELINE.md#website-only-content-deploys)).
+That script itself refuses to run if the change touches a release-trust
+path, runs the full analyze/test/build sequence, confirms the configured
+Hosting target before deploying, and verifies the live site afterward
+rather than trusting a clean exit code alone.
 
 This carve-out changes nothing else about the [manual release
 policy](#free-tier-manual-release-policy) above:
@@ -1527,6 +1529,92 @@ asset filename, file size, SHA-256, website manifest changes, validation
 performed, deployment result, known limitations, rollback target, and
 remaining platform releases in a new dated entry here — never signing
 credentials, access tokens, private keys, or certificate files.
+
+### 2026-07-30 — Website-only content deploy carve-out (policy + script, not yet run)
+
+Summary:
+
+You asked for a standing "publish every update to the website" rule. That
+conflicted with the non-negotiable [manual release
+policy](#free-tier-manual-release-policy) — most updates (bug fixes, doc
+edits) have nothing to do with the live site, and deploying on every commit
+would bypass the two-approval gate for anything that does. Explained the
+conflict; you came back with a precisely scoped "WEBSITE AUTO-DEPLOY POLICY"
+spec instead: pre-approve deploys for *website-content-only* changes (landing
+page, legal pages, FAQ, screenshots, localization, static assets, web-only
+bug/accessibility fixes), while leaving app-binary releases, the Download
+section's actual release data, and all Git actions exactly as manual and
+approval-gated as before. You approved the `CLAUDE.md` policy text first, in
+its own turn; this phase adds the script and docs it references.
+
+Files created:
+
+- `tool/deploy_website.ps1` — fixed, no shortcut flags. Refuses to run if the
+  working tree or the commits ahead of `origin/main` touch
+  `web/release-manifest.json`, `assets/release/**`, or an Android signing/
+  version file (hard stop back to the manual release pipeline, not a
+  warning); then runs `flutter analyze`, the full `flutter test` suite, and
+  `flutter build web --release`; confirms `.firebaserc` actually configures
+  the `cashly-lao` Hosting target before deploying it; runs `firebase deploy
+  --only hosting:cashly-lao --project cashly-lao`; then fetches
+  `https://cashly-lao.web.app/` afterward to confirm the deploy actually
+  landed rather than trusting a clean exit code alone.
+
+Files modified:
+
+- `CLAUDE.md` — the "Website-only content deploys (pre-approved)" section
+  now points at the real script instead of noting it didn't exist yet.
+- `docs/RELEASE_PIPELINE.md` — new "Website-only content deploys" section,
+  documenting this as a separate, narrower path from the manual app-release
+  pipeline above it, cross-referenced from `CLAUDE.md`.
+
+Implementation decisions:
+
+- The release-trust guard checks *both* uncommitted changes (`git status
+  --porcelain`) and commits already made ahead of `origin/main` (`git diff
+  --name-only $(git merge-base HEAD origin/main) HEAD`), since a
+  release-trust change could reach this script either staged or already
+  committed. If the merge-base check itself can't run (e.g., no network to
+  fetch `origin`), the script throws rather than silently skipping the
+  guard — fails closed, consistent with every other safeguard in this
+  policy.
+- No parameters/flags on the script at all — no `-SkipTests`, no `-Force`.
+  Every run does the full sequence or refuses; there's no shortcut path to
+  weaken.
+- Left `.github/workflows/*` untouched. The policy explicitly keeps
+  deployment tied to whichever local `firebase login` session runs the
+  script — no CI-stored Firebase credentials, so no workflow needed to
+  change.
+
+Validation:
+
+- PowerShell parser validation passed for `tool/deploy_website.ps1`.
+- `git diff --check` — clean (only the pre-existing LF/CRLF warning, not a
+  real conflict).
+- No Dart/Flutter code changed this phase (policy doc + a new PowerShell
+  script only), so `flutter analyze`/`flutter test` weren't rerun — the
+  script itself calls both internally on every future real run.
+
+Known limitations:
+
+- **`tool/deploy_website.ps1` has never actually been run.** This
+  environment's `firebase` CLI is an unauthenticated first-run installer
+  (`firepit`), not a real logged-in session — confirmed by running `firebase
+  login:list`, which failed with a broken welcome-script crash instead of
+  listing a session. A real deploy needs to run somewhere your own `firebase
+  login` session already exists; nothing here claims otherwise.
+- The release-trust guard's path list (`web/release-manifest.json`,
+  `assets/release/**`, a few Android signing/version paths) is a best-effort
+  denylist, not a formal proof — a future file that becomes release-trust-
+  relevant but isn't yet in this list wouldn't be caught. Worth revisiting
+  if the release-trust surface grows.
+- Not exercised end-to-end (would require a real `firebase login` session
+  and an actual website-only change to deploy).
+
+Next recommended step: none required for this phase. The first real use of
+`tool/deploy_website.ps1` — whenever a genuine website-only change is ready
+— will be the actual end-to-end validation of this path; record that
+deployment's result here per the section's own requirements when it happens.
 
 ## Product Roadmap
 

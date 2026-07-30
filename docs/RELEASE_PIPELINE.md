@@ -88,6 +88,41 @@ The deploy command is always limited to `hosting:cashly-lao`; it does not
 deploy Functions, Firestore rules, or an APK. The script fetches and validates
 the live manifest after deployment.
 
+## Website-only content deploys
+
+A second, narrower path exists for changes that are only about
+[cashly-lao.web.app](https://cashly-lao.web.app)'s content — the landing
+page, Privacy Policy, Terms, FAQ, screenshots, website localization, other
+static web assets, and web-only bug/accessibility/responsive fixes. It is
+**not** part of the app-release pipeline above and never touches release
+data.
+
+```powershell
+.\tool\deploy_website.ps1
+```
+
+The script:
+
+1. Refuses to run if the working tree or the commits ahead of `origin/main`
+   touch `web/release-manifest.json`, `assets/release/**`, or an Android
+   signing/version file — those changes must go through the manual release
+   pipeline above instead.
+2. Runs `flutter analyze`, the full `flutter test` suite, and
+   `flutter build web --release`; any failure stops before deploying.
+3. Confirms `.firebaserc` actually configures the `cashly-lao` Hosting
+   target before deploying it.
+4. Runs `firebase deploy --only hosting:cashly-lao --project cashly-lao`,
+   using whichever local `firebase login` session the executing environment
+   has — no credentials are stored in this repository.
+5. Fetches the live site afterward to confirm the deploy actually landed,
+   rather than trusting a clean `firebase deploy` exit code alone.
+
+Per `CLAUDE.md`'s [Website-only content deploys](../CLAUDE.md#website-only-content-deploys-pre-approved)
+policy, running this script does not itself require a separate approval once
+its own checks pass — but it never authorizes a Git action (commit, push,
+merge, tag), and it structurally cannot touch application-binary releases,
+since it refuses to run the moment a release-trust file is in scope.
+
 ## CI's role
 
 `release.yml`, `prepare-release.yml`, and `web-preview.yml` run read-only
