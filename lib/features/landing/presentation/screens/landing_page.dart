@@ -1407,6 +1407,12 @@ class _ApkDownloadSection extends StatelessWidget {
             final latestStableRelease = manifest?.latestStableReleaseFor(
               ReleasePlatform.android,
             );
+            // Only ever links to the official GitHub Release page for the
+            // verified latest release — never surfaced for a fallback,
+            // legacy, or otherwise untrusted manifest.
+            final releaseNotesUrl = latestStableRelease != null
+                ? manifest?.release?.releaseUrl
+                : null;
             final supportingText = currentRelease == null
                 ? isLoading
                       ? 'Checking the latest release details…'
@@ -1472,6 +1478,25 @@ class _ApkDownloadSection extends StatelessWidget {
                         fontSize: 12,
                         height: 1.45,
                         fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                  if (releaseNotesUrl != null) ...[
+                    const SizedBox(height: 8),
+                    InkWell(
+                      onTap: () => launchUrl(
+                        releaseNotesUrl,
+                        mode: LaunchMode.platformDefault,
+                        webOnlyWindowName: '_self',
+                      ),
+                      child: const Text(
+                        'View full release notes on GitHub →',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          decoration: TextDecoration.underline,
+                        ),
                       ),
                     ),
                   ],

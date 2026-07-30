@@ -48,6 +48,7 @@ void main() {
     expect(find.text('Private and Secure'), findsOneWidget);
     expect(find.text('Version 1.0.1'), findsOneWidget);
     expect(find.text('Android 7.0+'), findsOneWidget);
+    expect(find.text('View full release notes on GitHub →'), findsOneWidget);
     expect(find.text('Is Cashly Lao free?'), findsOneWidget);
     expect(find.text('Which platforms are supported?'), findsOneWidget);
     expect(
