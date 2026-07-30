@@ -1088,6 +1088,30 @@ abstract class AppLocalizations {
   /// **'Could not save the budget. Please try again.'**
   String get saveBudgetFailedMessage;
 
+  /// No description provided for @budgetPercentUsedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% used'**
+  String budgetPercentUsedLabel(String percent);
+
+  /// No description provided for @budgetedTotalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Budgeted'**
+  String get budgetedTotalLabel;
+
+  /// No description provided for @spentTotalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Spent'**
+  String get spentTotalLabel;
+
+  /// No description provided for @remainingTotalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining'**
+  String get remainingTotalLabel;
+
   /// No description provided for @savingsGoalsTitle.
   ///
   /// In en, this message translates to:

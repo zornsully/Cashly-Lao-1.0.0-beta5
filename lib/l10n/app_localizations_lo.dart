@@ -554,6 +554,20 @@ class AppLocalizationsLo extends AppLocalizations {
       'ບໍ່ສາມາດບັນທຶກງົບປະມານໄດ້. ກະລຸນາລອງໃໝ່ອີກຄັ້ງ.';
 
   @override
+  String budgetPercentUsedLabel(String percent) {
+    return '$percent% ໃຊ້ແລ້ວ';
+  }
+
+  @override
+  String get budgetedTotalLabel => 'ງົບປະມານ';
+
+  @override
+  String get spentTotalLabel => 'ໃຊ້ຈ່າຍ';
+
+  @override
+  String get remainingTotalLabel => 'ເຫຼືອ';
+
+  @override
   String get savingsGoalsTitle => 'ເປົ້າໝາຍການເກັບເງິນ';
 
   @override

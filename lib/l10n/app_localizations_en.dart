@@ -553,6 +553,20 @@ class AppLocalizationsEn extends AppLocalizations {
       'Could not save the budget. Please try again.';
 
   @override
+  String budgetPercentUsedLabel(String percent) {
+    return '$percent% used';
+  }
+
+  @override
+  String get budgetedTotalLabel => 'Budgeted';
+
+  @override
+  String get spentTotalLabel => 'Spent';
+
+  @override
+  String get remainingTotalLabel => 'Remaining';
+
+  @override
   String get savingsGoalsTitle => 'Savings Goals';
 
   @override

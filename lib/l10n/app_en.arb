@@ -251,6 +251,17 @@
     }
   },
   "saveBudgetFailedMessage": "Could not save the budget. Please try again.",
+  "budgetPercentUsedLabel": "{percent}% used",
+  "@budgetPercentUsedLabel": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetedTotalLabel": "Budgeted",
+  "spentTotalLabel": "Spent",
+  "remainingTotalLabel": "Remaining",
   "savingsGoalsTitle": "Savings Goals",
   "savingsGoalsTooltip": "Savings goals",
   "noSavingsGoalsYetTitle": "No savings goals yet",

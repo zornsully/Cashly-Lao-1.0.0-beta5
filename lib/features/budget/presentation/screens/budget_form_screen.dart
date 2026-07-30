@@ -139,7 +139,7 @@ class _BudgetFormScreenState extends ConsumerState<BudgetFormScreen> {
                     else
                       Card(
                         child: ListTile(
-                          leading: const Icon(Icons.calendar_today_outlined),
+                          leading: const Icon(AppSymbols.calendarToday),
                           title: Text(DateFormat.yMMMM().format(month)),
                           subtitle: Text(l10n.categoryAndMonthLockedMessage),
                         ),

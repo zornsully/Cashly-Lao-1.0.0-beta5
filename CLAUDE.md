@@ -1616,6 +1616,129 @@ Next recommended step: none required for this phase. The first real use of
 — will be the actual end-to-end validation of this path; record that
 deployment's result here per the section's own requirements when it happens.
 
+### 2026-07-31 — Product polish Phase 4: Budgets (done)
+
+Summary:
+
+Continuing the page-by-page product-polish pass (Dashboard, Transactions,
+Accounts already done) with Budgets — read the actual code first
+(`lib/features/budget/`, singular directory name) rather than assuming scope.
+Budgets already had correct loading/empty/error states and full
+localization; what was actually missing or broken:
+
+1. **No responsive treatment** — single-column at every width, unlike
+   Dashboard/Transactions/Accounts. Added the same content-width-driven
+   `LayoutBuilder` grid pattern (1–2 columns within `ResponsiveCenter`'s
+   720px cap).
+2. **No month-total signal.** A user could see each category's individual
+   progress but never "how much of this month's total budget is left."
+   Added `_BudgetSummaryHeader` (Budgeted/Spent/Remaining, per currency —
+   never mixed, same as every other money rollup in this app), following
+   the same `_summarizeByCurrency` + small stat-card pattern Transactions'
+   `_TransactionsSummaryRow`/`_SummaryCard` already established. This is
+   now the second near-identical private implementation of that pattern
+   (Transactions, now Budgets) — a good candidate for extraction into
+   `core/widgets` the next time a third screen needs it, deliberately not
+   done yet per this project's own "don't abstract from a single usage"
+   standard.
+3. **No percentage-used signal** on `BudgetProgressTile` — only a bar and
+   remaining/overspent text, no number. Added `budgetPercentUsedLabel`
+   ("{percent}% used"), combined with the existing remaining/overspent
+   message on one line (`"82% used · 120,000 ₭ remaining"`).
+4. **Only two visual states** (on-track / overspent) on the progress bar,
+   despite the accessibility principle already followed elsewhere in this
+   app ("never encode meaning in color alone"). Added a third,
+   `theme.colorScheme.tertiary`-colored "approaching limit" state
+   (≥80%, not yet overspent) — always paired with the percent-used text
+   from item 3, never color-only.
+5. **4 raw `Icons.*` uses**, all with an existing `AppSymbols` equivalent
+   already defined — no new icon constants needed this phase.
+6. `_NoBudgetTile` was a bare `Card`/`ListTile`, visually inconsistent with
+   `BudgetProgressTile`'s `AppCard`-based layout and, now that both sit in
+   the same responsive grid, structurally mismatched height. Rebuilt on
+   `AppCard` with the same icon-row shape.
+7. `LinearProgressIndicator`'s `minHeight: 8` → `AppSpacing.sm` (same
+   value, now token-traced).
+
+Files modified:
+
+- `lib/features/budget/presentation/widgets/budget_progress_tile.dart` —
+  icon sweep, `AppSpacing.sm` token, `isApproachingLimit` third bar state,
+  percent label combined into the existing status text.
+- `lib/features/budget/presentation/screens/budget_form_screen.dart` — icon
+  sweep (`Icons.calendar_today_outlined` → `AppSymbols.calendarToday`).
+- `lib/features/budget/presentation/screens/budgets_list_screen.dart` —
+  responsive grid, `_BudgetSummaryHeader`/`_BudgetSummaryCard`/
+  `_summarizeByCurrency`, `_NoBudgetTile` rebuilt on `AppCard`, icon sweep.
+- `lib/l10n/app_en.arb` / `app_lo.arb` — 4 new keys
+  (`budgetPercentUsedLabel`, `budgetedTotalLabel`, `spentTotalLabel`,
+  `remainingTotalLabel`).
+- Tests: `test/features/budget/presentation/screens/budgets_list_screen_test.dart`
+  — new test covering the month summary header and the approaching-limit
+  (85%-used) tile state, the first coverage this screen had beyond the
+  empty "no budget set" row. `test/features/budget/presentation/widgets/budget_progress_tile_test.dart`
+  (new file) — `BudgetProgressTile` had zero dedicated widget tests before
+  this phase; added on-track and overspent state coverage.
+
+Implementation decisions:
+
+- Kept the `_BudgetSummaryCard`/`_summarizeByCurrency` pattern local to
+  `budgets_list_screen.dart` rather than reusing Transactions'
+  `_SummaryCard` — Dart's file-level privacy means the existing widget
+  isn't importable, and this project's established norm (see the Accounts
+  phase's own reasoning) is to let a pattern repeat once before extracting
+  a shared component, not extract from a single prior usage.
+  `_BudgetSummaryCard`'s figures use `theme.colorScheme.primary` for
+  Budgeted (a neutral figure, not positive/negative) and
+  `AppSemanticColors`' positive/negative foreground for
+  Spent/Remaining, matching how every other money figure in this app
+  chooses color.
+  Remaining is a plain `remaining < 0` comparison (i.e., only red when the
+  *month's total* is overspent, not per-category) since it summarizes the
+  whole month, not a single budget.
+- `isApproachingLimit` (≥80%, not overspent) is computed inline in the
+  widget rather than added as a new getter on `BudgetProgress` — a
+  presentation-layer display threshold, not a business rule the domain
+  layer needs to know about.
+- Did not add a "copy last month's budgets" bulk-create feature, despite
+  it being a real, valuable gap the initial audit surfaced (budgets are
+  inherently monthly, and re-entering the same limits every month is a
+  genuine annoyance) — sized similarly to Transactions' "duplicate"
+  feature from the prior phase, but decided to keep this phase to
+  polish-and-fix scope; worth proposing as its own small feature next.
+- Did not add a delete action to `budget_form_screen.dart` itself — delete
+  already lives on the list screen's tile with a confirm dialog, and
+  adding a second delete entry point wasn't an identified gap (unlike
+  Transactions, where "duplicate" was a genuinely missing capability, not
+  just a UI relocation).
+
+Validation:
+
+- `flutter analyze` — 0 issues.
+- `dart format --set-exit-if-changed lib test tool` — clean.
+- `flutter test` — full suite, 383 passing (3 new), 0 failing, 0 skipped.
+  Also confirmed no regression in Dashboard's or Reports' own
+  `BudgetProgressTile` embeddings (both reuse the same widget; neither has
+  a test asserting on the old remaining/overspent-only text, so the new
+  combined percent+status line didn't need updates there).
+- `flutter build web --release` — compiles clean end-to-end.
+
+Known limitations:
+
+- **Not visually verified on-device or in-browser**, same standing caveat
+  as every prior UI phase this session — particularly the new grid's
+  height match between `BudgetProgressTile` (5 lines) and `_NoBudgetTile`
+  (1 row) at 2 columns, and the `childAspectRatio: 2.2` chosen for the
+  grid, which wasn't tuned against a real rendered screen.
+- New Lao strings are drafts, same unreviewed status as the rest of
+  `app_lo.arb`.
+- "Copy last month's budgets" remains an open, real gap — not built this
+  phase (see Implementation decisions).
+
+Next recommended phase: Categories (similar size to this one), Settings
+(not yet scoped), or Reports (the large item, still needs its own scoping
+conversation first).
+
 ## Product Roadmap
 
 The full staged roadmap — objectives, features, deliverables,
