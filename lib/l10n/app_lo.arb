@@ -147,6 +147,7 @@
   "updateCategoryFailedMessage": "ບໍ່ສາມາດອັບເດດໝວດໝູ່ໄດ້.",
   "reorderCategoriesFailedMessage": "ບໍ່ສາມາດບັນທຶກລຳດັບໃໝ່ໄດ້.",
   "categoryFormEditTitle": "ແກ້ໄຂໝວດໝູ່",
+  "defaultCategoryLockedHelper": "ໝວດໝູ່ເລີ່ມຕົ້ນບໍ່ສາມາດລຶບໄດ້ ແຕ່ທ່ານຍັງສາມາດປ່ຽນຊື່ ຫຼື ປ່ຽນໄອຄອນ ແລະ ສີໄດ້.",
   "categoryNameLabel": "ຊື່ໝວດໝູ່",
   "categoryTypeLabel": "ປະເພດ",
   "saveCategoryFailedMessage": "ບໍ່ສາມາດບັນທຶກໝວດໝູ່ໄດ້. ກະລຸນາລອງໃໝ່ອີກຄັ້ງ.",

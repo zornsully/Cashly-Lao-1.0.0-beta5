@@ -212,6 +212,7 @@
   "updateCategoryFailedMessage": "Could not update the category.",
   "reorderCategoriesFailedMessage": "Could not save the new order.",
   "categoryFormEditTitle": "Edit category",
+  "defaultCategoryLockedHelper": "Default categories can't be deleted, but you can still rename them or change their icon and color.",
   "categoryNameLabel": "Category name",
   "categoryTypeLabel": "Type",
   "saveCategoryFailedMessage": "Could not save the category. Please try again.",

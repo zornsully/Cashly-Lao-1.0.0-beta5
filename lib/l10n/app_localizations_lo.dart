@@ -489,6 +489,10 @@ class AppLocalizationsLo extends AppLocalizations {
   String get categoryFormEditTitle => 'ແກ້ໄຂໝວດໝູ່';
 
   @override
+  String get defaultCategoryLockedHelper =>
+      'ໝວດໝູ່ເລີ່ມຕົ້ນບໍ່ສາມາດລຶບໄດ້ ແຕ່ທ່ານຍັງສາມາດປ່ຽນຊື່ ຫຼື ປ່ຽນໄອຄອນ ແລະ ສີໄດ້.';
+
+  @override
   String get categoryNameLabel => 'ຊື່ໝວດໝູ່';
 
   @override

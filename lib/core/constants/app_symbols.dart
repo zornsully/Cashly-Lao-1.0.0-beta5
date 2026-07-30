@@ -290,4 +290,14 @@ abstract final class AppSymbols {
     fontFamily: _family,
     fontPackage: _package,
   );
+  static const IconData dragHandle = IconData(
+    0xe25d,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData labelOutline = IconData(
+    0xe893,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
 }

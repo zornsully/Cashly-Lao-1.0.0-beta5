@@ -5,8 +5,10 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_color_key.dart';
 import '../../../../core/constants/app_icon_key.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/app_symbols.dart';
 import '../../../../core/utils/app_snackbar.dart';
 import '../../../../core/utils/validators.dart';
+import '../../../../core/widgets/app_badge.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/color_picker_field.dart';
 import '../../../../core/widgets/icon_picker_field.dart';
@@ -93,6 +95,8 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
   Widget build(BuildContext context) {
     final isLoading = ref.watch(categoryControllerProvider).isLoading;
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final isDefault = widget.existing?.isDefault ?? false;
 
     return Scaffold(
       appBar: AppBar(
@@ -111,11 +115,28 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    if (isDefault) ...[
+                      Row(
+                        children: [
+                          AppBadge(label: l10n.defaultBadgeLabel),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: Text(
+                              l10n.defaultCategoryLockedHelper,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                    ],
                     AppTextField(
                       label: l10n.categoryNameLabel,
                       controller: _nameController,
                       textInputAction: TextInputAction.done,
-                      prefixIcon: Icons.label_outline,
+                      prefixIcon: AppSymbols.labelOutline,
                       validator: (value) => Validators.requiredField(
                         context,
                         value,
@@ -133,12 +154,12 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
                         ButtonSegment(
                           value: CategoryType.expense,
                           label: Text(l10n.expenseLabel),
-                          icon: const Icon(Icons.arrow_upward),
+                          icon: const Icon(AppSymbols.arrowUpward),
                         ),
                         ButtonSegment(
                           value: CategoryType.income,
                           label: Text(l10n.incomeLabel),
-                          icon: const Icon(Icons.arrow_downward),
+                          icon: const Icon(AppSymbols.arrowDownward),
                         ),
                       ],
                       selected: {_type},

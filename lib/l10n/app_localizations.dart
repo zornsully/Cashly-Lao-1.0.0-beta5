@@ -980,6 +980,12 @@ abstract class AppLocalizations {
   /// **'Edit category'**
   String get categoryFormEditTitle;
 
+  /// No description provided for @defaultCategoryLockedHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Default categories can\'t be deleted, but you can still rename them or change their icon and color.'**
+  String get defaultCategoryLockedHelper;
+
   /// No description provided for @categoryNameLabel.
   ///
   /// In en, this message translates to:

@@ -488,6 +488,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryFormEditTitle => 'Edit category';
 
   @override
+  String get defaultCategoryLockedHelper =>
+      'Default categories can\'t be deleted, but you can still rename them or change their icon and color.';
+
+  @override
   String get categoryNameLabel => 'Category name';
 
   @override

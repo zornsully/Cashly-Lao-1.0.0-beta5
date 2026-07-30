@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/app_symbols.dart';
 import '../../../../core/widgets/app_badge.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -73,7 +74,7 @@ class CategoryTile extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.sm),
                 child: Icon(
-                  Icons.drag_handle,
+                  AppSymbols.dragHandle,
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),

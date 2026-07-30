@@ -1739,6 +1739,94 @@ Next recommended phase: Categories (similar size to this one), Settings
 (not yet scoped), or Reports (the large item, still needs its own scoping
 conversation first).
 
+### 2026-07-31 — Product polish Phase 5: Categories (done)
+
+Summary:
+
+Continuing the page-by-page pass with Categories (`lib/features/categories/`
+— already fully localized, correct loading/empty/error states, and — unlike
+every other list screen so far — already had reordering and archive/unarchive
+parity with Accounts built in). What was actually missing:
+
+1. **8 raw `Icons.*` uses** across the list screen, form screen, and tile —
+   6 had an existing `AppSymbols` equivalent; 2 genuinely didn't
+   (`Icons.drag_handle`, `Icons.label_outline`) and needed new constants,
+   codepoints looked up directly from the installed `material_symbols_icons`
+   package source (same discipline as every prior icon addition this
+   project — never guessed): `dragHandle` (`0xe25d`, from
+   `drag_handle_rounded`) and `labelOutline` (`0xe893`, from
+   `label_outline_rounded`).
+2. **Archive-toggle icon** used the old filled/outline `Icons.archive`/
+   `Icons.archive_outlined` pair — fixed the same way Accounts' equivalent
+   toggle already was: one `AppSymbols.archive` glyph, tinted primary when
+   active.
+3. **No indication when editing a default category that it's a default
+   category** — a user only discovered the delete restriction by trying
+   to delete it and finding no delete option, with no explanation. Added a
+   "Default" badge + a short explanatory line at the top of the edit form
+   (`defaultCategoryLockedHelper`), the same "surface a pinned/restricted
+   state directly in the form" pattern Accounts used for its locked
+   currency field.
+
+Files modified:
+
+- `lib/core/constants/app_symbols.dart` — 2 new constants (`dragHandle`,
+  `labelOutline`).
+- `lib/features/categories/presentation/screens/categories_list_screen.dart`
+  — icon sweep (archive toggle, FAB, empty-state icon/button).
+- `lib/features/categories/presentation/screens/category_form_screen.dart`
+  — icon sweep (name-field prefix, expense/income segment icons); the new
+  default-category badge/helper block.
+- `lib/features/categories/presentation/widgets/category_tile.dart` — icon
+  sweep (drag handle).
+- `lib/l10n/app_en.arb` / `app_lo.arb` — 1 new key
+  (`defaultCategoryLockedHelper`).
+- Tests: `test/features/categories/presentation/screens/category_form_screen_test.dart`
+  (new file — this screen had zero tests before this phase) covering the
+  Default badge appearing when editing a default category and staying
+  absent when editing a non-default one or creating a new one.
+
+Implementation decisions — two deliberate non-changes, both explained
+rather than silently skipped:
+
+- **No responsive multi-column grid**, unlike Dashboard/Transactions/
+  Accounts/Budgets. This list is a `ReorderableListView` — drag-to-reorder
+  doesn't have unambiguous semantics in a 2D grid (which corner does a
+  dragged item land in?), so forcing the same content-width grid pattern
+  here would have degraded the core interaction, not polished it. This is
+  a genuine, considered exception to the pattern, not an oversight.
+- **No transaction-count-before-delete safety feature**, despite it being
+  a real, valuable gap the audit surfaced (today's delete confirmation
+  shows only the category name, not how many transactions or how much
+  money is tied to it). Not built this phase because it needs a new
+  aggregate-query capability that doesn't exist yet (the transaction
+  repository only exposes a month-scoped watch, not an all-time
+  per-category count) — a real feature, not a polish-pass-sized fix.
+  Recorded here the same way Budgets' "copy last month" gap was, so it
+  isn't lost.
+
+Validation:
+
+- `flutter analyze` — 0 issues.
+- `dart format --set-exit-if-changed lib test tool` — clean.
+- `flutter test` — full suite, 386 passing (3 new), 0 failing, 0 skipped.
+- `flutter build web --release` — compiles clean end-to-end.
+
+Known limitations:
+
+- Not visually verified on-device or in-browser, same standing caveat as
+  every prior UI phase this session — particularly the new default-category
+  badge/helper block's layout and the drag-handle icon's visual weight
+  against the rest of the row.
+- New Lao string is a draft, same unreviewed status as the rest of
+  `app_lo.arb`.
+- The transaction-count-before-delete gap remains open (see Implementation
+  decisions).
+
+Next recommended phase: Settings (not yet scoped) or Reports (the large
+item, still needs its own scoping conversation first) — this closes out
+every "similar size" page-level phase from the original master prompt.
+
 ## Product Roadmap
 
 The full staged roadmap — objectives, features, deliverables,
