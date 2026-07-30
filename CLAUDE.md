@@ -380,6 +380,53 @@ fails. A rollback changes only the website manifest back to a previously
 verified public release; it cannot retract or alter an existing GitHub asset.
 macOS, Windows, and iOS releases remain held until separately authorized.
 
+### Website-only content deploys (pre-approved)
+
+Scoped narrowly to content that lives only at
+[cashly-lao.web.app](https://cashly-lao.web.app): the landing page, Privacy
+Policy, Terms, FAQ, screenshots, the Download section's *presentation* (not
+its data), website localization, other static web assets, and web-only
+bug/accessibility/responsive-layout fixes.
+
+For changes scoped to that list only, once `flutter analyze`, `flutter
+test` (full suite), and `flutter build web --release` all pass — and the
+change touches none of `web/release-manifest.json`, `assets/release/**`, or
+any Android signing/version file — a Firebase Hosting deploy of
+`hosting:cashly-lao` may proceed without a separate per-instance approval,
+via a dedicated, guarded deploy script. That script does not exist yet;
+adding it (`tool/deploy_website.ps1`) is a separate, still-pending step
+requiring its own approval — this section documents the policy it will
+implement, not a claim that the automation already exists.
+
+This carve-out changes nothing else about the [manual release
+policy](#free-tier-manual-release-policy) above:
+
+- **Application binaries remain fully manual and non-negotiable** — APK/AAB/
+  IPA, App Store submission, installers, GitHub Release publication, signing-
+  key changes, and production release tags all still require the full
+  sequence and both explicit owner approvals, exactly as documented above.
+- **The Download section's actual release data is never covered by this
+  carve-out.** Any change to `release-manifest.json` or
+  `assets/release/distribution_policy.json` — including which release is
+  marked latest — stays on the existing two-approval-gate sequence.
+- **This never authorizes Git actions.** Commit, push, merge, PR, and tag
+  still each require your explicit per-instance approval, unchanged.
+- **No new paid services.** Stays fully Firebase Spark/GitHub Free
+  compatible — no Blaze-only services, no deploy-only Cloud Functions, no
+  GitHub Actions deploy credentials. Firebase Hosting deployment uses
+  whichever local `firebase login` session is available in the environment
+  actually running the deploy; no Firebase credentials, tokens, or login
+  data are ever stored in the repository or in this file.
+
+After every website deployment under this policy, record in a new dated
+Project Memory entry: date/time, task completed, files changed, tests run,
+the web build command, the deployment command, the Firebase Hosting target,
+the live URL, verification actually performed against the live site,
+deployment result, any failures or limitations, rollback notes, and the next
+step. Never record a deployment as successful without independently
+verifying the live site — a clean local build and a clean `firebase deploy`
+exit code are not the same claim as "the live site now shows this."
+
 ## Quality Assurance Checklist
 
 Before calling any screen or feature "done," confirm:
