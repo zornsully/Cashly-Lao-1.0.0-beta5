@@ -33,7 +33,12 @@ class SavingsGoalsListScreen extends ConsumerWidget {
             tooltip: showArchived
                 ? l10n.hideArchivedTooltip
                 : l10n.showArchivedTooltip,
-            icon: Icon(showArchived ? Icons.archive : Icons.archive_outlined),
+            icon: Icon(
+              AppSymbols.archive,
+              color: showArchived
+                  ? Theme.of(context).colorScheme.primary
+                  : null,
+            ),
             onPressed: () =>
                 ref.read(showArchivedGoalsProvider.notifier).toggle(),
           ),
@@ -55,7 +60,7 @@ class SavingsGoalsListScreen extends ConsumerWidget {
                 message: l10n.noSavingsGoalsYetMessage,
                 action: FilledButton.icon(
                   onPressed: () => context.push(AppRoutes.savingsGoalNew),
-                  icon: const Icon(Icons.add),
+                  icon: const Icon(AppSymbols.addRounded),
                   label: Text(l10n.addGoalButton),
                 ),
               );
@@ -85,7 +90,7 @@ class SavingsGoalsListScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push(AppRoutes.savingsGoalNew),
-        child: const Icon(Icons.add),
+        child: const Icon(AppSymbols.addRounded),
       ),
     );
   }

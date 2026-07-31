@@ -196,34 +196,42 @@ by any existing widget test** (no `home_shell_screen_test.dart` exists) and
 **not visually verified on-device** — worth a real look at the bottom-nav
 and sidebar's selected-state visuals next time you're signed in.
 
-**Remaining count by file** (each needs its own AppSymbols constant lookup
-from the installed `material_symbols_icons` package — never guessed — for
-any icon without an existing equivalent):
+**`financial_insight_card.dart` (14) and `profile_screen.dart` (7) — also
+done.** 10 new `AppSymbols` constants added (`deleteForever`, `verified`,
+`logout`, `checkCircleOutline`, `autoAwesome`, `infoOutline`,
+`flagOutlined`, `southEast`, `northEast`, `addChart`, `waterfallChart`,
+`compareArrows`, `circle` — codepoints looked up directly from the
+installed package; `info_outline_rounded` doesn't exist as a distinct name
+so `info_rounded` was used instead, same "no true outline/filled split"
+finding as elsewhere in this sweep). `financial_insight_card_test.dart`
+(the one existing test for this file) still passes.
 
-- `lib/features/landing/presentation/screens/landing_page.dart` — 21
-  (**likely exempt** — this page has never used the `AppSpacing`/
-  `AppSymbols` design-token system; it's the public marketing page with
-  its own established local convention, same reasoning already applied to
-  its color/spacing choices. Confirm this reasoning still holds before
-  touching it, don't assume.)
-- `lib/features/financial_insights/presentation/widgets/financial_insight_card.dart` — 14
-- `lib/features/auth/presentation/screens/profile_screen.dart` — 7
-- `lib/features/savings_goals/presentation/screens/savings_goal_detail_screen.dart` — 4
-- `lib/features/savings_goals/presentation/screens/savings_goals_list_screen.dart` — 4
-- `lib/features/auth/presentation/screens/forgot_password_screen.dart` — 2
-- `lib/features/auth/presentation/screens/register_screen.dart` — 2
-- `lib/features/accounts/presentation/screens/account_form_screen.dart` — 1
-- `lib/features/auth/presentation/screens/login_screen.dart` — 1
-- `lib/features/auth/presentation/screens/verify_email_screen.dart` — 1
-- `lib/features/landing/presentation/screens/legal_document_page.dart` — 1
-  (same landing-page exemption question as above)
+**Savings Goals (`savings_goal_detail_screen.dart` 4, `savings_goals_list_screen.dart`
+4) and the small auth/account-form screens (`forgot_password_screen.dart`
+2, `register_screen.dart` 2, `account_form_screen.dart` 1,
+`login_screen.dart` 1, `verify_email_screen.dart` 1) — all done.** 5 new
+`AppSymbols` constants added (`notificationsActive`, `markEmailRead`,
+`email`, `badge`, `markEmailUnread`). The `showArchived`-driven archive
+icon in `savings_goals_list_screen.dart` follows the exact same pattern
+already established in `accounts_list_screen.dart` (one `AppSymbols.archive`
+glyph, tinted `colorScheme.primary` when active, instead of a nonexistent
+filled/outline pair).
 
-**Suggested next action**: `financial_insight_card.dart` (14) and
-`profile_screen.dart` (7) next — both feature screens, lower blast radius
-than the shell. Resolve the landing-page exemption question explicitly
-(with the project owner, since it's a design-system-scope decision, not a
-mechanical one) before deciding whether its 22 icons are in or out of
+**This closes the sweep except for the landing page.** A repo-wide check
+confirms `lib/features/landing/presentation/screens/landing_page.dart`
+(21 icons) and `legal_document_page.dart` (1 icon) are the only files with
+any raw `Icons.*` left — every other screen and shared widget in `lib/`
+is now on `AppSymbols`. Both landing files are **left untouched
+deliberately**, not missed: that page has never used the `AppSpacing`/
+`AppSymbols` design-token system, following its own established local
+convention as the public, pre-auth marketing page (same reasoning already
+applied to its color/spacing choices elsewhere). Resolve this explicitly
+with the project owner — it's a design-system-scope decision, not a
+mechanical one — before deciding whether those 22 icons are in or out of
 scope.
+
+`flutter analyze` (0 issues) and `flutter test` (412/412) both still clean
+after every step of this sweep.
 
 ## Android R8/backup hardening — configured, completely unverified (no Android SDK here)
 

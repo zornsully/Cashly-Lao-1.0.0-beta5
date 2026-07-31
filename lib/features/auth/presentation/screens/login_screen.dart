@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/app_symbols.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/app_snackbar.dart';
 import '../../../../core/utils/platform_capabilities.dart';
@@ -87,7 +88,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
-                prefixIcon: Icons.email_outlined,
+                prefixIcon: AppSymbols.email,
                 validator: (value) => Validators.email(context, value),
                 autofillHints: const [AutofillHints.email],
               ),

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/app_symbols.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/app_snackbar.dart';
@@ -187,7 +188,7 @@ class ProfileScreen extends ConsumerWidget {
         title: Text(l10n.profileTitle),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings_outlined),
+            icon: const Icon(AppSymbols.settings),
             tooltip: l10n.settingsTitle,
             onPressed: () => context.push(AppRoutes.settings),
           ),
@@ -238,7 +239,7 @@ class ProfileScreen extends ConsumerWidget {
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.edit_outlined, size: 20),
+                          icon: const Icon(AppSymbols.edit, size: 20),
                           tooltip: l10n.editDisplayNameTooltip,
                           onPressed: () => _editDisplayName(context, ref, user),
                         ),
@@ -254,8 +255,8 @@ class ProfileScreen extends ConsumerWidget {
                     Chip(
                       avatar: Icon(
                         user.emailVerified
-                            ? Icons.verified_outlined
-                            : Icons.warning_amber_outlined,
+                            ? AppSymbols.verified
+                            : AppSymbols.warningAmberRounded,
                         size: 18,
                         color: user.emailVerified
                             ? theme.colorScheme.primary
@@ -270,7 +271,7 @@ class ProfileScreen extends ConsumerWidget {
                     const SizedBox(height: AppSpacing.lg),
                     Card(
                       child: ListTile(
-                        leading: const Icon(Icons.calendar_today_outlined),
+                        leading: const Icon(AppSymbols.calendarToday),
                         title: Text(l10n.memberSinceLabel),
                         subtitle: Text(
                           DateFormat.yMMMMd().format(user.createdAt),
@@ -280,14 +281,14 @@ class ProfileScreen extends ConsumerWidget {
                     const SizedBox(height: AppSpacing.xl),
                     DestructiveButton(
                       label: l10n.signOutButton,
-                      icon: Icons.logout,
+                      icon: AppSymbols.logout,
                       onPressed: () => _logout(context, ref, l10n),
                       isLoading: isLoading,
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     DestructiveButton(
                       label: l10n.deleteAccountButtonLabel,
-                      icon: Icons.delete_forever_outlined,
+                      icon: AppSymbols.deleteForever,
                       variant: DestructiveButtonVariant.text,
                       onPressed: () =>
                           _confirmDeleteAccount(context, ref, user),

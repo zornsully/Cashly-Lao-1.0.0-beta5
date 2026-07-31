@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/app_symbols.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/app_snackbar.dart';
 import '../../../../core/utils/validators.dart';
@@ -63,7 +64,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         subtitle: l10n.checkEmailSubtitle(_emailController.text.trim()),
         children: [
           Icon(
-            Icons.mark_email_read_outlined,
+            AppSymbols.markEmailRead,
             size: 64,
             color: Theme.of(context).colorScheme.primary,
           ),
@@ -90,7 +91,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.done,
-                prefixIcon: Icons.email_outlined,
+                prefixIcon: AppSymbols.email,
                 validator: (value) => Validators.email(context, value),
                 onFieldSubmitted: (_) => _submit(),
                 autofillHints: const [AutofillHints.email],
