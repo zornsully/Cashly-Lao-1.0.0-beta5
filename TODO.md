@@ -161,23 +161,45 @@ speculatively.
 ## Icons.* → AppSymbols.* sweep (remaining scope, counted)
 
 **Reason deferred**: large and mechanical (87 raw `Icons.*` references across
-17 files as of this pass), and several of the files involved are
-high-blast-radius shared widgets (`error_view.dart`, `sync_status_banner.dart`,
-`app_password_field.dart`, `home_shell_screen.dart` — the bottom-nav shell
-used on every authenticated screen). A rushed pass risked exactly what the
-audit warned against: losing an accessibility label, icon weight, or
-navigation-state meaning during blind replacement. Fixed in this pass only
-the two icons already named as a specific deferred item from the Reports
-phase (`reports_screen.dart`'s export button and empty-state icon — done,
-see `AppSymbols.iosShare`/`insertChartOutlined`).
+17 files as of the original audit pass). A rushed pass risked exactly what
+the audit warned against: losing an accessibility label, icon weight, or
+navigation-state meaning during blind replacement.
+
+**Done so far**: the 2 icons already named as a specific deferred item from
+the Reports phase (`reports_screen.dart`'s export button and empty-state
+icon — `AppSymbols.iosShare`/`insertChartOutlined`), plus every shared,
+high-reuse widget named below as "do first" — `error_view.dart` (2),
+`sync_status_banner.dart` (1), `month_selector_header.dart` (2),
+`color_picker_field.dart` (1), `app_password_field.dart` (3) — 9 icons, 5
+files, 0 remaining raw `Icons.*` in any of them. New `AppSymbols` constants
+added: `chevronLeft`, `errorOutline`, `refresh`, `cloudOffOutlined`,
+`check`, `lockOutline`, `visibility`, `visibilityOff` (codepoints looked up
+directly from the installed `material_symbols_icons` package, same
+discipline as every prior addition — never guessed). `flutter analyze`/
+`flutter test` both still clean after this pass.
+
+**`home_shell_screen.dart` — done (23 icons), with one real design change
+worth flagging**: its bottom-nav `NavigationDestination`s used to pass a
+different classic-Material-Icons glyph for `icon:` vs `selectedIcon:`
+(e.g. `dashboard_outlined` vs `dashboard`) — Material Symbols Rounded has
+no equivalent distinct filled glyph for most of these (confirmed by
+looking up the actual codepoints: `pie_chart_rounded`/
+`pie_chart_outline_rounded` resolve to the identical codepoint `0xf0da`,
+and several `_outline_rounded` names don't exist in the font at all), same
+finding as the pre-existing `person`/`personOutline` constants which
+already share one codepoint. Rather than passing the same icon twice,
+`selectedIcon:` was dropped entirely on every destination — Material 3's
+`NavigationBar` already visually distinguishes the selected tab via its
+own indicator pill and icon color, so nothing is lost. Also added 3 new
+`AppSymbols` constants (`dashboard`, `barChart`, `repeat`). **Not covered
+by any existing widget test** (no `home_shell_screen_test.dart` exists) and
+**not visually verified on-device** — worth a real look at the bottom-nav
+and sidebar's selected-state visuals next time you're signed in.
 
 **Remaining count by file** (each needs its own AppSymbols constant lookup
 from the installed `material_symbols_icons` package — never guessed — for
 any icon without an existing equivalent):
 
-- `lib/core/routing/home_shell_screen.dart` — 23 (bottom-nav shell, every
-  authenticated screen embeds this — do first, carefully, with a real
-  on-device check of tab icons/selected-state visuals before/after)
 - `lib/features/landing/presentation/screens/landing_page.dart` — 21
   (**likely exempt** — this page has never used the `AppSpacing`/
   `AppSymbols` design-token system; it's the public marketing page with
@@ -186,30 +208,22 @@ any icon without an existing equivalent):
   touching it, don't assume.)
 - `lib/features/financial_insights/presentation/widgets/financial_insight_card.dart` — 14
 - `lib/features/auth/presentation/screens/profile_screen.dart` — 7
-- `lib/core/widgets/app_password_field.dart` — 3
 - `lib/features/savings_goals/presentation/screens/savings_goal_detail_screen.dart` — 4
 - `lib/features/savings_goals/presentation/screens/savings_goals_list_screen.dart` — 4
 - `lib/features/auth/presentation/screens/forgot_password_screen.dart` — 2
 - `lib/features/auth/presentation/screens/register_screen.dart` — 2
-- `lib/core/widgets/error_view.dart` — 2
-- `lib/core/widgets/month_selector_header.dart` — 2
-- `lib/core/widgets/color_picker_field.dart` — 1
-- `lib/core/widgets/sync_status_banner.dart` — 1
 - `lib/features/accounts/presentation/screens/account_form_screen.dart` — 1
 - `lib/features/auth/presentation/screens/login_screen.dart` — 1
 - `lib/features/auth/presentation/screens/verify_email_screen.dart` — 1
 - `lib/features/landing/presentation/screens/legal_document_page.dart` — 1
   (same landing-page exemption question as above)
 
-**Suggested next action**: one file at a time, starting with the shared
-widgets (`error_view.dart`, `sync_status_banner.dart`, `month_selector_header.dart`,
-`color_picker_field.dart`, `app_password_field.dart` — all small, all
-high-reuse, do these first since a mistake here is the highest-leverage
-one to catch), then `home_shell_screen.dart` on its own with real
-on-device verification, then the remaining feature screens. Resolve the
-landing-page exemption question explicitly (with the project owner, since
-it's a design-system-scope decision, not a mechanical one) before deciding
-whether its 22 icons are in or out of scope.
+**Suggested next action**: `financial_insight_card.dart` (14) and
+`profile_screen.dart` (7) next — both feature screens, lower blast radius
+than the shell. Resolve the landing-page exemption question explicitly
+(with the project owner, since it's a design-system-scope decision, not a
+mechanical one) before deciding whether its 22 icons are in or out of
+scope.
 
 ## Android R8/backup hardening — configured, completely unverified (no Android SDK here)
 

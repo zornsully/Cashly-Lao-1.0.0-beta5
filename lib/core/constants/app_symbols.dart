@@ -326,4 +326,60 @@ abstract final class AppSymbols {
     fontPackage: _package,
     matchTextDirection: true,
   );
+  static const IconData chevronLeft = IconData(
+    0xe5cb,
+    fontFamily: _family,
+    fontPackage: _package,
+    matchTextDirection: true,
+  );
+  static const IconData errorOutline = IconData(
+    0xf8b6,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData refresh = IconData(
+    0xe5d5,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData cloudOffOutlined = IconData(
+    0xe2c1,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData check = IconData(
+    0xe668,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData lockOutline = IconData(
+    0xe899,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData visibility = IconData(
+    0xe8f4,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData visibilityOff = IconData(
+    0xe8f5,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData dashboard = IconData(
+    0xe871,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData barChart = IconData(
+    0xe26b,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData repeat = IconData(
+    0xe040,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
 }

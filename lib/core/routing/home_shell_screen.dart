@@ -8,6 +8,7 @@ import '../../l10n/app_localizations.dart';
 import '../constants/app_motion.dart';
 import '../constants/app_radius.dart';
 import '../constants/app_spacing.dart';
+import '../constants/app_symbols.dart';
 import '../providers/budget_alert_providers.dart';
 import '../providers/fcm_message_providers.dart';
 import '../providers/fcm_token_registration_providers.dart';
@@ -133,35 +134,36 @@ class _MobileNavigationBar extends StatelessWidget {
       // narrow phones â€” only the active tab's label is shown, matching
       // Material 3's guidance for higher destination counts.
       labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+      // No `selectedIcon:` on any destination below: Material Symbols
+      // Rounded (unlike the classic Material Icons this screen used to use)
+      // doesn't expose a genuinely distinct filled glyph per icon name —
+      // same finding as the Accounts/Categories archive-toggle icon. Left
+      // unset rather than passed the same icon twice; NavigationBar already
+      // distinguishes the selected tab via its own indicator pill and icon
+      // color, so nothing is lost.
       destinations: [
         NavigationDestination(
-          icon: const Icon(Icons.dashboard_outlined),
-          selectedIcon: const Icon(Icons.dashboard),
+          icon: const Icon(AppSymbols.dashboard),
           label: l10n.dashboardTitle,
         ),
         NavigationDestination(
-          icon: const Icon(Icons.account_balance_wallet_outlined),
-          selectedIcon: const Icon(Icons.account_balance_wallet),
+          icon: const Icon(AppSymbols.accountBalanceWallet),
           label: l10n.accountsTitle,
         ),
         NavigationDestination(
-          icon: const Icon(Icons.receipt_long_outlined),
-          selectedIcon: const Icon(Icons.receipt_long),
+          icon: const Icon(AppSymbols.receiptLong),
           label: l10n.transactionsTabLabel,
         ),
         NavigationDestination(
-          icon: const Icon(Icons.category_outlined),
-          selectedIcon: const Icon(Icons.category),
+          icon: const Icon(AppSymbols.category),
           label: l10n.categoriesTitle,
         ),
         NavigationDestination(
-          icon: const Icon(Icons.pie_chart_outline),
-          selectedIcon: const Icon(Icons.pie_chart),
+          icon: const Icon(AppSymbols.pieChart),
           label: l10n.budgetTitle,
         ),
         NavigationDestination(
-          icon: const Icon(Icons.person_outline),
-          selectedIcon: const Icon(Icons.person),
+          icon: const Icon(AppSymbols.person),
           label: l10n.profileTitle,
         ),
       ],
@@ -224,35 +226,35 @@ class _ApplicationSidebar extends ConsumerWidget {
                     _SidebarDestination(
                       expanded: expanded,
                       label: l10n.dashboardTitle,
-                      icon: Icons.dashboard_outlined,
+                      icon: AppSymbols.dashboard,
                       selected: navigationShell.currentIndex == 0,
                       onTap: () => _goToBranch(0),
                     ),
                     _SidebarDestination(
                       expanded: expanded,
                       label: l10n.transactionsTabLabel,
-                      icon: Icons.receipt_long_outlined,
+                      icon: AppSymbols.receiptLong,
                       selected: navigationShell.currentIndex == 2,
                       onTap: () => _goToBranch(2),
                     ),
                     _SidebarDestination(
                       expanded: expanded,
                       label: l10n.accountsTitle,
-                      icon: Icons.account_balance_wallet_outlined,
+                      icon: AppSymbols.accountBalanceWallet,
                       selected: navigationShell.currentIndex == 1,
                       onTap: () => _goToBranch(1),
                     ),
                     _SidebarDestination(
                       expanded: expanded,
                       label: l10n.budgetTitle,
-                      icon: Icons.pie_chart_outline,
+                      icon: AppSymbols.pieChart,
                       selected: navigationShell.currentIndex == 4,
                       onTap: () => _goToBranch(4),
                     ),
                     _SidebarDestination(
                       expanded: expanded,
                       label: l10n.categoriesTitle,
-                      icon: Icons.category_outlined,
+                      icon: AppSymbols.category,
                       selected: navigationShell.currentIndex == 3,
                       onTap: () => _goToBranch(3),
                     ),
@@ -260,27 +262,27 @@ class _ApplicationSidebar extends ConsumerWidget {
                     _SidebarDestination(
                       expanded: expanded,
                       label: l10n.reportsTitle,
-                      icon: Icons.bar_chart_rounded,
+                      icon: AppSymbols.barChart,
                       onTap: () => context.push(AppRoutes.reports),
                     ),
                     _SidebarDestination(
                       expanded: expanded,
                       label: l10n.savingsGoalsTitle,
-                      icon: Icons.savings_outlined,
+                      icon: AppSymbols.savings,
                       onTap: () => context.push(AppRoutes.savingsGoals),
                     ),
                     const _SidebarSectionDivider(),
                     _SidebarDestination(
                       expanded: expanded,
                       label: 'Recurring transactions',
-                      icon: Icons.repeat_rounded,
+                      icon: AppSymbols.repeat,
                       enabled: false,
                       trailing: expanded ? const _ComingSoonPill() : null,
                     ),
                     _SidebarDestination(
                       expanded: expanded,
                       label: 'Bills & reminders',
-                      icon: Icons.notifications_none_rounded,
+                      icon: AppSymbols.notificationsNone,
                       enabled: false,
                       trailing: expanded ? const _ComingSoonPill() : null,
                     ),
@@ -291,7 +293,7 @@ class _ApplicationSidebar extends ConsumerWidget {
               _SidebarDestination(
                 expanded: expanded,
                 label: l10n.settingsTitle,
-                icon: Icons.settings_outlined,
+                icon: AppSymbols.settings,
                 onTap: () => context.push(AppRoutes.settings),
               ),
               _SidebarProfile(
@@ -523,7 +525,7 @@ class _SidebarProfile extends StatelessWidget {
                 ),
               ),
             ),
-            Icon(Icons.more_horiz_rounded, color: colorScheme.onSurfaceVariant),
+            Icon(AppSymbols.moreHoriz, color: colorScheme.onSurfaceVariant),
           ],
         ],
       ),

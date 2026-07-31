@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../constants/app_color_key.dart';
+import '../constants/app_symbols.dart';
 
 /// A labeled row of [AppColorKey] swatches. Shared by Accounts and (later)
 /// Categories so both features pick from the exact same curated palette.
@@ -75,7 +76,7 @@ class _ColorSwatch extends StatelessWidget {
               : null,
         ),
         child: isSelected
-            ? const Icon(Icons.check, color: Colors.white, size: 20)
+            ? const Icon(AppSymbols.check, color: Colors.white, size: 20)
             : null,
       ),
     );
