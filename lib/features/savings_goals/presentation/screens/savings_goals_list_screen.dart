@@ -66,22 +66,54 @@ class SavingsGoalsListScreen extends ConsumerWidget {
               );
             }
 
-            return ListView.separated(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                AppSpacing.md,
-                AppSpacing.md,
-                AppSpacing.xxl,
-              ),
-              itemCount: progressList.length,
-              separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
-              itemBuilder: (context, index) {
-                final progress = progressList[index];
-                return GoalCard(
-                  progress: progress,
-                  onTap: () => context.push(
-                    AppRoutes.savingsGoalDetailPath(progress.goal.id),
+            Widget buildCard(int index) {
+              final progress = progressList[index];
+              return GoalCard(
+                progress: progress,
+                onTap: () => context.push(
+                  AppRoutes.savingsGoalDetailPath(progress.goal.id),
+                ),
+              );
+            }
+
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                // Content width (not window width) drives the column count,
+                // same pattern already used by Accounts/Budgets/Dashboard —
+                // one implementation serves phones, tablets, and desktop.
+                final columns = (constraints.maxWidth / 360).floor().clamp(
+                  1,
+                  3,
+                );
+                if (columns == 1) {
+                  return ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.md,
+                      AppSpacing.md,
+                      AppSpacing.md,
+                      AppSpacing.xxl,
+                    ),
+                    itemCount: progressList.length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(height: AppSpacing.sm),
+                    itemBuilder: (context, index) => buildCard(index),
+                  );
+                }
+                return GridView.builder(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.md,
+                    AppSpacing.md,
+                    AppSpacing.md,
+                    AppSpacing.xxl,
                   ),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: columns,
+                    crossAxisSpacing: AppSpacing.sm,
+                    mainAxisSpacing: AppSpacing.sm,
+                    childAspectRatio: 1.5,
+                  ),
+                  itemCount: progressList.length,
+                  itemBuilder: (context, index) => buildCard(index),
                 );
               },
             );

@@ -302,6 +302,93 @@ coverage — see the existing "offline mutation fallback" test group in
 transaction shape named in the audit). Large-value/fractional-currency
 summation precision was not specifically re-tested this pass either.
 
+## Responsive coverage audit (done — one real fix, rest already covered)
+
+Audited every one of the app's 22 screens (`lib/features/*/presentation/
+screens/*.dart`) for responsive treatment, since the completion-mission
+spec asked for a per-screen inventory rather than assuming coverage.
+Screens use one of four legitimate patterns, not just `ResponsiveCenter`:
+
+- **Multi-column `LayoutBuilder`-driven grid** (content-width breakpoints,
+  1→2→3 columns): Dashboard, Accounts, Budgets, Transactions (summary
+  row) — all built in earlier product-polish phases.
+- **`ResponsiveCenter` only** (content-width cap, deliberately single-
+  column): Categories (drag-to-reorder has no unambiguous 2D-grid
+  semantics — a deliberate, already-documented exception), Reports,
+  Settings.
+- **Hand-rolled `ConstrainedBox(maxWidth: ...)`**, not the shared
+  `ResponsiveCenter` widget but equally real width capping: every form
+  screen (Account/Budget/Category/SavingsGoal/Transaction — all
+  `maxWidth: 520`, a consistent, repeated pattern), every auth screen via
+  the shared `AuthScaffold` (`maxWidth: 440`), `profile_screen.dart`
+  (`maxWidth: 440`), `legal_document_page.dart` (`maxWidth: 850`, a
+  reading-appropriate width for legal text).
+- **`Center` + `Column(mainAxisSize: MainAxisSize.min)`**, inherently
+  content-sized rather than stretching at any width: `lock_screen.dart`,
+  `splash_screen.dart` — genuinely fine as-is, not a gap.
+
+**One real gap found and fixed**: `savings_goals_list_screen.dart` was
+`ResponsiveCenter`-only despite being a card-based list exactly like
+Accounts before its own grid pass — same `GoalCard` shape, same
+`ListView.separated`. Converted to the identical `LayoutBuilder`-driven
+1→2→3-column grid pattern (`childAspectRatio: 1.5`, chosen but **not
+tuned against a real rendered screen** — same standing caveat Budget's
+own grid launched with). The existing
+`savings_goals_list_screen_test.dart` still passes unchanged.
+
+`lib/features/landing/` (`landing_page.dart`, `legal_document_page.dart`)
+is intentionally excluded from this audit's "gap" framing — it already
+has its own extensive `LayoutBuilder`-based responsive system (7 call
+sites) as the public marketing surface's established convention, same
+reasoning as its icon/color-token exemption elsewhere in this file.
+
+**Not done this pass**: visual verification of any of the above at the
+actual required test widths (320/375/600/768/1024/1280/1440px) — this
+audit is code-level only, same standing limitation as every other UI
+claim in this project's history without a real device/browser.
+
+## Phase 4 (functional completion pass) — started, not exhaustive
+
+Audited every screen for the presence of loading/empty/error states and
+for fire-and-forget controller calls missing error handling (the exact
+class of bug `profile_screen.dart`'s old logout button had — see the
+earlier privacy/security phase). The loading/empty/error audit found
+nothing new: every "0" in an automated sweep was a legitimate non-gap
+(forms and static pages don't need list-style states). The
+fire-and-forget sweep found exactly two other bare controller calls in
+the whole app (`savings_goals_list_screen.dart`'s archive-filter toggle,
+`lock_screen.dart`'s post-biometric unlock) — both confirmed synchronous,
+local, and failure-free by reading them directly, not assumed.
+
+**Real, concrete gap closed**: `profile_screen.dart` had **zero test
+coverage** despite this session adding real new branching logic to it
+(the logout pending-writes guard) — a genuine "test coverage" gap per the
+audit's own standard ("never label a feature complete based only on a
+screen existing"). Added `profile_screen_test.dart`: 4 tests covering
+name/email display, logout success, a generic logout failure, and the
+specific pending-writes failure message (confirms the raw datasource
+message is never shown verbatim to the user — it's mapped to the
+localized string). Also closed `register_screen.dart`'s **complete
+absence of any test** (registration is a launch-blocking flow) with
+`register_screen_test.dart`: 4 tests covering empty-form validation,
+confirm-password mismatch, successful submission, and a failure
+snackbar.
+
+`flutter analyze` — 0 issues. Full suite now includes these 8 new tests.
+
+**Still genuinely untested** (not started this pass — a full
+feature-by-feature pass is large, separate scope): `forgot_password_screen.dart`,
+`verify_email_screen.dart`, `lock_screen.dart`, `legal_document_page.dart`,
+`account_form_screen.dart`, `budget_form_screen.dart`,
+`savings_goal_detail_screen.dart`, `savings_goal_form_screen.dart`. None
+of these were found to have a *known* bug during this pass — they're
+listed here as coverage gaps, not confirmed defects. A true Phase 4
+(feature-by-feature UI/data/state/navigation/validation/loading/empty/
+error/offline/localization/accessibility/responsive/dark-light/test-
+coverage matrix, per the completion-mission spec) remains open and would
+still need real device/browser verification for its non-code-level
+checks regardless of how much further test-writing happens here.
+
 ## Security & data
 
 - **Deep-linkable edit routes.** Account/Category/Budget/Transaction edit
