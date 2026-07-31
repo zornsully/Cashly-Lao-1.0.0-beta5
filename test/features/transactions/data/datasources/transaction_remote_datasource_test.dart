@@ -721,6 +721,99 @@ void main() {
       expect(march.first.date, DateTime(2026, 3, 20));
       expect(march.last.date, DateTime(2026, 3, 5));
     });
+
+    test('a December month range correctly excludes January of the next '
+        'year (year-boundary correctness)', () async {
+      final accountId = await seedAccount(1000);
+
+      await dataSource.createTransaction(
+        accountId: accountId,
+        categoryId: 'cat-1',
+        type: TransactionType.expense,
+        amount: 10,
+        date: DateTime(2026, 12, 31, 23, 59),
+        note: 'still December',
+      );
+      await dataSource.createTransaction(
+        accountId: accountId,
+        categoryId: 'cat-1',
+        type: TransactionType.expense,
+        amount: 10,
+        date: DateTime(2027, 1, 1),
+        note: 'next January',
+      );
+
+      final december = await dataSource
+          .watchTransactionsForMonth(DateTime(2026, 12))
+          .first;
+
+      expect(december, hasLength(1));
+      expect(december.single.note, 'still December');
+    });
+
+    test(
+      'a leap-year February range includes Feb 29 but excludes March 1',
+      () async {
+        final accountId = await seedAccount(1000);
+
+        // 2028 is a leap year.
+        await dataSource.createTransaction(
+          accountId: accountId,
+          categoryId: 'cat-1',
+          type: TransactionType.expense,
+          amount: 10,
+          date: DateTime(2028, 2, 29, 12),
+          note: 'leap day',
+        );
+        await dataSource.createTransaction(
+          accountId: accountId,
+          categoryId: 'cat-1',
+          type: TransactionType.expense,
+          amount: 10,
+          date: DateTime(2028, 3, 1),
+          note: 'March',
+        );
+
+        final february = await dataSource
+            .watchTransactionsForMonth(DateTime(2028, 2))
+            .first;
+
+        expect(february, hasLength(1));
+        expect(february.single.note, 'leap day');
+      },
+    );
+
+    test(
+      'a non-leap-year February range ends on the 28th, not the 29th',
+      () async {
+        final accountId = await seedAccount(1000);
+
+        // 2026 is not a leap year — Feb has 28 days.
+        await dataSource.createTransaction(
+          accountId: accountId,
+          categoryId: 'cat-1',
+          type: TransactionType.expense,
+          amount: 10,
+          date: DateTime(2026, 2, 28, 23, 59),
+          note: 'last day of Feb',
+        );
+        await dataSource.createTransaction(
+          accountId: accountId,
+          categoryId: 'cat-1',
+          type: TransactionType.expense,
+          amount: 10,
+          date: DateTime(2026, 3, 1),
+          note: 'March',
+        );
+
+        final february = await dataSource
+            .watchTransactionsForMonth(DateTime(2026, 2))
+            .first;
+
+        expect(february, hasLength(1));
+        expect(february.single.note, 'last day of Feb');
+      },
+    );
   });
 
   group('watchTransactionsInRange', () {

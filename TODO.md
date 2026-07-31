@@ -263,6 +263,45 @@ Google Sign-In, and push-notification-related classes. If anything breaks,
 add the specific missing keep rule to `proguard-rules.pro` — don't disable
 minification wholesale to make the symptom go away.
 
+## Financial accuracy and time tests: month/year-boundary + leap-year (done)
+
+**What was done**: audited the actual month-range/month-navigation logic
+(used by Transactions, Budget, and Reports — all three share the identical
+`DateTime(year, month ± 1)` pattern) and added real regression coverage
+that was genuinely missing before this pass:
+
+- `transaction_remote_datasource_test.dart` — 3 new tests on
+  `watchTransactionsForMonth`: a December range correctly excludes the
+  next January (year-boundary), a leap-year (2028) February range
+  includes Feb 29 but excludes March 1, and a non-leap-year (2026)
+  February range ends on the 28th, not a fabricated 29th.
+- New `selected_transactions_month_test.dart`,
+  `selected_budget_month_test.dart`, `selected_report_month_test.dart` —
+  each notifier's `previousMonth()`/`nextMonth()` tested crossing a real
+  year boundary (January → previous December, December → next January).
+
+All 9 new tests pass, confirming Dart's `DateTime` constructor already
+normalizes out-of-range month values correctly (`DateTime(year, 0)` rolls
+back to December of the previous year, `DateTime(year, 13)` rolls forward
+to January of the next year) — this was a real, previously-unverified
+assumption this codebase's date-range code relied on everywhere, not a bug
+that needed fixing.
+
+**Asia/Vientiane timezone / UTC conversion**: already deliberately scoped
+and tested on the server side (`functions/src/lib/ictCalendar.ts` +
+`ictCalendar.test.ts`, part of the existing 57 Functions tests) — hardcodes
+ICT (UTC+7, no DST) since Cloud Functions have no device-local timezone.
+The Dart client side uses local `DateTime` (device timezone) for all
+month/day boundaries — an accepted, already-documented simplification
+(see that file's own doc comment), not an untested gap.
+
+**Not covered by this pass**: duplicate-offline-submission and
+concurrent-update financial-accuracy scenarios (both already have some
+coverage — see the existing "offline mutation fallback" test group in
+`transaction_remote_datasource_test.dart` — but not exhaustively for every
+transaction shape named in the audit). Large-value/fractional-currency
+summation precision was not specifically re-tested this pass either.
+
 ## Security & data
 
 - **Deep-linkable edit routes.** Account/Category/Budget/Transaction edit
