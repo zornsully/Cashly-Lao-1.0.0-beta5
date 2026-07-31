@@ -109,30 +109,32 @@ wasn't the right shape for it anyway:
 - **Restore purchases** flow for a user who reinstalls or switches
   devices.
 
-## Cloud Functions deployment (Blaze plan decision needed)
+## Cloud Functions deployment — decided (2026-08-01): skip Blaze, stay on Spark
 
-**Reason deferred**: Cloud Functions 2nd-gen (everything in `functions/`)
-requires the paid Firebase Blaze plan — a hard platform requirement, not a
-configuration choice — which conflicts with this project's Spark-only
-free-tier policy unless the owner explicitly approves the upgrade. See
-`docs/CLOUD_FUNCTIONS_STATUS.md` for the full writeup.
+**Decision**: the owner chose not to upgrade to Blaze. Cloud Functions
+2nd-gen (everything in `functions/`) requires the paid plan — a hard
+platform requirement, not a configuration choice — and the FCM backstop
+wasn't judged worth it. This is now closed, not pending; see
+`docs/CLOUD_FUNCTIONS_STATUS.md` for the full record.
 
-**Impact**: the FCM push backstop (notifications when the app is fully
-closed) and `onUserDeleted`'s server-side cleanup of `notificationState`
-(the one user-owned collection with literally no client deletion path,
-since rules deny client access to it) are almost certainly not live in
-production today. Core financial correctness is unaffected — nothing
-balance/budget/report-related depends on a server.
+**Consequences**: the FCM push backstop (notifications when the app is
+fully closed) and `onUserDeleted`'s server-side cleanup stay permanently
+inactive under this policy. `functions/` remains in the repo, built and
+tested, in case a future separate decision reopens this — no script
+should deploy it without that. Core financial correctness is unaffected —
+nothing balance/budget/report-related depends on a server.
 
-**Required dependency/approval**: explicit owner approval to upgrade the
-`cashly-lao` Firebase project to Blaze, then a real `firebase login`
-session to run `firebase deploy --only functions --project cashly-lao`.
+**The `notificationState` account-deletion gap this item used to flag
+turns out to be moot**: that collection is written only by these Cloud
+Functions (via the Admin SDK; rules deny client access entirely). If the
+functions never run, no document is ever created there, so there's
+nothing for `onUserDeleted` to have needed to clean up — no rules change
+or alternate mechanism needed. Re-examine only if Functions deployment is
+ever reopened.
 
-**Suggested next action**: owner decides whether the backstop is worth the
-Blaze upgrade; if yes, add a `-ApproveFunctionsDeployment`-style explicit
-switch to a deploy script (mirroring `publish_web_metadata.ps1`'s existing
-`-ApproveSparkDeployment` pattern) rather than ever making Functions
-deployment implicit in another script.
+**Reopening this later**: needs a fresh, explicit, separate owner
+approval — same standard as every other paid-plan/signing/publishing
+decision in this project.
 
 ## Web security headers — added, not yet live-verified
 

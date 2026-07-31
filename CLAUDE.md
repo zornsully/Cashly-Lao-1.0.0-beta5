@@ -2577,15 +2577,16 @@ reporting, notifications, and export — has since shipped:
   each alert condition server-side and pushing only when a client-written
   presence heartbeat — `lib/core/providers/presence_providers.dart` —
   shows local's own listeners aren't currently running) is fully built
-  and unit-tested, but **its live deployment status is unverified** — see
-  [Cloud Functions deployment status](docs/CLOUD_FUNCTIONS_STATUS.md).
-  Cloud Functions 2nd-gen (what every function in `functions/` uses)
-  requires the paid Firebase Blaze plan, which conflicts with this
-  project's Spark-only free-tier policy unless/until the owner
-  explicitly approves that upgrade — see that doc before assuming the
-  push backstop is actually reaching a real device. See `ROADMAP.md`'s
-  "Beyond v1" section for the full design, including the dedup mechanism
-  between the two paths.
+  and unit-tested, but **the owner has decided to stay on Spark and not
+  deploy it** (2026-08-01) — Cloud Functions 2nd-gen (what every function
+  in `functions/` uses) requires the paid Firebase Blaze plan, which
+  conflicts with this project's Spark-only free-tier policy, and the
+  owner chose not to upgrade for it. Treat the FCM-closed-app backstop as
+  permanently not live unless a future, separate owner decision revisits
+  this — see [Cloud Functions deployment status](docs/CLOUD_FUNCTIONS_STATUS.md)
+  for the full record. See `ROADMAP.md`'s "Beyond v1" section for the
+  full design, including the dedup mechanism between the two paths, kept
+  for reference if this is ever revisited.
 - **Export**: CSV, built directly on `MonthlyReport.toExportRows()` as
   planned. PDF is the one format still open — see `TODO.md`.
 
