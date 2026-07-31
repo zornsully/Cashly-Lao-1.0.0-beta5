@@ -95,6 +95,25 @@ The deploy command is always limited to `hosting:cashly-lao`; it does not
 deploy Functions, Firestore rules, or an APK. The script fetches and validates
 the live manifest after deployment.
 
+## Web service-worker strategy (deliberate, unmodified)
+
+`web/` has no hand-written or overridden service-worker code — no custom
+`flutter_service_worker.js`, no custom registration logic in `index.html`
+(it loads `flutter_bootstrap.js` with no `serviceWorkerSettings` override).
+This is the deliberate choice, not an oversight: Flutter's own default web
+bootstrap already generates a fresh `flutter_service_worker.js` on every
+`flutter build web --release`, keyed by a content hash of the build's own
+assets, so a redeploy's new JS/asset hashes don't collide with a
+previously cached version — the standard mechanism Flutter's web tooling
+uses to avoid serving stale JS after a deploy. Hand-rolling a custom
+service worker on top of that would risk exactly the stale-asset problem
+it's meant to prevent, without a corresponding benefit for this app (no
+custom offline-first experience is scoped for the public website).
+**Not yet verified through an actual redeploy cycle** in this environment
+(no live `firebase deploy` session available) — confirm on the next real
+website deploy that a hard-refreshed browser picks up the new build
+rather than a stale cached one.
+
 ## Website-only content deploys
 
 A second, narrower path exists for changes that are only about

@@ -617,6 +617,8 @@
   "confirmYourPasswordLabel": "Confirm your password",
   "deleteAccountConfirmButton": "Delete Account",
   "deleteUserAccountFailedMessage": "Could not delete your account.",
+  "logoutFailedMessage": "Could not sign out. Please try again.",
+  "logoutPendingWritesMessage": "Some changes haven't finished syncing yet. Connect to the internet and try again before signing out.",
   "addYourNameLabel": "Add your name",
   "emailVerifiedLabel": "Email verified",
   "notVerifiedLabel": "Not verified",

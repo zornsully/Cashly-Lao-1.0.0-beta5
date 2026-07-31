@@ -228,6 +228,11 @@ abstract final class AppSymbols {
     fontFamily: _family,
     fontPackage: _package,
   );
+  static const IconData iosShare = IconData(
+    0xe6b8,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
   static const IconData category = IconData(
     0xe72c,
     fontFamily: _family,

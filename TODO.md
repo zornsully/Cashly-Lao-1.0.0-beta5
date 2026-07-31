@@ -109,6 +109,138 @@ wasn't the right shape for it anyway:
 - **Restore purchases** flow for a user who reinstalls or switches
   devices.
 
+## Cloud Functions deployment (Blaze plan decision needed)
+
+**Reason deferred**: Cloud Functions 2nd-gen (everything in `functions/`)
+requires the paid Firebase Blaze plan — a hard platform requirement, not a
+configuration choice — which conflicts with this project's Spark-only
+free-tier policy unless the owner explicitly approves the upgrade. See
+`docs/CLOUD_FUNCTIONS_STATUS.md` for the full writeup.
+
+**Impact**: the FCM push backstop (notifications when the app is fully
+closed) and `onUserDeleted`'s server-side cleanup of `notificationState`
+(the one user-owned collection with literally no client deletion path,
+since rules deny client access to it) are almost certainly not live in
+production today. Core financial correctness is unaffected — nothing
+balance/budget/report-related depends on a server.
+
+**Required dependency/approval**: explicit owner approval to upgrade the
+`cashly-lao` Firebase project to Blaze, then a real `firebase login`
+session to run `firebase deploy --only functions --project cashly-lao`.
+
+**Suggested next action**: owner decides whether the backstop is worth the
+Blaze upgrade; if yes, add a `-ApproveFunctionsDeployment`-style explicit
+switch to a deploy script (mirroring `publish_web_metadata.ps1`'s existing
+`-ApproveSparkDeployment` pattern) rather than ever making Functions
+deployment implicit in another script.
+
+## Web security headers — added, not yet live-verified
+
+**What was done**: `firebase.json`'s Hosting config now sends
+`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`,
+`Permissions-Policy`, `Strict-Transport-Security`, and a
+`Content-Security-Policy` scoped to exactly the Firebase Auth/Firestore/
+Analytics/CanvasKit/Google-Sign-In domains the app actually calls.
+
+**Reason not fully closed**: headers only take effect once actually
+deployed to Firebase Hosting, which stays behind this project's website
+deploy approval gate. The CSP domain list was built by reading
+`pubspec.yaml`'s Firebase/Google dependencies and this repo's own
+Firebase project config, not by observing live network requests (no
+running browser session in this environment).
+
+**Required next step, after the next website deploy**: fetch
+`https://cashly-lao.web.app/` and check the response headers are present;
+open the deployed site and confirm in the browser console that nothing is
+CSP-blocked — specifically Firebase Auth (including the Google Sign-In
+popup/redirect), Firestore's `wss`/`https` connections, CanvasKit's `.wasm`
+fetch from `gstatic.com`, and Analytics. If anything is blocked, widen only
+the specific directive that failed, re-deploy, and re-check — never widen
+speculatively.
+
+## Icons.* → AppSymbols.* sweep (remaining scope, counted)
+
+**Reason deferred**: large and mechanical (87 raw `Icons.*` references across
+17 files as of this pass), and several of the files involved are
+high-blast-radius shared widgets (`error_view.dart`, `sync_status_banner.dart`,
+`app_password_field.dart`, `home_shell_screen.dart` — the bottom-nav shell
+used on every authenticated screen). A rushed pass risked exactly what the
+audit warned against: losing an accessibility label, icon weight, or
+navigation-state meaning during blind replacement. Fixed in this pass only
+the two icons already named as a specific deferred item from the Reports
+phase (`reports_screen.dart`'s export button and empty-state icon — done,
+see `AppSymbols.iosShare`/`insertChartOutlined`).
+
+**Remaining count by file** (each needs its own AppSymbols constant lookup
+from the installed `material_symbols_icons` package — never guessed — for
+any icon without an existing equivalent):
+
+- `lib/core/routing/home_shell_screen.dart` — 23 (bottom-nav shell, every
+  authenticated screen embeds this — do first, carefully, with a real
+  on-device check of tab icons/selected-state visuals before/after)
+- `lib/features/landing/presentation/screens/landing_page.dart` — 21
+  (**likely exempt** — this page has never used the `AppSpacing`/
+  `AppSymbols` design-token system; it's the public marketing page with
+  its own established local convention, same reasoning already applied to
+  its color/spacing choices. Confirm this reasoning still holds before
+  touching it, don't assume.)
+- `lib/features/financial_insights/presentation/widgets/financial_insight_card.dart` — 14
+- `lib/features/auth/presentation/screens/profile_screen.dart` — 7
+- `lib/core/widgets/app_password_field.dart` — 3
+- `lib/features/savings_goals/presentation/screens/savings_goal_detail_screen.dart` — 4
+- `lib/features/savings_goals/presentation/screens/savings_goals_list_screen.dart` — 4
+- `lib/features/auth/presentation/screens/forgot_password_screen.dart` — 2
+- `lib/features/auth/presentation/screens/register_screen.dart` — 2
+- `lib/core/widgets/error_view.dart` — 2
+- `lib/core/widgets/month_selector_header.dart` — 2
+- `lib/core/widgets/color_picker_field.dart` — 1
+- `lib/core/widgets/sync_status_banner.dart` — 1
+- `lib/features/accounts/presentation/screens/account_form_screen.dart` — 1
+- `lib/features/auth/presentation/screens/login_screen.dart` — 1
+- `lib/features/auth/presentation/screens/verify_email_screen.dart` — 1
+- `lib/features/landing/presentation/screens/legal_document_page.dart` — 1
+  (same landing-page exemption question as above)
+
+**Suggested next action**: one file at a time, starting with the shared
+widgets (`error_view.dart`, `sync_status_banner.dart`, `month_selector_header.dart`,
+`color_picker_field.dart`, `app_password_field.dart` — all small, all
+high-reuse, do these first since a mistake here is the highest-leverage
+one to catch), then `home_shell_screen.dart` on its own with real
+on-device verification, then the remaining feature screens. Resolve the
+landing-page exemption question explicitly (with the project owner, since
+it's a design-system-scope decision, not a mechanical one) before deciding
+whether its 22 icons are in or out of scope.
+
+## Android R8/backup hardening — configured, completely unverified (no Android SDK here)
+
+**What was done**: `android/app/build.gradle.kts`'s release build type now
+enables `isMinifyEnabled`/`isShrinkResources` with a new
+`android/app/proguard-rules.pro` (Crashlytics line-number keep rules +
+Play Core dontwarn, since Firebase/Google Sign-In/flutter_local_notifications
+already ship their own consumer ProGuard rules bundled in their AARs).
+`AndroidManifest.xml` now sets `android:allowBackup="false"` so Firestore's
+local cache (real financial data) can never be swept into Android Auto
+Backup.
+
+**Reason this is flagged, not just logged as done**: this environment has
+**no Android SDK at all** — `flutter build apk --release` was attempted and
+failed immediately with `[!] No Android SDK found`, before Gradle ever ran.
+That means **the R8/minification change has never actually been built**,
+let alone smoke-tested on a device — exactly the "enable R8 and assume
+success" mistake the audit explicitly warned against. Do not treat this as
+verified.
+
+**Required next step, before this Android hardening is trusted**: on a
+machine with a real Android SDK (e.g. via `tool/prepare_manual_release.ps1`,
+which already builds both APK and AAB), run `flutter build apk --release`
+and `flutter build appbundle --release` and confirm they succeed under R8;
+then install the resulting APK on a real device or emulator and smoke-test
+login, viewing accounts/transactions (screens most likely to break under
+over-aggressive shrinking of reflection-free but plugin-heavy code paths),
+Google Sign-In, and push-notification-related classes. If anything breaks,
+add the specific missing keep rule to `proguard-rules.pro` — don't disable
+minification wholesale to make the symptom go away.
+
 ## Security & data
 
 - **Deep-linkable edit routes.** Account/Category/Budget/Transaction edit

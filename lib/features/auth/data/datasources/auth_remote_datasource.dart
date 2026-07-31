@@ -1,3 +1,11 @@
+// ignore_for_file: prefer_initializing_formals
+// Every constructor parameter here maps 1:1 to a same-named private field,
+// so `this.field` initializing-formal syntax would work for the names that
+// happen to be short — but `dart format` is free to wrap a long assignment
+// (`_waitForPendingWrites = waitForPendingWrites`) onto a second line,
+// which moves a same-line `// ignore:` comment away from the diagnostic it
+// was suppressing. A file-level ignore is the reliable fix rather than
+// four fragile per-line ones.
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter/foundation.dart';
@@ -29,13 +37,33 @@ abstract interface class AuthRemoteDataSource {
   /// for a Firebase session — same session shape as email/password sign-in.
   Future<UserModel> signInWithGoogle();
 
-  Future<void> logout();
-
   Future<void> sendPasswordResetEmail(String email);
 
   Future<void> sendEmailVerification();
 
   Future<UserModel> reloadUser();
+
+  /// Signs the current user out.
+  ///
+  /// Firestore's local persistence cache is not scoped per-user — it
+  /// survives a sign-out by default, so a second person signing into the
+  /// same device/browser profile could otherwise read the previous user's
+  /// cached financial documents before their own data ever loads. To
+  /// prevent that:
+  ///
+  /// 1. Waits (bounded — [FirebaseAuthRemoteDataSource._pendingWritesSyncTimeout])
+  ///    for any offline writes to finish reaching the server. If they can't
+  ///    be confirmed synced in time (e.g. genuinely offline with queued
+  ///    writes), this throws [AuthException] with
+  ///    `code: 'logout-pending-writes'` and does **not** sign out — an
+  ///    unsynchronized write is never discarded.
+  /// 2. Signs out of Firebase Auth.
+  /// 3. Best-effort clears the local Firestore cache so the next user on
+  ///    this device starts from an empty cache. This step never blocks or
+  ///    fails the sign-out itself — see the implementation's doc comment
+  ///    for the exact Firebase SDK behavior this relies on and why it's
+  ///    still marked best-effort.
+  Future<void> logout();
 
   Future<void> updateDisplayName(String displayName);
 
@@ -53,13 +81,32 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
     required fb.FirebaseAuth firebaseAuth,
     required FirebaseFirestore firestore,
     GoogleSignIn? googleSignIn,
-  }) : _firebaseAuth = firebaseAuth, // ignore: prefer_initializing_formals
-       _firestore = firestore, // ignore: prefer_initializing_formals
-       _googleSignIn = googleSignIn ?? GoogleSignIn.instance;
+    // Both overridable purely for testability: `fake_cloud_firestore`
+    // (used throughout this codebase's datasource tests) doesn't implement
+    // `waitForPendingWrites()`/`terminate()`, since neither has a meaningful
+    // fake-in-memory behavior to simulate. Production code always uses the
+    // real Firestore instance's own implementations (the `??` defaults
+    // below); tests inject a controllable fake instead.
+    Future<void> Function()? waitForPendingWrites,
+    Future<void> Function()? clearLocalCache,
+  }) : _firebaseAuth = firebaseAuth,
+       _firestore = firestore,
+       _googleSignIn = googleSignIn ?? GoogleSignIn.instance,
+       _waitForPendingWrites = waitForPendingWrites,
+       _clearLocalCache = clearLocalCache;
 
   final fb.FirebaseAuth _firebaseAuth;
   final FirebaseFirestore _firestore;
   final GoogleSignIn _googleSignIn;
+  final Future<void> Function()? _waitForPendingWrites;
+  final Future<void> Function()? _clearLocalCache;
+
+  /// How long [logout] will wait for queued offline writes to reach the
+  /// server before refusing to sign out. Bounded so a genuinely offline
+  /// device doesn't hang the sign-out button forever — `waitForPendingWrites`
+  /// only resolves once every currently-queued write is acknowledged by the
+  /// server, so with zero connectivity it would otherwise never complete.
+  static const _pendingWritesSyncTimeout = Duration(seconds: 8);
 
   // google_sign_in's Android implementation is *supposed* to fall back to
   // reading this from the native `default_web_client_id` string resource
@@ -258,7 +305,58 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
   }
 
   @override
-  Future<void> logout() => _firebaseAuth.signOut();
+  Future<void> logout() async {
+    final waitForWrites =
+        _waitForPendingWrites ?? _firestore.waitForPendingWrites;
+    try {
+      await waitForWrites().timeout(_pendingWritesSyncTimeout);
+    } catch (_) {
+      // Covers both a real timeout (still offline with queued writes) and
+      // any other error from `waitForPendingWrites()` — either way, sync
+      // status couldn't be confirmed, so this fails closed rather than
+      // risking a discarded offline mutation.
+      throw const AuthException(
+        "Some changes haven't finished syncing yet. Connect to the "
+        'internet and try again before signing out.',
+        code: 'logout-pending-writes',
+      );
+    }
+
+    await _firebaseAuth.signOut();
+    await _clearLocalCacheBestEffort();
+  }
+
+  /// Clears Firestore's local persistence cache so a second person signing
+  /// into this device/browser profile doesn't see the previous user's
+  /// cached financial documents before their own data loads — Firestore's
+  /// disk cache is not scoped per-user and otherwise survives sign-out.
+  ///
+  /// Relies on `terminate()` + `clearPersistence()`: per the `cloud_firestore`
+  /// plugin's documented behavior, `terminate()` safely detaches every
+  /// active listener (they simply stop emitting, they don't throw), and
+  /// `FirebaseFirestore.instance` lazily re-creates a fresh, usable instance
+  /// the next time anything accesses it — which is what lets the *next*
+  /// signed-in user's screens re-subscribe normally. This sequence has not
+  /// been exercised on a real device/browser through a full logout →
+  /// different-login cycle; verify that before relying on it in production.
+  ///
+  /// Deliberately best-effort and never rethrows: the user is already
+  /// signed out of Firebase Auth by the time this runs, so a failure here
+  /// (e.g. a listener that doesn't detach as documented) must not appear
+  /// to the user as a failed sign-out.
+  Future<void> _clearLocalCacheBestEffort() async {
+    final clear = _clearLocalCache ?? _defaultClearLocalCache;
+    try {
+      await clear();
+    } catch (_) {
+      // Best-effort — see method doc comment.
+    }
+  }
+
+  Future<void> _defaultClearLocalCache() async {
+    await _firestore.terminate();
+    await _firestore.clearPersistence();
+  }
 
   @override
   Future<void> sendPasswordResetEmail(String email) async {
@@ -394,6 +492,8 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
         FirestorePaths.categories,
         FirestorePaths.transactions,
         FirestorePaths.budgets,
+        FirestorePaths.savingsGoals,
+        FirestorePaths.smartMoneyScores,
         FirestorePaths.fcmTokens,
       ]) {
         await _deleteAllInChunks(userDoc.collection(collectionName));
@@ -408,6 +508,14 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
     } on FirebaseException catch (e) {
       throw ServerException(e.message ?? 'Could not delete your account.');
     }
+
+    // Same shared-device reasoning as `logout`'s cache clear: the deleted
+    // user's data is already gone server-side, but it can still linger in
+    // Firestore's local disk cache for whoever signs in next. No pending-
+    // writes wait needed here — every write above this point already
+    // completed (or the method would have thrown), so there's nothing left
+    // to lose by clearing immediately.
+    await _clearLocalCacheBestEffort();
   }
 
   /// Seeds `users/{uid}` only if it doesn't already exist — called after

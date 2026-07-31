@@ -1199,6 +1199,14 @@ class AppLocalizationsLo extends AppLocalizations {
   String get deleteUserAccountFailedMessage => 'ບໍ່ສາມາດລຶບບັນຊີຂອງທ່ານໄດ້.';
 
   @override
+  String get logoutFailedMessage =>
+      'ບໍ່ສາມາດອອກຈາກລະບົບໄດ້. ກະລຸນາລອງໃໝ່ອີກຄັ້ງ.';
+
+  @override
+  String get logoutPendingWritesMessage =>
+      'ການປ່ຽນແປງບາງຢ່າງຍັງຊິງຂໍ້ມູນບໍ່ສຳເລັດ. ກະລຸນາເຊື່ອມຕໍ່ອິນເຕີເນັດ ແລະ ລອງໃໝ່ອີກຄັ້ງກ່ອນອອກຈາກລະບົບ.';
+
+  @override
   String get addYourNameLabel => 'ເພີ່ມຊື່ຂອງທ່ານ';
 
   @override

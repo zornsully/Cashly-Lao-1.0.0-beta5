@@ -123,7 +123,7 @@ class ReportsScreen extends ConsumerWidget {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.ios_share),
+            icon: const Icon(AppSymbols.iosShare),
             tooltip: l10n.exportReportTooltip,
             onPressed: report != null && report.hasAnyActivity
                 ? () => _exportCsv(context, ref, report)
@@ -145,7 +145,7 @@ class ReportsScreen extends ConsumerWidget {
           data: (report) {
             if (!report.hasAnyActivity) {
               return EmptyState(
-                icon: Icons.insert_chart_outlined,
+                icon: AppSymbols.insertChartOutlined,
                 title: l10n.nothingToReportYetTitle,
                 message: l10n.nothingToReportYetMessage,
               );

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/error/failure.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/app_snackbar.dart';
 import '../../../../core/widgets/app_loading_indicator.dart';
@@ -159,6 +160,22 @@ class ProfileScreen extends ConsumerWidget {
     AppSnackbar.showError(context, message);
   }
 
+  Future<void> _logout(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l10n,
+  ) async {
+    final success = await ref.read(authControllerProvider.notifier).logout();
+
+    if (!context.mounted || success) return;
+    final failure = ref.read(authControllerProvider.notifier).failure;
+    final message =
+        failure is AuthFailure && failure.code == 'logout-pending-writes'
+        ? l10n.logoutPendingWritesMessage
+        : failure?.message ?? l10n.logoutFailedMessage;
+    AppSnackbar.showError(context, message);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userAsync = ref.watch(authStateChangesProvider);
@@ -264,8 +281,7 @@ class ProfileScreen extends ConsumerWidget {
                     DestructiveButton(
                       label: l10n.signOutButton,
                       icon: Icons.logout,
-                      onPressed: () =>
-                          ref.read(authControllerProvider.notifier).logout(),
+                      onPressed: () => _logout(context, ref, l10n),
                       isLoading: isLoading,
                     ),
                     const SizedBox(height: AppSpacing.sm),

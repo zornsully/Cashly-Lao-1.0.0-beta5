@@ -2210,6 +2210,18 @@ abstract class AppLocalizations {
   /// **'Could not delete your account.'**
   String get deleteUserAccountFailedMessage;
 
+  /// No description provided for @logoutFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not sign out. Please try again.'**
+  String get logoutFailedMessage;
+
+  /// No description provided for @logoutPendingWritesMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Some changes haven\'t finished syncing yet. Connect to the internet and try again before signing out.'**
+  String get logoutPendingWritesMessage;
+
   /// No description provided for @addYourNameLabel.
   ///
   /// In en, this message translates to:

@@ -136,29 +136,48 @@ void main() {
       await userDoc.collection('categories').add({'name': 'Food'});
       await userDoc.collection('transactions').add({'note': 'Coffee'});
       await userDoc.collection('budgets').add({'limitAmount': 100});
+      await userDoc.collection('savingsGoals').add({'name': 'New phone'});
+      await userDoc.collection('smartMoneyScores').add({
+        'totalScore': 80,
+        'maxScore': 100,
+      });
+      await userDoc.collection('fcmTokens').doc('token-1').set({
+        'platform': 'android',
+      });
     }
 
-    test('reauthenticates, then deletes the profile doc, every subcollection, '
-        'and the Firebase user — in that order', () async {
-      await seed();
+    test(
+      'reauthenticates, then deletes the profile doc, every subcollection '
+      '(accounts, categories, transactions, budgets, savings goals, Smart '
+      'Money Scores, FCM tokens), and the Firebase user — in that order',
+      () async {
+        await seed();
 
-      await dataSource.deleteAccount(password: 'correct-password');
+        await dataSource.deleteAccount(password: 'correct-password');
 
-      verify(() => user.reauthenticateWithCredential(any())).called(1);
+        verify(() => user.reauthenticateWithCredential(any())).called(1);
 
-      final userDoc = firestore.collection('users').doc('uid-1');
-      expect((await userDoc.get()).exists, isFalse);
-      for (final name in [
-        'accounts',
-        'categories',
-        'transactions',
-        'budgets',
-      ]) {
-        expect((await userDoc.collection(name).get()).docs, isEmpty);
-      }
+        final userDoc = firestore.collection('users').doc('uid-1');
+        expect((await userDoc.get()).exists, isFalse);
+        for (final name in [
+          'accounts',
+          'categories',
+          'transactions',
+          'budgets',
+          'savingsGoals',
+          'smartMoneyScores',
+          'fcmTokens',
+        ]) {
+          expect(
+            (await userDoc.collection(name).get()).docs,
+            isEmpty,
+            reason: '$name should be fully deleted',
+          );
+        }
 
-      verify(() => user.delete()).called(1);
-    });
+        verify(() => user.delete()).called(1);
+      },
+    );
 
     test(
       'throws AuthException and deletes nothing when reauthentication fails',
@@ -176,6 +195,70 @@ void main() {
         final userDoc = firestore.collection('users').doc('uid-1');
         expect((await userDoc.get()).exists, isTrue);
         verifyNever(() => user.delete());
+      },
+    );
+
+    test('best-effort clears the local Firestore cache after a successful '
+        'deletion, so the next user on this device does not see it', () async {
+      await seed();
+      var cacheCleared = false;
+      final withCacheClear = FirebaseAuthRemoteDataSource(
+        firebaseAuth: firebaseAuth,
+        firestore: firestore,
+        clearLocalCache: () async => cacheCleared = true,
+      );
+
+      await withCacheClear.deleteAccount(password: 'correct-password');
+
+      expect(cacheCleared, isTrue);
+    });
+  });
+
+  group('logout', () {
+    test('signs out and best-effort clears the local cache once pending '
+        'writes are confirmed synced', () async {
+      var cacheCleared = false;
+      final withOverrides = FirebaseAuthRemoteDataSource(
+        firebaseAuth: firebaseAuth,
+        firestore: firestore,
+        waitForPendingWrites: () async {},
+        clearLocalCache: () async => cacheCleared = true,
+      );
+      when(() => firebaseAuth.signOut()).thenAnswer((_) async {});
+
+      await withOverrides.logout();
+
+      verify(() => firebaseAuth.signOut()).called(1);
+      expect(cacheCleared, isTrue);
+    });
+
+    test(
+      'refuses to sign out — and never touches the local cache — when '
+      'pending writes cannot be confirmed synced (e.g. still offline)',
+      () async {
+        var cacheCleared = false;
+        final withOverrides = FirebaseAuthRemoteDataSource(
+          firebaseAuth: firebaseAuth,
+          firestore: firestore,
+          waitForPendingWrites: () => Future<void>.error(
+            Exception('simulated: still offline, write not acknowledged'),
+          ),
+          clearLocalCache: () async => cacheCleared = true,
+        );
+
+        await expectLater(
+          withOverrides.logout(),
+          throwsA(
+            isA<AuthException>().having(
+              (e) => e.code,
+              'code',
+              'logout-pending-writes',
+            ),
+          ),
+        );
+
+        verifyNever(() => firebaseAuth.signOut());
+        expect(cacheCleared, isFalse);
       },
     );
   });

@@ -1199,6 +1199,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteUserAccountFailedMessage => 'Could not delete your account.';
 
   @override
+  String get logoutFailedMessage => 'Could not sign out. Please try again.';
+
+  @override
+  String get logoutPendingWritesMessage =>
+      'Some changes haven\'t finished syncing yet. Connect to the internet and try again before signing out.';
+
+  @override
   String get addYourNameLabel => 'Add your name';
 
   @override
