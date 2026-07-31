@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/constants/app_currency.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/app_symbols.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/app_snackbar.dart';
 import '../../../../core/utils/currency_formatter.dart';
@@ -55,13 +56,13 @@ class SavingsGoalDetailScreen extends ConsumerWidget {
     if (!confirmed || !context.mounted) return;
 
     final notifier = ref.read(savingsGoalControllerProvider.notifier);
-    final success = await notifier.deleteGoal(goal.id);
+    final result = await notifier.deleteGoal(goal.id);
 
     if (!context.mounted) return;
-    if (success) {
+    if (result.success) {
       context.pop();
     } else {
-      final message = notifier.failure?.message ?? l10n.deleteGoalFailedMessage;
+      final message = result.failure?.message ?? l10n.deleteGoalFailedMessage;
       AppSnackbar.showError(context, message);
     }
   }
@@ -73,13 +74,13 @@ class SavingsGoalDetailScreen extends ConsumerWidget {
   ) async {
     final l10n = AppLocalizations.of(context)!;
     final notifier = ref.read(savingsGoalControllerProvider.notifier);
-    final success = goal.isArchived
+    final result = goal.isArchived
         ? await notifier.unarchiveGoal(goal.id)
         : await notifier.archiveGoal(goal.id);
 
     if (!context.mounted) return;
-    if (!success) {
-      final message = notifier.failure?.message ?? l10n.saveGoalFailedMessage;
+    if (!result.success) {
+      final message = result.failure?.message ?? l10n.saveGoalFailedMessage;
       AppSnackbar.showError(context, message);
     }
   }
@@ -141,7 +142,7 @@ class SavingsGoalDetailScreen extends ConsumerWidget {
             ? null
             : [
                 IconButton(
-                  icon: const Icon(Icons.edit_outlined),
+                  icon: const Icon(AppSymbols.edit),
                   tooltip: l10n.goalFormEditTitle,
                   onPressed: () => context.push(
                     AppRoutes.savingsGoalEditPath(loadedProgress.goal.id),
@@ -269,7 +270,7 @@ class _DetailBody extends ConsumerWidget {
         const SizedBox(height: AppSpacing.lg),
         if (progress.account.isArchived) ...[
           _InfoBanner(
-            icon: Icons.archive_outlined,
+            icon: AppSymbols.archive,
             message: l10n.linkedAccountArchivedMessage,
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -286,7 +287,7 @@ class _DetailBody extends ConsumerWidget {
         if (isDue) ...[
           const SizedBox(height: AppSpacing.md),
           _InfoBanner(
-            icon: Icons.notifications_active_outlined,
+            icon: AppSymbols.notificationsActive,
             message: l10n.contributionDueBannerMessage(
               CurrencyFormatter.format(goal.autoContributionAmount!, currency),
             ),
@@ -300,7 +301,7 @@ class _DetailBody extends ConsumerWidget {
         const SizedBox(height: AppSpacing.lg),
         FilledButton.icon(
           onPressed: () => onContribute(),
-          icon: const Icon(Icons.add),
+          icon: const Icon(AppSymbols.addRounded),
           label: Text(l10n.contributeButton),
         ),
         const SizedBox(height: AppSpacing.xl),

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/app_symbols.dart';
+import '../../../../core/error/failure.dart';
 import '../../../../core/utils/app_snackbar.dart';
 import '../../../../core/widgets/primary_button.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -81,7 +83,16 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
   }
 
   Future<void> _signOut() async {
-    await ref.read(authControllerProvider.notifier).logout();
+    final l10n = AppLocalizations.of(context)!;
+    final success = await ref.read(authControllerProvider.notifier).logout();
+
+    if (!mounted || success) return;
+    final failure = ref.read(authControllerProvider.notifier).failure;
+    final message =
+        failure is AuthFailure && failure.code == 'logout-pending-writes'
+        ? l10n.logoutPendingWritesMessage
+        : failure?.message ?? l10n.logoutFailedMessage;
+    AppSnackbar.showError(context, message);
   }
 
   @override
@@ -95,7 +106,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
       subtitle: l10n.verifyEmailSubtitle(email),
       children: [
         Icon(
-          Icons.mark_email_unread_outlined,
+          AppSymbols.markEmailUnread,
           size: 64,
           color: Theme.of(context).colorScheme.primary,
         ),

@@ -149,7 +149,7 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
                       label: l10n.accountNameLabel,
                       controller: _nameController,
                       textInputAction: TextInputAction.next,
-                      prefixIcon: Icons.badge_outlined,
+                      prefixIcon: AppSymbols.badge,
                       validator: (value) => Validators.requiredField(
                         context,
                         value,

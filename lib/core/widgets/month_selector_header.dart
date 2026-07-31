@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../constants/app_spacing.dart';
+import '../constants/app_symbols.dart';
 
 /// Shared prev/month-label/next header for every screen that browses one
 /// calendar month at a time (Transactions, Budget, Reports) — each has its
@@ -33,7 +34,7 @@ class MonthSelectorHeader extends StatelessWidget
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           IconButton(
-            icon: const Icon(Icons.chevron_left),
+            icon: const Icon(AppSymbols.chevronLeft),
             tooltip: l10n.previousMonthTooltip,
             onPressed: onPrevious,
           ),
@@ -46,7 +47,7 @@ class MonthSelectorHeader extends StatelessWidget
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.chevron_right),
+            icon: const Icon(AppSymbols.chevronRight),
             tooltip: l10n.nextMonthTooltip,
             onPressed: onNext,
           ),

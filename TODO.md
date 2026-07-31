@@ -109,30 +109,32 @@ wasn't the right shape for it anyway:
 - **Restore purchases** flow for a user who reinstalls or switches
   devices.
 
-## Cloud Functions deployment (Blaze plan decision needed)
+## Cloud Functions deployment — decided (2026-08-01): skip Blaze, stay on Spark
 
-**Reason deferred**: Cloud Functions 2nd-gen (everything in `functions/`)
-requires the paid Firebase Blaze plan — a hard platform requirement, not a
-configuration choice — which conflicts with this project's Spark-only
-free-tier policy unless the owner explicitly approves the upgrade. See
-`docs/CLOUD_FUNCTIONS_STATUS.md` for the full writeup.
+**Decision**: the owner chose not to upgrade to Blaze. Cloud Functions
+2nd-gen (everything in `functions/`) requires the paid plan — a hard
+platform requirement, not a configuration choice — and the FCM backstop
+wasn't judged worth it. This is now closed, not pending; see
+`docs/CLOUD_FUNCTIONS_STATUS.md` for the full record.
 
-**Impact**: the FCM push backstop (notifications when the app is fully
-closed) and `onUserDeleted`'s server-side cleanup of `notificationState`
-(the one user-owned collection with literally no client deletion path,
-since rules deny client access to it) are almost certainly not live in
-production today. Core financial correctness is unaffected — nothing
-balance/budget/report-related depends on a server.
+**Consequences**: the FCM push backstop (notifications when the app is
+fully closed) and `onUserDeleted`'s server-side cleanup stay permanently
+inactive under this policy. `functions/` remains in the repo, built and
+tested, in case a future separate decision reopens this — no script
+should deploy it without that. Core financial correctness is unaffected —
+nothing balance/budget/report-related depends on a server.
 
-**Required dependency/approval**: explicit owner approval to upgrade the
-`cashly-lao` Firebase project to Blaze, then a real `firebase login`
-session to run `firebase deploy --only functions --project cashly-lao`.
+**The `notificationState` account-deletion gap this item used to flag
+turns out to be moot**: that collection is written only by these Cloud
+Functions (via the Admin SDK; rules deny client access entirely). If the
+functions never run, no document is ever created there, so there's
+nothing for `onUserDeleted` to have needed to clean up — no rules change
+or alternate mechanism needed. Re-examine only if Functions deployment is
+ever reopened.
 
-**Suggested next action**: owner decides whether the backstop is worth the
-Blaze upgrade; if yes, add a `-ApproveFunctionsDeployment`-style explicit
-switch to a deploy script (mirroring `publish_web_metadata.ps1`'s existing
-`-ApproveSparkDeployment` pattern) rather than ever making Functions
-deployment implicit in another script.
+**Reopening this later**: needs a fresh, explicit, separate owner
+approval — same standard as every other paid-plan/signing/publishing
+decision in this project.
 
 ## Web security headers — added, not yet live-verified
 
@@ -161,55 +163,77 @@ speculatively.
 ## Icons.* → AppSymbols.* sweep (remaining scope, counted)
 
 **Reason deferred**: large and mechanical (87 raw `Icons.*` references across
-17 files as of this pass), and several of the files involved are
-high-blast-radius shared widgets (`error_view.dart`, `sync_status_banner.dart`,
-`app_password_field.dart`, `home_shell_screen.dart` — the bottom-nav shell
-used on every authenticated screen). A rushed pass risked exactly what the
-audit warned against: losing an accessibility label, icon weight, or
-navigation-state meaning during blind replacement. Fixed in this pass only
-the two icons already named as a specific deferred item from the Reports
-phase (`reports_screen.dart`'s export button and empty-state icon — done,
-see `AppSymbols.iosShare`/`insertChartOutlined`).
+17 files as of the original audit pass). A rushed pass risked exactly what
+the audit warned against: losing an accessibility label, icon weight, or
+navigation-state meaning during blind replacement.
 
-**Remaining count by file** (each needs its own AppSymbols constant lookup
-from the installed `material_symbols_icons` package — never guessed — for
-any icon without an existing equivalent):
+**Done so far**: the 2 icons already named as a specific deferred item from
+the Reports phase (`reports_screen.dart`'s export button and empty-state
+icon — `AppSymbols.iosShare`/`insertChartOutlined`), plus every shared,
+high-reuse widget named below as "do first" — `error_view.dart` (2),
+`sync_status_banner.dart` (1), `month_selector_header.dart` (2),
+`color_picker_field.dart` (1), `app_password_field.dart` (3) — 9 icons, 5
+files, 0 remaining raw `Icons.*` in any of them. New `AppSymbols` constants
+added: `chevronLeft`, `errorOutline`, `refresh`, `cloudOffOutlined`,
+`check`, `lockOutline`, `visibility`, `visibilityOff` (codepoints looked up
+directly from the installed `material_symbols_icons` package, same
+discipline as every prior addition — never guessed). `flutter analyze`/
+`flutter test` both still clean after this pass.
 
-- `lib/core/routing/home_shell_screen.dart` — 23 (bottom-nav shell, every
-  authenticated screen embeds this — do first, carefully, with a real
-  on-device check of tab icons/selected-state visuals before/after)
-- `lib/features/landing/presentation/screens/landing_page.dart` — 21
-  (**likely exempt** — this page has never used the `AppSpacing`/
-  `AppSymbols` design-token system; it's the public marketing page with
-  its own established local convention, same reasoning already applied to
-  its color/spacing choices. Confirm this reasoning still holds before
-  touching it, don't assume.)
-- `lib/features/financial_insights/presentation/widgets/financial_insight_card.dart` — 14
-- `lib/features/auth/presentation/screens/profile_screen.dart` — 7
-- `lib/core/widgets/app_password_field.dart` — 3
-- `lib/features/savings_goals/presentation/screens/savings_goal_detail_screen.dart` — 4
-- `lib/features/savings_goals/presentation/screens/savings_goals_list_screen.dart` — 4
-- `lib/features/auth/presentation/screens/forgot_password_screen.dart` — 2
-- `lib/features/auth/presentation/screens/register_screen.dart` — 2
-- `lib/core/widgets/error_view.dart` — 2
-- `lib/core/widgets/month_selector_header.dart` — 2
-- `lib/core/widgets/color_picker_field.dart` — 1
-- `lib/core/widgets/sync_status_banner.dart` — 1
-- `lib/features/accounts/presentation/screens/account_form_screen.dart` — 1
-- `lib/features/auth/presentation/screens/login_screen.dart` — 1
-- `lib/features/auth/presentation/screens/verify_email_screen.dart` — 1
-- `lib/features/landing/presentation/screens/legal_document_page.dart` — 1
-  (same landing-page exemption question as above)
+**`home_shell_screen.dart` — done (23 icons), with one real design change
+worth flagging**: its bottom-nav `NavigationDestination`s used to pass a
+different classic-Material-Icons glyph for `icon:` vs `selectedIcon:`
+(e.g. `dashboard_outlined` vs `dashboard`) — Material Symbols Rounded has
+no equivalent distinct filled glyph for most of these (confirmed by
+looking up the actual codepoints: `pie_chart_rounded`/
+`pie_chart_outline_rounded` resolve to the identical codepoint `0xf0da`,
+and several `_outline_rounded` names don't exist in the font at all), same
+finding as the pre-existing `person`/`personOutline` constants which
+already share one codepoint. Rather than passing the same icon twice,
+`selectedIcon:` was dropped entirely on every destination — Material 3's
+`NavigationBar` already visually distinguishes the selected tab via its
+own indicator pill and icon color, so nothing is lost. Also added 3 new
+`AppSymbols` constants (`dashboard`, `barChart`, `repeat`). **Not covered
+by any existing widget test** (no `home_shell_screen_test.dart` exists) and
+**not visually verified on-device** — worth a real look at the bottom-nav
+and sidebar's selected-state visuals next time you're signed in.
 
-**Suggested next action**: one file at a time, starting with the shared
-widgets (`error_view.dart`, `sync_status_banner.dart`, `month_selector_header.dart`,
-`color_picker_field.dart`, `app_password_field.dart` — all small, all
-high-reuse, do these first since a mistake here is the highest-leverage
-one to catch), then `home_shell_screen.dart` on its own with real
-on-device verification, then the remaining feature screens. Resolve the
-landing-page exemption question explicitly (with the project owner, since
-it's a design-system-scope decision, not a mechanical one) before deciding
-whether its 22 icons are in or out of scope.
+**`financial_insight_card.dart` (14) and `profile_screen.dart` (7) — also
+done.** 10 new `AppSymbols` constants added (`deleteForever`, `verified`,
+`logout`, `checkCircleOutline`, `autoAwesome`, `infoOutline`,
+`flagOutlined`, `southEast`, `northEast`, `addChart`, `waterfallChart`,
+`compareArrows`, `circle` — codepoints looked up directly from the
+installed package; `info_outline_rounded` doesn't exist as a distinct name
+so `info_rounded` was used instead, same "no true outline/filled split"
+finding as elsewhere in this sweep). `financial_insight_card_test.dart`
+(the one existing test for this file) still passes.
+
+**Savings Goals (`savings_goal_detail_screen.dart` 4, `savings_goals_list_screen.dart`
+4) and the small auth/account-form screens (`forgot_password_screen.dart`
+2, `register_screen.dart` 2, `account_form_screen.dart` 1,
+`login_screen.dart` 1, `verify_email_screen.dart` 1) — all done.** 5 new
+`AppSymbols` constants added (`notificationsActive`, `markEmailRead`,
+`email`, `badge`, `markEmailUnread`). The `showArchived`-driven archive
+icon in `savings_goals_list_screen.dart` follows the exact same pattern
+already established in `accounts_list_screen.dart` (one `AppSymbols.archive`
+glyph, tinted `colorScheme.primary` when active, instead of a nonexistent
+filled/outline pair).
+
+**This closes the sweep except for the landing page.** A repo-wide check
+confirms `lib/features/landing/presentation/screens/landing_page.dart`
+(21 icons) and `legal_document_page.dart` (1 icon) are the only files with
+any raw `Icons.*` left — every other screen and shared widget in `lib/`
+is now on `AppSymbols`. Both landing files are **left untouched
+deliberately**, not missed: that page has never used the `AppSpacing`/
+`AppSymbols` design-token system, following its own established local
+convention as the public, pre-auth marketing page (same reasoning already
+applied to its color/spacing choices elsewhere). Resolve this explicitly
+with the project owner — it's a design-system-scope decision, not a
+mechanical one — before deciding whether those 22 icons are in or out of
+scope.
+
+`flutter analyze` (0 issues) and `flutter test` (412/412) both still clean
+after every step of this sweep.
 
 ## Android R8/backup hardening — configured, completely unverified (no Android SDK here)
 
@@ -240,6 +264,191 @@ over-aggressive shrinking of reflection-free but plugin-heavy code paths),
 Google Sign-In, and push-notification-related classes. If anything breaks,
 add the specific missing keep rule to `proguard-rules.pro` — don't disable
 minification wholesale to make the symptom go away.
+
+## Financial accuracy and time tests: month/year-boundary + leap-year (done)
+
+**What was done**: audited the actual month-range/month-navigation logic
+(used by Transactions, Budget, and Reports — all three share the identical
+`DateTime(year, month ± 1)` pattern) and added real regression coverage
+that was genuinely missing before this pass:
+
+- `transaction_remote_datasource_test.dart` — 3 new tests on
+  `watchTransactionsForMonth`: a December range correctly excludes the
+  next January (year-boundary), a leap-year (2028) February range
+  includes Feb 29 but excludes March 1, and a non-leap-year (2026)
+  February range ends on the 28th, not a fabricated 29th.
+- New `selected_transactions_month_test.dart`,
+  `selected_budget_month_test.dart`, `selected_report_month_test.dart` —
+  each notifier's `previousMonth()`/`nextMonth()` tested crossing a real
+  year boundary (January → previous December, December → next January).
+
+All 9 new tests pass, confirming Dart's `DateTime` constructor already
+normalizes out-of-range month values correctly (`DateTime(year, 0)` rolls
+back to December of the previous year, `DateTime(year, 13)` rolls forward
+to January of the next year) — this was a real, previously-unverified
+assumption this codebase's date-range code relied on everywhere, not a bug
+that needed fixing.
+
+**Asia/Vientiane timezone / UTC conversion**: already deliberately scoped
+and tested on the server side (`functions/src/lib/ictCalendar.ts` +
+`ictCalendar.test.ts`, part of the existing 57 Functions tests) — hardcodes
+ICT (UTC+7, no DST) since Cloud Functions have no device-local timezone.
+The Dart client side uses local `DateTime` (device timezone) for all
+month/day boundaries — an accepted, already-documented simplification
+(see that file's own doc comment), not an untested gap.
+
+**Not covered by this pass**: duplicate-offline-submission and
+concurrent-update financial-accuracy scenarios (both already have some
+coverage — see the existing "offline mutation fallback" test group in
+`transaction_remote_datasource_test.dart` — but not exhaustively for every
+transaction shape named in the audit). Large-value/fractional-currency
+summation precision was not specifically re-tested this pass either.
+
+## Responsive coverage audit (done — one real fix, rest already covered)
+
+Audited every one of the app's 22 screens (`lib/features/*/presentation/
+screens/*.dart`) for responsive treatment, since the completion-mission
+spec asked for a per-screen inventory rather than assuming coverage.
+Screens use one of four legitimate patterns, not just `ResponsiveCenter`:
+
+- **Multi-column `LayoutBuilder`-driven grid** (content-width breakpoints,
+  1→2→3 columns): Dashboard, Accounts, Budgets, Transactions (summary
+  row) — all built in earlier product-polish phases.
+- **`ResponsiveCenter` only** (content-width cap, deliberately single-
+  column): Categories (drag-to-reorder has no unambiguous 2D-grid
+  semantics — a deliberate, already-documented exception), Reports,
+  Settings.
+- **Hand-rolled `ConstrainedBox(maxWidth: ...)`**, not the shared
+  `ResponsiveCenter` widget but equally real width capping: every form
+  screen (Account/Budget/Category/SavingsGoal/Transaction — all
+  `maxWidth: 520`, a consistent, repeated pattern), every auth screen via
+  the shared `AuthScaffold` (`maxWidth: 440`), `profile_screen.dart`
+  (`maxWidth: 440`), `legal_document_page.dart` (`maxWidth: 850`, a
+  reading-appropriate width for legal text).
+- **`Center` + `Column(mainAxisSize: MainAxisSize.min)`**, inherently
+  content-sized rather than stretching at any width: `lock_screen.dart`,
+  `splash_screen.dart` — genuinely fine as-is, not a gap.
+
+**One real gap found and fixed**: `savings_goals_list_screen.dart` was
+`ResponsiveCenter`-only despite being a card-based list exactly like
+Accounts before its own grid pass — same `GoalCard` shape, same
+`ListView.separated`. Converted to the identical `LayoutBuilder`-driven
+1→2→3-column grid pattern (`childAspectRatio: 1.5`, chosen but **not
+tuned against a real rendered screen** — same standing caveat Budget's
+own grid launched with). The existing
+`savings_goals_list_screen_test.dart` still passes unchanged.
+
+`lib/features/landing/` (`landing_page.dart`, `legal_document_page.dart`)
+is intentionally excluded from this audit's "gap" framing — it already
+has its own extensive `LayoutBuilder`-based responsive system (7 call
+sites) as the public marketing surface's established convention, same
+reasoning as its icon/color-token exemption elsewhere in this file.
+
+**Not done this pass**: visual verification of any of the above at the
+actual required test widths (320/375/600/768/1024/1280/1440px) — this
+audit is code-level only, same standing limitation as every other UI
+claim in this project's history without a real device/browser.
+
+## Phase 4 (functional completion pass) — started, not exhaustive
+
+Audited every screen for the presence of loading/empty/error states and
+for fire-and-forget controller calls missing error handling (the exact
+class of bug `profile_screen.dart`'s old logout button had — see the
+earlier privacy/security phase). The loading/empty/error audit found
+nothing new: every "0" in an automated sweep was a legitimate non-gap
+(forms and static pages don't need list-style states). The
+fire-and-forget sweep found exactly two other bare controller calls in
+the whole app (`savings_goals_list_screen.dart`'s archive-filter toggle,
+`lock_screen.dart`'s post-biometric unlock) — both confirmed synchronous,
+local, and failure-free by reading them directly, not assumed.
+
+**Real, concrete gap closed**: `profile_screen.dart` had **zero test
+coverage** despite this session adding real new branching logic to it
+(the logout pending-writes guard) — a genuine "test coverage" gap per the
+audit's own standard ("never label a feature complete based only on a
+screen existing"). Added `profile_screen_test.dart`: 4 tests covering
+name/email display, logout success, a generic logout failure, and the
+specific pending-writes failure message (confirms the raw datasource
+message is never shown verbatim to the user — it's mapped to the
+localized string). Also closed `register_screen.dart`'s **complete
+absence of any test** (registration is a launch-blocking flow) with
+`register_screen_test.dart`: 4 tests covering empty-form validation,
+confirm-password mismatch, successful submission, and a failure
+snackbar.
+
+`flutter analyze` — 0 issues. Full suite now includes these 8 new tests.
+
+**Round 2** — closed `verify_email_screen.dart`'s own silent-logout bug
+(same class as `profile_screen.dart`'s: `_signOut()` called `logout()`
+without checking the result, so a failed logout — including the
+pending-writes case — failed with zero user feedback). Fixed the same
+way, added `verify_email_screen_test.dart` (5 tests, including one
+specifically named to prove the pending-writes message now surfaces).
+Also added `forgot_password_screen_test.dart` (3 tests), a screen that
+had no coverage at all. Checked all 4 remaining untested form screens
+(`budget_form_screen.dart`, `category_form_screen.dart`,
+`savings_goal_form_screen.dart`, `transaction_form_screen.dart`) by
+reading each `_submit()` in full — all four already check `success`
+correctly and show an error snackbar on failure; no bug found there.
+
+**Round 3** — closed the remaining coverage gaps and found a second,
+more serious defect:
+
+- `lock_screen.dart`, `legal_document_page.dart`, `account_form_screen.dart`
+  audited line-by-line: all three handle their success/failure paths
+  correctly. Added `lock_screen_test.dart` (4 tests: biometric success,
+  failure, `LocalAuthException` handling, retry-button flow),
+  `legal_document_page_test.dart` (3 tests: Privacy/Terms content render,
+  "Back to home" navigation), and confirmed `account_form_screen.dart`
+  needed no test additions beyond what already existed.
+- **Real bug found and fixed**: `savings_goal_detail_screen.dart`'s
+  delete/archive/unarchive menu actions crashed with an uncaught
+  `UnmountedRefException` whenever the mutation failed. Root cause:
+  `savingsGoalControllerProvider` is `.autoDispose`, and — unlike every
+  other feature's controller, whose form screen keeps it alive via
+  `ref.watch(...).isLoading` — nothing on this screen ever watches it, so
+  it can be disposed the moment the mutation's async gap ends. The code
+  read `notifier.failure` *after* that gap to build the error message;
+  once disposed, that read throws instead of ever showing the error
+  snackbar. Fixed by having `SavingsGoalController.deleteGoal`/
+  `archiveGoal`/`unarchiveGoal` return `({bool success, Failure? failure})`
+  directly (captured inside the same async closure that already produced
+  the result, before any disposal-vulnerable second read), instead of the
+  caller re-reading `notifier.failure` afterward. `createGoal`/`updateGoal`/
+  `contribute` were left on the original `Future<bool>` + `notifier.failure`
+  pattern since their call sites do keep the controller alive and were
+  never at risk. Added `savings_goal_detail_screen_test.dart` (4 tests) —
+  the delete- and archive-failure tests reproduced the crash before the
+  fix and pass cleanly after it.
+
+`flutter analyze` — 0 issues. `dart format --set-exit-if-changed` — clean.
+Full suite: 448 passing (11 new this round), 0 failing, 0 skipped.
+
+**Round 4** — closed the last remaining coverage gap:
+`savings_goal_form_screen.dart` (already confirmed correct in Round 2's
+sweep) had no dedicated test file. Added
+`savings_goal_form_screen_test.dart` (4 tests: empty-form validation,
+successful creation with an account selected, a failure snackbar, and
+the locked-account/pre-filled-values display when editing). Needed a
+real `GoRouter` (pushed, not `initialLocation`, so `context.pop()` on
+success has somewhere to return to) rather than the plain
+`MaterialApp(home: ...)` most other form-screen tests use, since this
+was the first form-screen test in the suite to actually exercise the
+success-then-pop path end-to-end.
+
+`flutter analyze` — 0 issues. `dart format --set-exit-if-changed` — clean.
+Full suite: 452 passing (4 new this round), 0 failing, 0 skipped.
+
+Every screen identified at the start of this phase now has dedicated
+test coverage and has been audited for the fire-and-forget/silent-
+failure bug class. Two real bugs were found and fixed across the four
+rounds (`verify_email_screen.dart`'s silent logout failure,
+`savings_goal_detail_screen.dart`'s crash on failed delete/archive). A
+true Phase 4 (feature-by-feature UI/data/state/navigation/validation/
+loading/empty/error/offline/localization/accessibility/responsive/
+dark-light matrix, per the completion-mission spec) remains open and
+would still need real device/browser verification for its non-code-level
+checks regardless of how much further test-writing happens here.
 
 ## Security & data
 

@@ -33,7 +33,12 @@ class SavingsGoalsListScreen extends ConsumerWidget {
             tooltip: showArchived
                 ? l10n.hideArchivedTooltip
                 : l10n.showArchivedTooltip,
-            icon: Icon(showArchived ? Icons.archive : Icons.archive_outlined),
+            icon: Icon(
+              AppSymbols.archive,
+              color: showArchived
+                  ? Theme.of(context).colorScheme.primary
+                  : null,
+            ),
             onPressed: () =>
                 ref.read(showArchivedGoalsProvider.notifier).toggle(),
           ),
@@ -55,28 +60,60 @@ class SavingsGoalsListScreen extends ConsumerWidget {
                 message: l10n.noSavingsGoalsYetMessage,
                 action: FilledButton.icon(
                   onPressed: () => context.push(AppRoutes.savingsGoalNew),
-                  icon: const Icon(Icons.add),
+                  icon: const Icon(AppSymbols.addRounded),
                   label: Text(l10n.addGoalButton),
                 ),
               );
             }
 
-            return ListView.separated(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                AppSpacing.md,
-                AppSpacing.md,
-                AppSpacing.xxl,
-              ),
-              itemCount: progressList.length,
-              separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
-              itemBuilder: (context, index) {
-                final progress = progressList[index];
-                return GoalCard(
-                  progress: progress,
-                  onTap: () => context.push(
-                    AppRoutes.savingsGoalDetailPath(progress.goal.id),
+            Widget buildCard(int index) {
+              final progress = progressList[index];
+              return GoalCard(
+                progress: progress,
+                onTap: () => context.push(
+                  AppRoutes.savingsGoalDetailPath(progress.goal.id),
+                ),
+              );
+            }
+
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                // Content width (not window width) drives the column count,
+                // same pattern already used by Accounts/Budgets/Dashboard —
+                // one implementation serves phones, tablets, and desktop.
+                final columns = (constraints.maxWidth / 360).floor().clamp(
+                  1,
+                  3,
+                );
+                if (columns == 1) {
+                  return ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.md,
+                      AppSpacing.md,
+                      AppSpacing.md,
+                      AppSpacing.xxl,
+                    ),
+                    itemCount: progressList.length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(height: AppSpacing.sm),
+                    itemBuilder: (context, index) => buildCard(index),
+                  );
+                }
+                return GridView.builder(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.md,
+                    AppSpacing.md,
+                    AppSpacing.md,
+                    AppSpacing.xxl,
                   ),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: columns,
+                    crossAxisSpacing: AppSpacing.sm,
+                    mainAxisSpacing: AppSpacing.sm,
+                    childAspectRatio: 1.5,
+                  ),
+                  itemCount: progressList.length,
+                  itemBuilder: (context, index) => buildCard(index),
                 );
               },
             );
@@ -85,7 +122,7 @@ class SavingsGoalsListScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push(AppRoutes.savingsGoalNew),
-        child: const Icon(Icons.add),
+        child: const Icon(AppSymbols.addRounded),
       ),
     );
   }
