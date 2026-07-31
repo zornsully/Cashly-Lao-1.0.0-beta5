@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../core/providers/firebase_providers.dart';
 import '../../../../core/providers/local_auth_providers.dart';
@@ -84,3 +85,10 @@ final updateNotificationsEnabledUseCaseProvider =
         ref.watch(userPreferencesRepositoryProvider),
       );
     });
+
+/// The installed app's version/build, for Settings' About section. Never
+/// changes during a session, so a plain [FutureProvider] (no stream) is
+/// enough.
+final packageInfoProvider = FutureProvider<PackageInfo>((ref) {
+  return PackageInfo.fromPlatform();
+});

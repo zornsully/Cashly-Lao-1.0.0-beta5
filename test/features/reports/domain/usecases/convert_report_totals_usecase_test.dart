@@ -21,7 +21,9 @@ void main() {
       totalIncomeByCurrency: income,
       totalExpenseByCurrency: expense,
       spendingByCategory: const {},
+      accountBreakdown: const {},
       budgetProgress: const [],
+      transactions: const [],
     );
   }
 

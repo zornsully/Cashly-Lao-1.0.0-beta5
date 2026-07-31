@@ -212,6 +212,7 @@
   "updateCategoryFailedMessage": "Could not update the category.",
   "reorderCategoriesFailedMessage": "Could not save the new order.",
   "categoryFormEditTitle": "Edit category",
+  "defaultCategoryLockedHelper": "Default categories can't be deleted, but you can still rename them or change their icon and color.",
   "categoryNameLabel": "Category name",
   "categoryTypeLabel": "Type",
   "saveCategoryFailedMessage": "Could not save the category. Please try again.",
@@ -251,6 +252,17 @@
     }
   },
   "saveBudgetFailedMessage": "Could not save the budget. Please try again.",
+  "budgetPercentUsedLabel": "{percent}% used",
+  "@budgetPercentUsedLabel": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetedTotalLabel": "Budgeted",
+  "spentTotalLabel": "Spent",
+  "remainingTotalLabel": "Remaining",
   "savingsGoalsTitle": "Savings Goals",
   "savingsGoalsTooltip": "Savings goals",
   "noSavingsGoalsYetTitle": "No savings goals yet",
@@ -440,7 +452,58 @@
   "nothingToReportYetMessage": "Once you record income or expenses for this month, you'll see monthly summaries, spending breakdowns, and trends here.",
   "incomeExpenseTrendSectionTitle": "Income vs Expense Trend",
   "spendingByCategorySectionTitle": "Spending by Category",
+  "accountBreakdownSectionTitle": "Spending by Account",
   "budgetVsActualSectionTitle": "Budget vs Actual",
+  "expenseWatchSectionTitle": "Keep an Eye On",
+  "reportFilterTooltip": "Filter report",
+  "reportFilterSheetTitle": "Filter report",
+  "dateRangeFilterLabel": "Date range",
+  "customDateRangeUnsetMessage": "Using the month selected above",
+  "chooseDateRangeButton": "Choose dates",
+  "clearDateRangeTooltip": "Clear custom date range",
+  "savingsRateLabel": "Savings rate",
+  "averageDailySpendLabel": "Avg. daily spend",
+  "topSpendingCategoryLabel": "Top category",
+  "spendingChangeLabel": "vs previous period",
+  "largeExpenseWatchMessage": "{amount} on {category} — well above your usual {average}",
+  "@largeExpenseWatchMessage": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "category": {
+        "type": "String"
+      },
+      "average": {
+        "type": "String"
+      }
+    }
+  },
+  "repeatedExpenseWatchMessage": "{count} similar charges of {amount} on {category}, close together — check for a duplicate",
+  "@repeatedExpenseWatchMessage": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      },
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "risingCategoryWatchMessage": "{category} spending is up {percent}% versus your average",
+  "@risingCategoryWatchMessage": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
   "seeAllButton": "See all",
   "netLabel": "Net",
   "totalLabel": "Total",
@@ -471,6 +534,10 @@
   "appLockToggleHelperMessage": "Require your fingerprint, face, or device PIN to open Cashly.",
   "appLockUnsupportedMessage": "Set up a fingerprint, face unlock, or screen lock on this device to use app lock.",
   "appLockUpdateFailedMessage": "Could not update app lock. Please try again.",
+  "disableAppLockTitle": "Turn off app lock?",
+  "disableAppLockMessage": "Anyone with access to your device will be able to open Cashly without authenticating.",
+  "turnOffButton": "Turn off",
+  "securityUnavailableOnWebMessage": "App lock and notifications aren't available in the web app. Use the mobile app to manage them.",
   "appLockTitle": "Cashly is locked",
   "appLockReasonMessage": "Authenticate to open Cashly",
   "appLockFailedMessage": "Authentication failed. Please try again.",
@@ -526,6 +593,20 @@
       }
     }
   },
+  "accountSectionTitle": "Account",
+  "manageAccountLabel": "Manage your account",
+  "manageAccountHelperMessage": "Name, email, and account deletion.",
+  "aboutSectionTitle": "About",
+  "appVersionLabel": "Version {version}",
+  "@appVersionLabel": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "privacyPolicyLabel": "Privacy Policy",
+  "termsOfServiceLabel": "Terms of Service",
   "profileTitle": "Profile",
   "editNameDialogTitle": "Edit name",
   "nameUpdatedMessage": "Name updated.",
@@ -536,6 +617,8 @@
   "confirmYourPasswordLabel": "Confirm your password",
   "deleteAccountConfirmButton": "Delete Account",
   "deleteUserAccountFailedMessage": "Could not delete your account.",
+  "logoutFailedMessage": "Could not sign out. Please try again.",
+  "logoutPendingWritesMessage": "Some changes haven't finished syncing yet. Connect to the internet and try again before signing out.",
   "addYourNameLabel": "Add your name",
   "emailVerifiedLabel": "Email verified",
   "notVerifiedLabel": "Not verified",

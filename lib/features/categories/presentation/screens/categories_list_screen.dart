@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/app_symbols.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/app_snackbar.dart';
 import '../../../../core/widgets/app_dialog.dart';
@@ -56,7 +57,12 @@ class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen>
             tooltip: showArchived
                 ? l10n.hideArchivedTooltip
                 : l10n.showArchivedTooltip,
-            icon: Icon(showArchived ? Icons.archive : Icons.archive_outlined),
+            icon: Icon(
+              AppSymbols.archive,
+              color: showArchived
+                  ? Theme.of(context).colorScheme.primary
+                  : null,
+            ),
             onPressed: () =>
                 ref.read(showArchivedCategoriesProvider.notifier).toggle(),
           ),
@@ -84,7 +90,7 @@ class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen>
               : CategoryType.income;
           return FloatingActionButton(
             onPressed: () => context.push(AppRoutes.categoryNew, extra: type),
-            child: const Icon(Icons.add),
+            child: const Icon(AppSymbols.addRounded),
           );
         },
       ),
@@ -185,7 +191,7 @@ class _CategoryTypeList extends ConsumerWidget {
         data: (categories) {
           if (categories.isEmpty) {
             return EmptyState(
-              icon: Icons.category_outlined,
+              icon: AppSymbols.category,
               title: type == CategoryType.expense
                   ? l10n.noExpenseCategoriesYetTitle
                   : l10n.noIncomeCategoriesYetTitle,
@@ -193,7 +199,7 @@ class _CategoryTypeList extends ConsumerWidget {
               action: FilledButton.icon(
                 onPressed: () =>
                     context.push(AppRoutes.categoryNew, extra: type),
-                icon: const Icon(Icons.add),
+                icon: const Icon(AppSymbols.addRounded),
                 label: Text(l10n.addCategoryButton),
               ),
             );

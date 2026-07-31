@@ -271,4 +271,82 @@ void main() {
       expect(find.text(CurrencyFormatter.format(90, usd)), findsWidgets);
     },
   );
+
+  testWidgets(
+    'shows the detailed transaction list and opens the filter sheet',
+    (tester) async {
+      // The default test surface is too short to reach the new bottom
+      // sections (insights, account breakdown, transaction list) without
+      // scrolling; a taller surface avoids relying on a scroll gesture
+      // just to make later-list content visible to finders.
+      await tester.binding.setSurfaceSize(const Size(500, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final accountRepository = _MockAccountRepository();
+      final categoryRepository = _MockCategoryRepository();
+      final transactionRepository = _MockTransactionRepository();
+      final budgetRepository = _MockBudgetRepository();
+
+      when(
+        () => accountRepository.watchAccounts(
+          includeArchived: any(named: 'includeArchived'),
+        ),
+      ).thenAnswer((_) => Stream.value([account]));
+      when(
+        () => categoryRepository.watchCategories(
+          type: any(named: 'type'),
+          includeArchived: any(named: 'includeArchived'),
+        ),
+      ).thenAnswer((_) => Stream.value([category]));
+      when(
+        () => transactionRepository.watchTransactionsForMonth(any()),
+      ).thenAnswer((_) => Stream.value([expenseTransaction]));
+      when(
+        () => transactionRepository.watchTransactionsInRange(
+          start: any(named: 'start'),
+          endExclusive: any(named: 'endExclusive'),
+        ),
+      ).thenAnswer((_) => Stream.value([expenseTransaction]));
+      when(
+        () => budgetRepository.watchBudgetsForMonth(any()),
+      ).thenAnswer((_) => Stream.value(const <BudgetEntity>[]));
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            accountRepositoryProvider.overrideWithValue(accountRepository),
+            categoryRepositoryProvider.overrideWithValue(categoryRepository),
+            transactionRepositoryProvider.overrideWithValue(
+              transactionRepository,
+            ),
+            budgetRepositoryProvider.overrideWithValue(budgetRepository),
+          ],
+          child: const MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: ReportsScreen(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+      // The detailed transaction list renders the category name (the
+      // transaction's title) and its account's name.
+      expect(find.text(l10n.transactionsTitle), findsOneWidget);
+      expect(find.text('Groceries'), findsWidgets);
+      expect(find.text('Cash'), findsWidgets);
+
+      // Opening the filter sheet shows its controls.
+      await tester.tap(find.byTooltip(l10n.reportFilterTooltip));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.reportFilterSheetTitle), findsOneWidget);
+      expect(find.text(l10n.dateRangeFilterLabel), findsOneWidget);
+      expect(find.text(l10n.allAccountsLabel), findsOneWidget);
+      expect(find.text(l10n.allCategoriesLabel), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

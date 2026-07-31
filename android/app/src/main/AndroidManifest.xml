@@ -7,7 +7,16 @@
     <application
         android:label="Cashly Lao"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        android:fullBackupContent="false">
+        <!-- Cashly's local Firestore persistence cache holds a real user's
+             financial data on-disk. `allowBackup="false"` disables both
+             Android Auto Backup (Google Drive) and device-to-device
+             transfer at the OS level for this app entirely — the safest
+             default for a financial app, and one every account already has
+             a cloud copy of via Firebase, so nothing is actually lost by
+             not also backing up the local cache. -->
         <activity
             android:name=".MainActivity"
             android:exported="true"

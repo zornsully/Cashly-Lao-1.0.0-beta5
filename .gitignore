@@ -117,6 +117,12 @@ coverage/
 functions/node_modules/
 functions/lib/
 
+# Firestore rules-emulator tests (firestore-tests/) — Node, not Flutter
+firestore-tests/node_modules/
+firestore-tests/firebase-debug.log
+firestore-tests/firestore-debug.log
+firestore-tests/ui-debug.log
+
 # Symbols
 app.*.symbols
 

@@ -488,6 +488,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryFormEditTitle => 'Edit category';
 
   @override
+  String get defaultCategoryLockedHelper =>
+      'Default categories can\'t be deleted, but you can still rename them or change their icon and color.';
+
+  @override
   String get categoryNameLabel => 'Category name';
 
   @override
@@ -551,6 +555,20 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get saveBudgetFailedMessage =>
       'Could not save the budget. Please try again.';
+
+  @override
+  String budgetPercentUsedLabel(String percent) {
+    return '$percent% used';
+  }
+
+  @override
+  String get budgetedTotalLabel => 'Budgeted';
+
+  @override
+  String get spentTotalLabel => 'Spent';
+
+  @override
+  String get remainingTotalLabel => 'Remaining';
 
   @override
   String get savingsGoalsTitle => 'Savings Goals';
@@ -913,7 +931,66 @@ class AppLocalizationsEn extends AppLocalizations {
   String get spendingByCategorySectionTitle => 'Spending by Category';
 
   @override
+  String get accountBreakdownSectionTitle => 'Spending by Account';
+
+  @override
   String get budgetVsActualSectionTitle => 'Budget vs Actual';
+
+  @override
+  String get expenseWatchSectionTitle => 'Keep an Eye On';
+
+  @override
+  String get reportFilterTooltip => 'Filter report';
+
+  @override
+  String get reportFilterSheetTitle => 'Filter report';
+
+  @override
+  String get dateRangeFilterLabel => 'Date range';
+
+  @override
+  String get customDateRangeUnsetMessage => 'Using the month selected above';
+
+  @override
+  String get chooseDateRangeButton => 'Choose dates';
+
+  @override
+  String get clearDateRangeTooltip => 'Clear custom date range';
+
+  @override
+  String get savingsRateLabel => 'Savings rate';
+
+  @override
+  String get averageDailySpendLabel => 'Avg. daily spend';
+
+  @override
+  String get topSpendingCategoryLabel => 'Top category';
+
+  @override
+  String get spendingChangeLabel => 'vs previous period';
+
+  @override
+  String largeExpenseWatchMessage(
+    String amount,
+    String category,
+    String average,
+  ) {
+    return '$amount on $category — well above your usual $average';
+  }
+
+  @override
+  String repeatedExpenseWatchMessage(
+    String count,
+    String amount,
+    String category,
+  ) {
+    return '$count similar charges of $amount on $category, close together — check for a duplicate';
+  }
+
+  @override
+  String risingCategoryWatchMessage(String category, String percent) {
+    return '$category spending is up $percent% versus your average';
+  }
 
   @override
   String get seeAllButton => 'See all';
@@ -974,6 +1051,20 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get appLockUpdateFailedMessage =>
       'Could not update app lock. Please try again.';
+
+  @override
+  String get disableAppLockTitle => 'Turn off app lock?';
+
+  @override
+  String get disableAppLockMessage =>
+      'Anyone with access to your device will be able to open Cashly without authenticating.';
+
+  @override
+  String get turnOffButton => 'Turn off';
+
+  @override
+  String get securityUnavailableOnWebMessage =>
+      'App lock and notifications aren\'t available in the web app. Use the mobile app to manage them.';
 
   @override
   String get appLockTitle => 'Cashly is locked';
@@ -1053,6 +1144,29 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get accountSectionTitle => 'Account';
+
+  @override
+  String get manageAccountLabel => 'Manage your account';
+
+  @override
+  String get manageAccountHelperMessage => 'Name, email, and account deletion.';
+
+  @override
+  String get aboutSectionTitle => 'About';
+
+  @override
+  String appVersionLabel(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get privacyPolicyLabel => 'Privacy Policy';
+
+  @override
+  String get termsOfServiceLabel => 'Terms of Service';
+
+  @override
   String get profileTitle => 'Profile';
 
   @override
@@ -1083,6 +1197,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteUserAccountFailedMessage => 'Could not delete your account.';
+
+  @override
+  String get logoutFailedMessage => 'Could not sign out. Please try again.';
+
+  @override
+  String get logoutPendingWritesMessage =>
+      'Some changes haven\'t finished syncing yet. Connect to the internet and try again before signing out.';
 
   @override
   String get addYourNameLabel => 'Add your name';

@@ -980,6 +980,12 @@ abstract class AppLocalizations {
   /// **'Edit category'**
   String get categoryFormEditTitle;
 
+  /// No description provided for @defaultCategoryLockedHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Default categories can\'t be deleted, but you can still rename them or change their icon and color.'**
+  String get defaultCategoryLockedHelper;
+
   /// No description provided for @categoryNameLabel.
   ///
   /// In en, this message translates to:
@@ -1087,6 +1093,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not save the budget. Please try again.'**
   String get saveBudgetFailedMessage;
+
+  /// No description provided for @budgetPercentUsedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% used'**
+  String budgetPercentUsedLabel(String percent);
+
+  /// No description provided for @budgetedTotalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Budgeted'**
+  String get budgetedTotalLabel;
+
+  /// No description provided for @spentTotalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Spent'**
+  String get spentTotalLabel;
+
+  /// No description provided for @remainingTotalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining'**
+  String get remainingTotalLabel;
 
   /// No description provided for @savingsGoalsTitle.
   ///
@@ -1718,11 +1748,109 @@ abstract class AppLocalizations {
   /// **'Spending by Category'**
   String get spendingByCategorySectionTitle;
 
+  /// No description provided for @accountBreakdownSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending by Account'**
+  String get accountBreakdownSectionTitle;
+
   /// No description provided for @budgetVsActualSectionTitle.
   ///
   /// In en, this message translates to:
   /// **'Budget vs Actual'**
   String get budgetVsActualSectionTitle;
+
+  /// No description provided for @expenseWatchSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep an Eye On'**
+  String get expenseWatchSectionTitle;
+
+  /// No description provided for @reportFilterTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter report'**
+  String get reportFilterTooltip;
+
+  /// No description provided for @reportFilterSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter report'**
+  String get reportFilterSheetTitle;
+
+  /// No description provided for @dateRangeFilterLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Date range'**
+  String get dateRangeFilterLabel;
+
+  /// No description provided for @customDateRangeUnsetMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Using the month selected above'**
+  String get customDateRangeUnsetMessage;
+
+  /// No description provided for @chooseDateRangeButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose dates'**
+  String get chooseDateRangeButton;
+
+  /// No description provided for @clearDateRangeTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear custom date range'**
+  String get clearDateRangeTooltip;
+
+  /// No description provided for @savingsRateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Savings rate'**
+  String get savingsRateLabel;
+
+  /// No description provided for @averageDailySpendLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg. daily spend'**
+  String get averageDailySpendLabel;
+
+  /// No description provided for @topSpendingCategoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Top category'**
+  String get topSpendingCategoryLabel;
+
+  /// No description provided for @spendingChangeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'vs previous period'**
+  String get spendingChangeLabel;
+
+  /// No description provided for @largeExpenseWatchMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} on {category} — well above your usual {average}'**
+  String largeExpenseWatchMessage(
+    String amount,
+    String category,
+    String average,
+  );
+
+  /// No description provided for @repeatedExpenseWatchMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} similar charges of {amount} on {category}, close together — check for a duplicate'**
+  String repeatedExpenseWatchMessage(
+    String count,
+    String amount,
+    String category,
+  );
+
+  /// No description provided for @risingCategoryWatchMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{category} spending is up {percent}% versus your average'**
+  String risingCategoryWatchMessage(String category, String percent);
 
   /// No description provided for @seeAllButton.
   ///
@@ -1829,6 +1957,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not update app lock. Please try again.'**
   String get appLockUpdateFailedMessage;
+
+  /// No description provided for @disableAppLockTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off app lock?'**
+  String get disableAppLockTitle;
+
+  /// No description provided for @disableAppLockMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone with access to your device will be able to open Cashly without authenticating.'**
+  String get disableAppLockMessage;
+
+  /// No description provided for @turnOffButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off'**
+  String get turnOffButton;
+
+  /// No description provided for @securityUnavailableOnWebMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'App lock and notifications aren\'t available in the web app. Use the mobile app to manage them.'**
+  String get securityUnavailableOnWebMessage;
 
   /// No description provided for @appLockTitle.
   ///
@@ -1956,6 +2108,48 @@ abstract class AppLocalizations {
   /// **'{code} — {name}'**
   String currencyDisplayFormat(String code, String name);
 
+  /// No description provided for @accountSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get accountSectionTitle;
+
+  /// No description provided for @manageAccountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage your account'**
+  String get manageAccountLabel;
+
+  /// No description provided for @manageAccountHelperMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Name, email, and account deletion.'**
+  String get manageAccountHelperMessage;
+
+  /// No description provided for @aboutSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get aboutSectionTitle;
+
+  /// No description provided for @appVersionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version}'**
+  String appVersionLabel(String version);
+
+  /// No description provided for @privacyPolicyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get privacyPolicyLabel;
+
+  /// No description provided for @termsOfServiceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of Service'**
+  String get termsOfServiceLabel;
+
   /// No description provided for @profileTitle.
   ///
   /// In en, this message translates to:
@@ -2015,6 +2209,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not delete your account.'**
   String get deleteUserAccountFailedMessage;
+
+  /// No description provided for @logoutFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not sign out. Please try again.'**
+  String get logoutFailedMessage;
+
+  /// No description provided for @logoutPendingWritesMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Some changes haven\'t finished syncing yet. Connect to the internet and try again before signing out.'**
+  String get logoutPendingWritesMessage;
 
   /// No description provided for @addYourNameLabel.
   ///

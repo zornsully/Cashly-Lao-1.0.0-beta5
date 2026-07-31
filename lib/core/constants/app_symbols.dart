@@ -228,6 +228,11 @@ abstract final class AppSymbols {
     fontFamily: _family,
     fontPackage: _package,
   );
+  static const IconData iosShare = IconData(
+    0xe6b8,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
   static const IconData category = IconData(
     0xe72c,
     fontFamily: _family,
@@ -289,5 +294,36 @@ abstract final class AppSymbols {
     0xe149,
     fontFamily: _family,
     fontPackage: _package,
+  );
+  static const IconData dragHandle = IconData(
+    0xe25d,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData labelOutline = IconData(
+    0xe893,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData brightnessAuto = IconData(
+    0xe1ab,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData lightMode = IconData(
+    0xe518,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData darkMode = IconData(
+    0xe51c,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData chevronRight = IconData(
+    0xe5cc,
+    fontFamily: _family,
+    fontPackage: _package,
+    matchTextDirection: true,
   );
 }

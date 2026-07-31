@@ -1,0 +1,13 @@
+{
+  "name": "cashly-firestore-rules-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Firestore Emulator rules-unit tests for ../firestore.rules — previously absent entirely (see CLAUDE.md's Phase 1 project-memory entry). Separate from functions/ (a different runtime concern: this tests security rules, not Cloud Functions logic) and from the Flutter test suite (rules aren't expressible in Dart).",
+  "scripts": {
+    "test": "firebase emulators:exec --project cashly-lao-rules-test --only firestore \"jest --config jest.config.cjs\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "jest": "^29.7.0"
+  }
+}
