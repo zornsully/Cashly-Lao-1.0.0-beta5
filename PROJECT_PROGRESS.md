@@ -588,9 +588,10 @@ the web-client OAuth ID explicitly to `GoogleSignIn.instance.initialize()`.
 iOS-side Google Sign-In setup remains open — no Mac in any environment
 this project has used (full checklist in `TODO.md`).
 
-**Running total: ~154 tests, `flutter analyze` 0 issues** (exact figure
-per `ROADMAP.md`'s own Stage 1 note; this stage's tests weren't broken out
-separately from Stage 2's in the source record).
+**Test count not separately recorded for this stage** — `ROADMAP.md`'s
+Stage 1 note doesn't give one, and Sprint 12 below reports its own total
+(150, including 3 new tests it added), so this stage's count can't be
+reconstructed without guessing. `flutter analyze`: 0 issues.
 
 ## Sprint 12 — Design System Compliance Pass ✅
 
@@ -890,7 +891,7 @@ and swept 19 raw `Icons.*` references to `AppSymbols.*` (14 new
 constants). **Tests:** dashboard suite 9/9 passing, `flutter build web
 --release` clean. Not visually verified on-device this phase.
 
-## 2026-07-29 — Product polish Phase 2: Transactions ✅
+## 2026-07-30 — Product polish Phase 2: Transactions ✅
 
 Kept the existing (already solid) mobile search/filter system as-is.
 Added: a three-dot Edit/Duplicate/Delete menu on `TransactionTile`
@@ -904,7 +905,7 @@ suite 372/372, with two real bugs caught by the existing test suite at
 wide-layout widths (a `RenderFlex` overflow, a `PopupMenuButton` sizing
 issue) — fixed, not just noted.
 
-## 2026-07-29 — Product polish Phase 3: Accounts ✅
+## 2026-07-30 — Product polish Phase 3: Accounts ✅
 
 Added a responsive `LayoutBuilder`-driven grid (1–3 columns), a genuine
 "Negative" balance badge (color was previously the only signal — fixed
@@ -975,7 +976,7 @@ safety check (needs a new aggregate-query capability, out of scope).
 **Tests:** +3 (first coverage `category_form_screen.dart` had ever had).
 `flutter test`: 386 passing.
 
-## 2026-08-01 — Product polish Phase 6: Settings ✅
+## 2026-07-31 — Product polish Phase 6: Settings ✅
 
 First full pass on Settings. Added an Account section (linking back to
 Profile — previously one-directional from Dashboard only) and an About
@@ -991,7 +992,7 @@ remaining `Icons.*` violations were identified but deliberately left for
 a future Profile-specific pass (different feature, out of this phase's
 scope).
 
-## 2026-08-01 — Reports functionality phase: filters, insights, account breakdown, transaction list, Expense Watch ✅
+## 2026-07-31 — Reports functionality phase: filters, insights, account breakdown, transaction list, Expense Watch ✅
 
 The functional core of a larger Reports redesign (PDF export and
 cloud-based detection explicitly deferred). Added: date-range/account/
@@ -1017,18 +1018,24 @@ one explicitly. **Tests:** +22 (12 of them on Expense Watch's three
 heuristic branches — the most novel logic this phase, most thoroughly
 covered). `flutter test`: 409 passing.
 
-## 2026-08-01 — Permanent multi-platform release procedure + Android AAB build (documented; not yet run)
+## 2026-07-31 — Permanent multi-platform release procedure + Android AAB build (documented; not yet run)
 
 Generalized the Android-specific manual release policy into a standing,
 criteria-based procedure covering whichever platforms actually satisfy
-four "release-ready" tests (scaffolding exists, a real local build has
-succeeded, signing is genuinely configured, a distribution channel is
-approved) at the time — currently only Android and Web. `tool/
-prepare_manual_release.ps1` now builds both the APK and the AAB; the AAB
-is checksummed as local evidence for future Play Store readiness but
-deliberately never enters the public trust chain (Play Store itself
-generates installable APKs from an AAB at install time — nothing should
-ever link to the AAB directly). iOS/Windows/macOS/Linux remain fully
+four "release-ready" tests: scaffolding exists, a real local build has
+succeeded, signing is genuinely configured, **and** a distribution
+channel is approved. `tool/prepare_manual_release.ps1` now builds both
+the APK and the AAB; the AAB is checksummed as local evidence for future
+Play Store readiness but deliberately never enters the public trust
+chain (Play Store itself generates installable APKs from an AAB at
+install time — nothing should ever link to the AAB directly).
+**Android is not yet release-ready by this procedure's own fourth
+criterion** — `assets/release/distribution_policy.json`'s `repository`
+field is still `null`, so no public distribution channel has actually
+been approved; the APK/AAB build-and-signing tooling is prepared and
+scaffolding/build/signing (criteria 1–3) are satisfied, but publishing
+still requires that approval first, exactly as the **Release** section at
+the end of this file states. iOS/Windows/macOS/Linux remain fully
 unconfigured — no signing material, no accounts, no Mac in any
 environment used so far. **Not exercised end-to-end** — no real release
 tag, keystore use, or actual build attempt this phase.
