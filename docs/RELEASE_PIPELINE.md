@@ -16,7 +16,7 @@ assets. It has no automatic publishing step.
    asking the site to accept a schema-v3 public release manifest. This is not a
    download-link update and still requires normal source review.
 
-## 1. Prepare a signed APK locally
+## 1. Prepare a signed APK (and AAB) locally
 
 Check out a clean, immutable stable source tag. Then run:
 
@@ -26,8 +26,9 @@ Check out a clean, immutable stable source tag. Then run:
   -ExpectedAndroidCertificateSha256 YOUR_APPROVED_CERTIFICATE_SHA256
 ```
 
-The tool refuses a dirty checkout or a tag/version mismatch. It builds the
-release APK locally with CI signing enforcement, then validates:
+The tool refuses a dirty checkout or a tag/version mismatch. It builds
+**both** the release APK and the release AAB locally with CI signing
+enforcement, then validates the APK:
 
 - package ID `com.cashlylao.app`;
 - version name and Android version code;
@@ -35,6 +36,12 @@ release APK locally with CI signing enforcement, then validates:
 - canonical artifact filename and positive byte size;
 - SHA-256 and `SHA256SUMS.txt`;
 - reviewed notes and source commit provenance.
+
+The AAB is checksummed (`AAB_SHA256SUMS.txt`) and kept as local evidence
+only, for future Play Store readiness — it is never published or linked
+from the website, since an AAB isn't directly installable the way a
+sideloaded APK is, and Play Store submission is a separate, not-yet-taken
+step requiring its own owner approval.
 
 It writes immutable local evidence to `build/manual-release/vX.Y.Z` and stops.
 It does not contact GitHub, Firebase, or any public service.

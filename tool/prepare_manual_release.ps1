@@ -83,6 +83,7 @@ try {
     $env:CI = 'true'
     try {
         Invoke-Checked { flutter build apk --release } 'Signed Android APK build'
+        Invoke-Checked { flutter build appbundle --release } 'Signed Android AAB build'
     } finally {
         if ($null -eq $previousCi) {
             Remove-Item Env:CI -ErrorAction SilentlyContinue
@@ -96,6 +97,25 @@ try {
     $artifactName = "Cashly-Lao-Android-$($appVersion.Version).apk"
     $artifactPath = Join-Path $outputPath $artifactName
     Copy-Item -LiteralPath $builtApk -Destination $artifactPath -ErrorAction Stop
+
+    # The AAB is built and checksummed for completeness and future Play
+    # Store readiness only -- it is never part of the public download chain
+    # (an .aab isn't directly installable the way a sideloaded .apk is;
+    # Play Store itself generates installable APKs from it at install time).
+    # It therefore isn't run through verify_release.dart's signature/asset
+    # trust checks, which exist specifically to gate what the website can
+    # link to.
+    $builtAab = Join-Path $projectRoot 'build\app\outputs\bundle\release\app-release.aab'
+    if (-not (Test-Path -LiteralPath $builtAab -PathType Leaf)) { throw 'Flutter did not produce app-release.aab.' }
+    $aabArtifactName = "Cashly-Lao-Android-$($appVersion.Version).aab"
+    $aabArtifactPath = Join-Path $outputPath $aabArtifactName
+    Copy-Item -LiteralPath $builtAab -Destination $aabArtifactPath -ErrorAction Stop
+    $aabChecksum = (Get-FileHash -LiteralPath $aabArtifactPath -Algorithm SHA256).Hash.ToUpperInvariant()
+    [System.IO.File]::WriteAllText(
+        (Join-Path $outputPath 'AAB_SHA256SUMS.txt'),
+        "$aabChecksum  $aabArtifactName`n",
+        [System.Text.UTF8Encoding]::new($false)
+    )
 
     $env:APKSIGNER_PATH = Resolve-AndroidTool 'apksigner'
     $env:AAPT_PATH = Resolve-AndroidTool 'aapt'
@@ -122,6 +142,8 @@ try {
     $evidence | Add-Member -NotePropertyName sourceRepository -NotePropertyValue 'zornsully/Cashly-Lao-1.0.0-beta5' -Force
     $evidence | Add-Member -NotePropertyName releaseNotesSha256 -NotePropertyValue $notesChecksum -Force
     $evidence | Add-Member -NotePropertyName preparedAt -NotePropertyValue ([DateTime]::UtcNow.ToString('o')) -Force
+    $evidence | Add-Member -NotePropertyName androidAabFileName -NotePropertyValue $aabArtifactName -Force
+    $evidence | Add-Member -NotePropertyName androidAabSha256 -NotePropertyValue $aabChecksum -Force
     [System.IO.File]::WriteAllText(
         $evidencePath,
         (($evidence | ConvertTo-Json -Depth 10) + "`n"),
@@ -130,7 +152,9 @@ try {
 
     Write-Output "Prepared local evidence for $ReleaseTag at $outputPath."
     Write-Output "APK: $artifactName"
-    Write-Output "SHA-256: $checksum"
+    Write-Output "APK SHA-256: $checksum"
+    Write-Output "AAB: $aabArtifactName (local/Play-Store-readiness only, not published)"
+    Write-Output "AAB SHA-256: $aabChecksum"
     Write-Output 'No GitHub Release, public download link, Firebase deployment, or website metadata was changed.'
     Write-Output 'Stop here and obtain explicit approval before running publish_github_release.ps1.'
 } finally {

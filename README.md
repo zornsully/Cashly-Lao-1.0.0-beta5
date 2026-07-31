@@ -45,8 +45,9 @@ rejected.
 
 The local tools are intentionally separate:
 
-1. `tool/prepare_manual_release.ps1` builds the signed APK and produces
-   immutable local evidence.
+1. `tool/prepare_manual_release.ps1` builds the signed APK (published) and
+   AAB (local Play-Store-readiness evidence only) and produces immutable
+   local evidence.
 2. `tool/publish_github_release.ps1` requires `-ApprovePublicRelease` and
    publishes only after local validation.
 3. `tool/publish_web_metadata.ps1` requires

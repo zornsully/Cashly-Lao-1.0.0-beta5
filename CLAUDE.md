@@ -380,6 +380,104 @@ fails. A rollback changes only the website manifest back to a previously
 verified public release; it cannot retract or alter an existing GitHub asset.
 macOS, Windows, and iOS releases remain held until separately authorized.
 
+### Multi-platform release procedure (permanent)
+
+This is the standing procedure for **every future approved Cashly Lao
+release**, across whichever platforms are actually release-ready at the
+time — it applies without the owner needing to restate it. It generalizes
+the Android sequence above rather than replacing it; nothing about that
+sequence's approval gates changes here.
+
+**A platform is "release-ready" only when all of these are true today:**
+
+1. Its Flutter scaffolding exists in the repo (`android/`, `ios/`,
+   `windows/`, `macos/`, `web/` — `linux/` does not exist yet; no Linux
+   target has ever been added).
+2. A real local production build has actually succeeded for it.
+3. Signing is genuinely configured for it (Android: the release keystore
+   already in use; iOS/macOS: an Apple Developer account and
+   certificate; Windows: a code-signing certificate) — never assumed,
+   always confirmed against real local tooling.
+4. A public distribution channel is approved for it (Android:
+   `assets/release/distribution_policy.json`'s `repository` is non-null
+   and owner-reviewed; no other platform has an equivalent policy yet).
+
+As of 2026-08-01 that makes **Android and Web** the only release-ready
+platforms. iOS, Windows, and macOS stay "coming soon" — none has ever
+been built, signed, or had a distribution channel approved, and each
+needs a real Apple Developer account and/or code-signing certificate
+(paid services) before any of that can start. Linux isn't a configured
+target at all. When a platform later satisfies all four criteria, this
+same procedure covers it automatically — nothing here should need
+rewriting, only the platform's own onboarding (new signing material, a
+new distribution-policy equivalent, the same owner approvals Android's
+own pipeline already requires) needs to happen first.
+
+**The procedure itself, for whatever platforms are release-ready:**
+
+1. Detect which platforms currently satisfy the four criteria above.
+2. Bump `pubspec.yaml`'s version and build number once — this is the
+   single shared source every platform's build reads from; the existing
+   `--tag`-must-match-`pubspec.yaml` check in `prepare_manual_release.ps1`
+   already enforces this for Android and extends the same way to any
+   other platform's build step.
+3. Run `flutter analyze` and the full `flutter test` suite, then build
+   every release-ready platform's production artifact.
+4. For Android specifically: build **both** the APK and the AAB
+   (`prepare_manual_release.ps1` does this). Only the APK is ever
+   published or linked from the website — an AAB isn't directly
+   installable by a user the way a sideloaded APK is (Play Store itself
+   generates installable APKs from an AAB at install time), so the AAB
+   is checksummed and kept as local evidence only, for future Play Store
+   readiness, never exposed as a public download.
+5. **Stop for explicit owner approval** before publishing anything
+   publicly — unchanged from the existing Android sequence.
+6. After approval, upload the verified Android APK to the approved
+   public GitHub distribution repository; verify the public asset
+   anonymously (existing `publish_github_release.ps1` behavior).
+7. Regenerate the release manifest's fields (version, build number,
+   release date, file size, SHA-256, release notes) for whichever
+   platforms actually just released — always generated from real
+   verified artifacts by `generate_release_manifest.dart`, never
+   hand-edited to look more finished than reality.
+8. Rebuild the web app (`flutter build web --release`) so a redeploy
+   would carry the latest approved source.
+9. **Stop for a second explicit owner approval** before deploying
+   website/store metadata — unchanged from the existing Android
+   sequence. This is a different, narrower-scoped approval than the
+   pre-approved [website-only content deploys](#website-only-content-deploys-pre-approved)
+   carve-out below: a release-triggered deploy changes the Download
+   section's actual release data, so it always stays on this two-gate
+   sequence, never the pre-approved content-only path.
+10. After that approval, deploy `hosting:cashly-lao`; verify the live
+    site afterward — the manifest is reachable and correct, and every
+    visible download button/link on the live page actually works, not
+    just that the deploy command exited 0.
+11. Keep the previous stable release's local evidence and its GitHub
+    Release asset available for rollback — never delete evidence, never
+    overwrite or retag a versioned public asset. `rollback_web_metadata.ps1`
+    already restores the website's link to a previously verified release
+    without touching any GitHub asset.
+12. Report: the version/build numbers involved, exactly which platforms
+    were actually built vs. skipped (and why, per the four criteria
+    above), the download link or store link for each released platform,
+    the live deployment URL, test results, and any errors — never
+    reported as successful without independently verifying the live
+    site, matching the standing rule in the Android sequence above.
+
+**Approval-gate mapping**, so "ask only when required" stays unambiguous:
+publishing a real public release = step 6 (and step 10's deploy);
+signing credentials/private keys = any use of the Android keystore or a
+future Apple/Windows certificate; store submission = any future Play
+Store/App Store/Microsoft Store step (none exist today); paid services =
+an Apple Developer account, a Windows code-signing certificate, or any
+CI/build cost beyond Firebase Spark and GitHub Free; destructive or
+irreversible changes = retagging or overwriting a versioned release,
+force-pushing, or deleting release evidence. Every one of those already
+requires explicit approval under the sequence above — this section adds
+platform coverage and removes the need to restate the checklist, not any
+new authority to act without you.
+
 ### Website-only content deploys (pre-approved)
 
 Scoped narrowly to content that lives only at
@@ -2132,6 +2230,113 @@ Next recommended step: the polish pass on Reports (icon sweep — 2 raw
 `Icons.*` uses), or PDF export / cloud-based Expense Watch if you decide
 to revisit those later. Otherwise this closes the "Reports functionality"
 request as scoped.
+
+### 2026-08-01 — Permanent multi-platform release procedure + Android AAB build (done; not yet run)
+
+Summary:
+
+You asked for an automated, standing multi-platform release workflow
+(Android APK/AAB, iOS, Windows, macOS, Linux, web) that wouldn't need
+re-explaining each time, approval-gated only on credentials/signing/store
+submission/payment/destructive changes. A platform audit found every
+non-Android, non-web platform is genuinely unconfigured — no iOS/Windows/
+macOS build has ever been signed or even attempted (no Mac in this
+environment, no Windows code-signing certificate, no Apple Developer
+account confirmed), and Linux was never added as a Flutter target at all.
+Explained why full unattended automation isn't possible here (it would
+need signing material stored somewhere a workflow can reach it, which
+`CLAUDE.md`'s own non-negotiable policy forbids, and most platforms need
+paid services this project has deliberately avoided) and proposed instead:
+persist the workflow as a standing, generalized *procedure* I already know
+to follow — still requiring the same real approvals, just without you
+needing to restate the checklist. You scoped current execution to Android
+(APK + AAB) and Web, explicitly deferring iOS/Windows/macOS/Linux, and
+approved this narrower version.
+
+Files modified:
+
+- `CLAUDE.md` — new "Multi-platform release procedure (permanent)"
+  subsection (under the existing manual release policy): defines the
+  four-criteria test for "release-ready" (scaffolding exists, a real
+  local build succeeds, signing is genuinely configured, a distribution
+  channel is approved), the generalized 12-step procedure, and an explicit
+  mapping from your five approval triggers to the exact steps they gate —
+  so "ask only when required" stays unambiguous rather than becoming a
+  loophole.
+- `tool/prepare_manual_release.ps1` — now builds both `flutter build apk
+  --release` and `flutter build appbundle --release`. The AAB is
+  checksummed into a new `AAB_SHA256SUMS.txt` and recorded in
+  `release-evidence.json` (`androidAabFileName`/`androidAabSha256`), but
+  deliberately **not** run through `verify_release.dart`'s signature/asset
+  trust checks — those exist specifically to gate what the website can
+  publicly link to, and the AAB is never linked publicly (it isn't
+  directly installable the way a sideloaded APK is; Play Store itself
+  generates installable APKs from an AAB at install time). It's built
+  purely for future Play Store readiness.
+- `docs/RELEASE_PIPELINE.md`, `README.md` — updated to describe the
+  APK+AAB build and the AAB's local-only, non-published status.
+
+Implementation decisions:
+
+- **Did not touch `web/release-manifest.json` or `assets/release/distribution_policy.json`.**
+  You asked to "correct" the manifest so it reflects "actual release
+  status" — but verified first that its current `coming_soon` state for
+  every platform is already accurate: `distribution_policy.json.repository`
+  is still `null` and no real signed, verified, owner-approved Android
+  release has gone out this session. Hand-editing either file to look more
+  finished than reality would be exactly the "fake download" the request
+  itself said not to create. Both only change as a byproduct of a real
+  release going through the approval-gated pipeline.
+- **"Web" is not a `ReleasePlatform` and gets no Download-section card.**
+  Clarified this interpretation with you rather than assuming silently: a
+  webpage isn't something a user "downloads," so treating Web as
+  release-ready means keeping the live site itself current (a redeploy),
+  not adding a new tile to the platform-download grid. `ReleasePlatform`
+  stays `{android, ios, windows, mac}`, unchanged.
+- **AAB kept fully outside the public trust chain** rather than teaching
+  `verify_release.dart` a second per-platform artifact format — the
+  existing `--artifact <platform>=<path>` design allows only one artifact
+  per platform key by design (rejects duplicates), and the AAB has no
+  legitimate reason to ever pass through that gate anyway, since nothing
+  should ever link to it publicly.
+- **Platform detection is criteria-based, not a hardcoded platform list** —
+  the procedure explicitly says a platform becomes covered automatically
+  once its scaffolding/build/signing/distribution-approval are all real,
+  specifically so this section doesn't need rewriting the next time a
+  platform is onboarded; only that platform's own real setup (signing
+  material, a distribution-policy equivalent, the same owner approvals
+  Android's pipeline already requires) has to happen first.
+
+Validation:
+
+- PowerShell parser validation passed for `tool/prepare_manual_release.ps1`.
+- No Dart/Flutter code changed this phase (policy doc + PowerShell script +
+  two doc files only), so `flutter analyze`/`flutter test` weren't rerun —
+  nothing in this phase touches app code.
+- **Not exercised end-to-end.** Running `prepare_manual_release.ps1` for
+  real requires a real immutable release tag, the actual Android release
+  keystore, and the approved certificate SHA-256 — none of which are
+  invoked here. The AAB build path is new and unverified against a real
+  build until the next actual release attempt.
+
+Known limitations:
+
+- No real release has ever been produced end-to-end this session (Android
+  or otherwise) — this phase only prepares the tooling and policy for when
+  one is.
+- iOS, Windows, macOS, and Linux remain fully unconfigured, exactly as
+  before. Onboarding any of them needs real credentials/accounts/certs
+  this environment doesn't have and this session was told not to pursue
+  yet.
+- The "release-ready" criteria are self-assessed against what's in the
+  repository right now (e.g. `distribution_policy.json`), not against an
+  independent audit trail — same trust model the existing Android policy
+  already relies on.
+
+Next recommended step: none required until an actual release is attempted.
+When you do approve one, follow the new "Multi-platform release procedure"
+section above starting from step 1, and record the result in a new dated
+entry the same way every prior release-related phase has.
 
 ## Product Roadmap
 
