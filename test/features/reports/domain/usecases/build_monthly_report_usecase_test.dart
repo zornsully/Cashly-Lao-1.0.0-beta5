@@ -102,7 +102,8 @@ void main() {
     final report = useCase(
       month: DateTime(2026, 3),
       accounts: accounts,
-      monthTransactions: transactions,
+      transactions: transactions,
+      monthTransactionsForBudgets: transactions,
       categories: categories,
       budgets: budgets,
     );
@@ -113,8 +114,11 @@ void main() {
     expect(report.netByCurrency, {'LAK': 800});
     expect(report.spendingByCategory['LAK'], hasLength(1));
     expect(report.spendingByCategory['LAK']!.single.category.id, 'food');
+    expect(report.accountBreakdown['LAK'], hasLength(1));
+    expect(report.accountBreakdown['LAK']!.single.account.id, 'acc-1');
     expect(report.budgetProgress, hasLength(1));
     expect(report.budgetProgress.single.spentAmount, 200);
+    expect(report.transactions, hasLength(2));
     expect(report.hasAnyActivity, isTrue);
   });
 
@@ -122,7 +126,8 @@ void main() {
     final report = useCase(
       month: DateTime(2026, 3, 15),
       accounts: const [],
-      monthTransactions: const [],
+      transactions: const [],
+      monthTransactionsForBudgets: const [],
       categories: const [],
       budgets: const [],
     );
@@ -145,11 +150,42 @@ void main() {
     final report = useCase(
       month: DateTime(2026, 3),
       accounts: const [],
-      monthTransactions: transactions,
+      transactions: transactions,
+      monthTransactionsForBudgets: transactions,
       categories: const [],
       budgets: const [],
     );
 
     expect(report.totalIncomeByCurrency, isEmpty);
+  });
+
+  test('budget progress reflects monthTransactionsForBudgets, not the '
+      'filtered transactions list', () {
+    final accounts = [account(id: 'acc-1', currencyCode: 'LAK')];
+    final categories = [category(id: 'food', name: 'Food')];
+    final budgets = [budget(categoryId: 'food', limitAmount: 300)];
+    // The "report view" is filtered down to nothing (e.g. a different
+    // account was selected), but the full month still had food spend.
+    final fullMonthTransactions = [
+      transaction(
+        id: 't1',
+        accountId: 'acc-1',
+        categoryId: 'food',
+        type: TransactionType.expense,
+        amount: 150,
+      ),
+    ];
+
+    final report = useCase(
+      month: DateTime(2026, 3),
+      accounts: accounts,
+      transactions: const [],
+      monthTransactionsForBudgets: fullMonthTransactions,
+      categories: categories,
+      budgets: budgets,
+    );
+
+    expect(report.totalExpenseByCurrency, isEmpty);
+    expect(report.budgetProgress.single.spentAmount, 150);
   });
 }

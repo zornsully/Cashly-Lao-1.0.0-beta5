@@ -1748,11 +1748,109 @@ abstract class AppLocalizations {
   /// **'Spending by Category'**
   String get spendingByCategorySectionTitle;
 
+  /// No description provided for @accountBreakdownSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending by Account'**
+  String get accountBreakdownSectionTitle;
+
   /// No description provided for @budgetVsActualSectionTitle.
   ///
   /// In en, this message translates to:
   /// **'Budget vs Actual'**
   String get budgetVsActualSectionTitle;
+
+  /// No description provided for @expenseWatchSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep an Eye On'**
+  String get expenseWatchSectionTitle;
+
+  /// No description provided for @reportFilterTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter report'**
+  String get reportFilterTooltip;
+
+  /// No description provided for @reportFilterSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter report'**
+  String get reportFilterSheetTitle;
+
+  /// No description provided for @dateRangeFilterLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Date range'**
+  String get dateRangeFilterLabel;
+
+  /// No description provided for @customDateRangeUnsetMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Using the month selected above'**
+  String get customDateRangeUnsetMessage;
+
+  /// No description provided for @chooseDateRangeButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose dates'**
+  String get chooseDateRangeButton;
+
+  /// No description provided for @clearDateRangeTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear custom date range'**
+  String get clearDateRangeTooltip;
+
+  /// No description provided for @savingsRateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Savings rate'**
+  String get savingsRateLabel;
+
+  /// No description provided for @averageDailySpendLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg. daily spend'**
+  String get averageDailySpendLabel;
+
+  /// No description provided for @topSpendingCategoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Top category'**
+  String get topSpendingCategoryLabel;
+
+  /// No description provided for @spendingChangeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'vs previous period'**
+  String get spendingChangeLabel;
+
+  /// No description provided for @largeExpenseWatchMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} on {category} — well above your usual {average}'**
+  String largeExpenseWatchMessage(
+    String amount,
+    String category,
+    String average,
+  );
+
+  /// No description provided for @repeatedExpenseWatchMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} similar charges of {amount} on {category}, close together — check for a duplicate'**
+  String repeatedExpenseWatchMessage(
+    String count,
+    String amount,
+    String category,
+  );
+
+  /// No description provided for @risingCategoryWatchMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{category} spending is up {percent}% versus your average'**
+  String risingCategoryWatchMessage(String category, String percent);
 
   /// No description provided for @seeAllButton.
   ///

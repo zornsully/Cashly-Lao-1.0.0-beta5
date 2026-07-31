@@ -930,7 +930,66 @@ class AppLocalizationsLo extends AppLocalizations {
   String get spendingByCategorySectionTitle => 'ລາຍຈ່າຍຕາມໝວດໝູ່';
 
   @override
+  String get accountBreakdownSectionTitle => 'ລາຍຈ່າຍຕາມບັນຊີ';
+
+  @override
   String get budgetVsActualSectionTitle => 'ງົບປະມານທຽບກັບຕົວຈິງ';
+
+  @override
+  String get expenseWatchSectionTitle => 'ຕິດຕາມເບິ່ງ';
+
+  @override
+  String get reportFilterTooltip => 'ກັ່ນຕອງລາຍງານ';
+
+  @override
+  String get reportFilterSheetTitle => 'ກັ່ນຕອງລາຍງານ';
+
+  @override
+  String get dateRangeFilterLabel => 'ຊ່ວງວັນທີ';
+
+  @override
+  String get customDateRangeUnsetMessage => 'ໃຊ້ເດືອນທີ່ເລືອກຢູ່ຂ້າງເທິງ';
+
+  @override
+  String get chooseDateRangeButton => 'ເລືອກວັນທີ';
+
+  @override
+  String get clearDateRangeTooltip => 'ລຶບຊ່ວງວັນທີກຳນົດເອງ';
+
+  @override
+  String get savingsRateLabel => 'ອັດຕາການປະຢັດ';
+
+  @override
+  String get averageDailySpendLabel => 'ໃຊ້ຈ່າຍສະເລ່ຍ/ວັນ';
+
+  @override
+  String get topSpendingCategoryLabel => 'ໝວດໝູ່ໃຊ້ຈ່າຍສູງສຸດ';
+
+  @override
+  String get spendingChangeLabel => 'ທຽບກັບຊ່ວງກ່ອນໜ້າ';
+
+  @override
+  String largeExpenseWatchMessage(
+    String amount,
+    String category,
+    String average,
+  ) {
+    return '$amount ສຳລັບ $category — ສູງກວ່າປົກກະຕິຫຼາຍ ($average)';
+  }
+
+  @override
+  String repeatedExpenseWatchMessage(
+    String count,
+    String amount,
+    String category,
+  ) {
+    return '$count ລາຍການທີ່ຄ້າຍກັນ $amount ສຳລັບ $category ໃນໄລຍະໃກ້ກັນ — ກວດເບິ່ງວ່າຊໍ້າກັນບໍ';
+  }
+
+  @override
+  String risingCategoryWatchMessage(String category, String percent) {
+    return 'ລາຍຈ່າຍ $category ເພີ່ມຂຶ້ນ $percent% ທຽບກັບຄ່າສະເລ່ຍຂອງທ່ານ';
+  }
 
   @override
   String get seeAllButton => 'ເບິ່ງທັງໝົດ';

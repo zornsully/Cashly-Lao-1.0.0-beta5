@@ -31,7 +31,9 @@ void main() {
       totalIncomeByCurrency: const {},
       totalExpenseByCurrency: const {},
       spendingByCategory: const {},
+      accountBreakdown: const {},
       budgetProgress: const [],
+      transactions: const [],
     );
 
     final csv = useCase(report);
@@ -60,7 +62,9 @@ void main() {
           ),
         ],
       },
+      accountBreakdown: const {},
       budgetProgress: const [],
+      transactions: const [],
     );
 
     final csv = useCase(report);
@@ -92,7 +96,9 @@ void main() {
           ),
         ],
       },
+      accountBreakdown: const {},
       budgetProgress: const [],
+      transactions: const [],
     );
 
     final csv = useCase(report);
@@ -115,7 +121,9 @@ void main() {
           ),
         ],
       },
+      accountBreakdown: const {},
       budgetProgress: const [],
+      transactions: const [],
     );
 
     final csv = useCase(report);

@@ -1968,6 +1968,171 @@ cross-cutting items still open (full responsive breakpoint system, shared
 behavior, the app-wide `Icons.*` sweep, a native-speaker `app_lo.arb`
 review).
 
+### 2026-08-01 — Reports functionality phase: filters, insights, account
+breakdown, detailed transaction list, Expense Watch (done)
+
+Summary:
+
+Scoped from an `AskUserQuestion` split of the Reports redesign into four
+independently-sized pieces (polish / new metrics+charts / PDF export /
+Expense Watch anomaly detection). You chose to build the functional core
+now — filters, new metrics, a new chart, a transaction list, and an
+on-device "Keep an Eye On" anomaly heuristic — explicitly deferring PDF
+export and any cloud-based detection, with the icon/token polish pass to
+follow as its own phase. Confirmed via audit before starting that every
+piece was genuinely greenfield (no partial PDF code, no anomaly-detection
+code anywhere, no charting library installed) — this was closer to adding
+a feature than polishing an existing one, so it was built and validated in
+layers: domain entities/usecases first, then the provider rework, then the
+UI, with `flutter analyze`/`flutter test` checkpoints between each.
+
+1. **Filters** — date-range, account, category, and transaction-type,
+   via a new `ReportFilter` domain entity and `reportFilterProvider`
+   (mirrors `TransactionFilter`/`transactionsFilterProvider`'s own
+   pattern). A custom date range *replaces* the browsed month as the
+   report's window; account/category/type narrow whatever window is
+   active. Reuses Transactions' own `FilterTransactionsUseCase` for the
+   account/category/type narrowing rather than duplicating that logic.
+2. **New summary metrics** — savings rate, average daily spend, top
+   spending category, and month-over-month expense change, via a new
+   `ReportInsights` entity/`ComputeReportInsightsUseCase`, layered on top
+   of `MonthlyReport` the same way `ConvertedMonthlyTotals` already is
+   (derived, optional, never blocks the rest of the screen).
+3. **Account breakdown chart** — a new `AccountPieChart` widget, deliberately
+   a near-identical twin of the existing `CategoryPieChart` (same
+   hand-rolled `CustomPainter` donut, no new charting dependency — you
+   explicitly asked to reuse the existing chart approach), backed by a new
+   `BuildAccountBreakdownUseCase` mirroring `ComputeCategorySpendingUseCase`.
+4. **Detailed transaction list** — a new, deliberately *read-only*
+   `_ReportTransactionTile` (not a reuse of Transactions' own
+   `TransactionTile`, which carries edit/duplicate/delete actions that
+   don't belong on an analysis screen — data changes still happen from
+   the Transactions tab).
+5. **Expense Watch ("Keep an Eye On")** — a new `DetectExpenseWatchUseCase`
+   with three fixed, deterministic, on-device heuristics (no ML, no cloud
+   call): a single transaction well above its category's trailing
+   average ("large"), several same-amount transactions in the same
+   category/account within a few days ("repeated" — a likely duplicate
+   charge), and a category whose spend this period is well above its own
+   trailing average ("rising"). A new sealed `ExpenseWatchItem` type
+   (`LargeExpenseWatchItem`/`RepeatedExpenseWatchItem`/
+   `RisingCategoryWatchItem`) rather than one flat class with nullable
+   fields, since the three variants genuinely differ in shape.
+
+A real design decision surfaced while wiring filters into the existing
+report builder: **Budget vs Actual must never be narrowed by the report's
+own display filter.** A budget's real spend has to reflect every account
+and every matching transaction that month, regardless of which account a
+user happens to be viewing Reports through — otherwise filtering to one
+account could make a budget look like it's under control when it isn't.
+`BuildMonthlyReportUseCase` now takes two transaction lists explicitly:
+`transactions` (filtered, drives every other figure) and
+`monthTransactionsForBudgets` (always the whole month, unfiltered) — this
+is covered by a dedicated test (see Validation) and by a provider-level
+integration test proving the wiring, not just the pure usecase logic.
+
+Files created:
+
+- `lib/features/reports/domain/entities/report_filter.dart`,
+  `account_spending.dart`, `expense_watch_item.dart`, `report_insights.dart`.
+- `lib/features/reports/domain/usecases/build_account_breakdown_usecase.dart`,
+  `compute_report_insights_usecase.dart`, `detect_expense_watch_usecase.dart`.
+- `lib/features/reports/presentation/widgets/account_pie_chart.dart`.
+- Tests: `compute_report_insights_usecase_test.dart` (6),
+  `detect_expense_watch_usecase_test.dart` (12, one per heuristic branch —
+  the most novel logic this phase, so the most thoroughly covered),
+  `presentation/providers/report_providers_test.dart` (3, new file —
+  `report_providers.dart` had zero dedicated tests before this phase).
+
+Files modified:
+
+- `lib/features/reports/domain/entities/monthly_report.dart` — added
+  `accountBreakdown` and `transactions` fields.
+- `lib/features/reports/domain/usecases/build_monthly_report_usecase.dart` —
+  `monthTransactions` renamed to `transactions`; new required
+  `monthTransactionsForBudgets` param (see the design decision above).
+- `lib/features/reports/presentation/providers/report_providers.dart` —
+  substantially reworked: `reportFilterProvider`, effective-range/
+  trailing-range resolution, `monthlyReportProvider` now sources from
+  `transactionsInRangeProvider` (custom range) or `transactionsForMonthProvider`
+  (plain month) rather than always the latter, `_previousPeriodExpenseProvider`,
+  `reportInsightsProvider`, `expenseWatchProvider`. `monthlyTrendProvider`
+  now also respects the account/category/type filter (never the custom
+  date range — a trend is inherently its own multi-month window).
+- `lib/features/reports/presentation/screens/reports_screen.dart` — filter
+  icon (badged when active) opening a new `_ReportFilterSheet`; new
+  `_InsightsRow`/`_InsightCard`, `_ExpenseWatchTile`, `_ReportTransactionTile`
+  private widgets; Account Breakdown, Keep an Eye On, and Transactions
+  sections added to the body.
+- Tests: `build_monthly_report_usecase_test.dart` (updated call sites +1 new
+  test for the budget/filter split), `monthly_report_test.dart`,
+  `convert_report_totals_usecase_test.dart`, `export_report_to_csv_usecase_test.dart`
+  (all updated for `MonthlyReport`'s two new required fields),
+  `reports_screen_test.dart` (+1 new test: transaction list rendering +
+  opening the filter sheet).
+
+Implementation decisions:
+
+- **No new charting package.** Every new visualization reuses the existing
+  hand-rolled `CustomPainter` donut approach — matches your explicit
+  instruction and keeps the dependency surface unchanged.
+- **`ExpenseWatch` thresholds are fixed constants, not user settings** —
+  2x category average ("large"), same-amount-within-3-days ("repeated"),
+  1.5x category average ("rising"). Documented as deliberate in the
+  usecase's own doc comment; revisit as a Settings toggle only if real
+  usage shows the fixed thresholds misfire for typical spending patterns.
+- **Trailing window is 3 calendar months** before the browsed month by
+  default, or 3x a custom range's own length when one is active — calendar-
+  month arithmetic for the common case to match `monthlyTrendProvider`'s
+  own existing convention, rather than approximating "a month" as a fixed
+  day count.
+- **Read-only transaction list**, not a `TransactionTile` reuse — Reports
+  is an analysis surface, not a second place to edit data.
+- Deliberately did **not** start PDF export or any cloud-based detection —
+  explicitly out of scope for this phase per your instruction. The
+  Icons.*/token polish pass (2 known raw icons in `reports_screen.dart`:
+  the export button and the empty-state icon) is deliberately deferred to
+  its own follow-up phase, not bundled into this one.
+
+Validation:
+
+- `flutter analyze` — 0 issues (checked at each layer: domain entities,
+  provider rework, and UI, not just once at the end).
+- `dart format --set-exit-if-changed lib test tool` — clean.
+- `flutter test` — full suite, 409 passing (22 new), 0 failing, 0 skipped.
+- `flutter build web --release` — compiles clean end-to-end.
+- Two real test-infra bugs found and fixed while adding coverage (not
+  product bugs): (1) a provider-level test needed to wait for *all* of
+  `monthlyReportProvider`'s several independent stream dependencies to
+  resolve, not just one or two fixed microtask flushes — fixed with a
+  poll-until-resolved helper instead of a fixed flush count; (2) the new
+  widget test's assertions on the transaction list (now near the bottom of
+  a much longer scrollable body) needed a taller test surface, same
+  pattern as prior phases' similar fix.
+
+Known limitations:
+
+- **Not visually verified on-device or in-browser**, same standing caveat
+  as every UI phase this session — particularly the filter sheet's date-
+  range picker, the insights row's 2/4-column reflow, and the Expense
+  Watch tiles' visual weight against the rest of the page.
+- New Lao strings are drafts, same unreviewed status as the rest of
+  `app_lo.arb`.
+- Expense Watch's heuristics are unvalidated against real spending data —
+  the thresholds are reasonable first guesses, not tuned against actual
+  usage (there is none yet; this app is pre-launch).
+- No widget-level test exercises an actual rendered `ExpenseWatchItem`
+  tile end-to-end (the heuristic logic itself has thorough usecase-level
+  coverage, and the full-screen integration is proven not to crash by the
+  passing widget tests, but no test asserts on `_ExpenseWatchTile`'s exact
+  rendered text) — worth adding if this section turns out to need visual
+  iteration.
+
+Next recommended step: the polish pass on Reports (icon sweep — 2 raw
+`Icons.*` uses), or PDF export / cloud-based Expense Watch if you decide
+to revisit those later. Otherwise this closes the "Reports functionality"
+request as scoped.
+
 ## Product Roadmap
 
 The full staged roadmap — objectives, features, deliverables,

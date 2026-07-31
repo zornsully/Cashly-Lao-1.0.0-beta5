@@ -931,7 +931,66 @@ class AppLocalizationsEn extends AppLocalizations {
   String get spendingByCategorySectionTitle => 'Spending by Category';
 
   @override
+  String get accountBreakdownSectionTitle => 'Spending by Account';
+
+  @override
   String get budgetVsActualSectionTitle => 'Budget vs Actual';
+
+  @override
+  String get expenseWatchSectionTitle => 'Keep an Eye On';
+
+  @override
+  String get reportFilterTooltip => 'Filter report';
+
+  @override
+  String get reportFilterSheetTitle => 'Filter report';
+
+  @override
+  String get dateRangeFilterLabel => 'Date range';
+
+  @override
+  String get customDateRangeUnsetMessage => 'Using the month selected above';
+
+  @override
+  String get chooseDateRangeButton => 'Choose dates';
+
+  @override
+  String get clearDateRangeTooltip => 'Clear custom date range';
+
+  @override
+  String get savingsRateLabel => 'Savings rate';
+
+  @override
+  String get averageDailySpendLabel => 'Avg. daily spend';
+
+  @override
+  String get topSpendingCategoryLabel => 'Top category';
+
+  @override
+  String get spendingChangeLabel => 'vs previous period';
+
+  @override
+  String largeExpenseWatchMessage(
+    String amount,
+    String category,
+    String average,
+  ) {
+    return '$amount on $category — well above your usual $average';
+  }
+
+  @override
+  String repeatedExpenseWatchMessage(
+    String count,
+    String amount,
+    String category,
+  ) {
+    return '$count similar charges of $amount on $category, close together — check for a duplicate';
+  }
+
+  @override
+  String risingCategoryWatchMessage(String category, String percent) {
+    return '$category spending is up $percent% versus your average';
+  }
 
   @override
   String get seeAllButton => 'See all';

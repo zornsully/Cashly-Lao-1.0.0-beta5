@@ -452,7 +452,58 @@
   "nothingToReportYetMessage": "Once you record income or expenses for this month, you'll see monthly summaries, spending breakdowns, and trends here.",
   "incomeExpenseTrendSectionTitle": "Income vs Expense Trend",
   "spendingByCategorySectionTitle": "Spending by Category",
+  "accountBreakdownSectionTitle": "Spending by Account",
   "budgetVsActualSectionTitle": "Budget vs Actual",
+  "expenseWatchSectionTitle": "Keep an Eye On",
+  "reportFilterTooltip": "Filter report",
+  "reportFilterSheetTitle": "Filter report",
+  "dateRangeFilterLabel": "Date range",
+  "customDateRangeUnsetMessage": "Using the month selected above",
+  "chooseDateRangeButton": "Choose dates",
+  "clearDateRangeTooltip": "Clear custom date range",
+  "savingsRateLabel": "Savings rate",
+  "averageDailySpendLabel": "Avg. daily spend",
+  "topSpendingCategoryLabel": "Top category",
+  "spendingChangeLabel": "vs previous period",
+  "largeExpenseWatchMessage": "{amount} on {category} — well above your usual {average}",
+  "@largeExpenseWatchMessage": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "category": {
+        "type": "String"
+      },
+      "average": {
+        "type": "String"
+      }
+    }
+  },
+  "repeatedExpenseWatchMessage": "{count} similar charges of {amount} on {category}, close together — check for a duplicate",
+  "@repeatedExpenseWatchMessage": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      },
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "risingCategoryWatchMessage": "{category} spending is up {percent}% versus your average",
+  "@risingCategoryWatchMessage": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
   "seeAllButton": "See all",
   "netLabel": "Net",
   "totalLabel": "Total",

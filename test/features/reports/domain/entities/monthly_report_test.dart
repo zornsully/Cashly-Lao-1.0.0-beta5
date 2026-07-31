@@ -28,7 +28,9 @@ void main() {
       totalIncomeByCurrency: {'LAK': 1000, 'USD': 50},
       totalExpenseByCurrency: {'LAK': 200},
       spendingByCategory: {},
+      accountBreakdown: const {},
       budgetProgress: [],
+      transactions: const [],
     );
 
     expect(report.currencies, {'LAK', 'USD'});
@@ -40,7 +42,9 @@ void main() {
       totalIncomeByCurrency: {'LAK': 1000},
       totalExpenseByCurrency: {'LAK': 300, 'USD': 20},
       spendingByCategory: {},
+      accountBreakdown: const {},
       budgetProgress: [],
+      transactions: const [],
     );
 
     expect(report.netByCurrency, {'LAK': 700, 'USD': -20});
@@ -52,7 +56,9 @@ void main() {
       totalIncomeByCurrency: {},
       totalExpenseByCurrency: {},
       spendingByCategory: {},
+      accountBreakdown: const {},
       budgetProgress: [],
+      transactions: const [],
     );
 
     expect(report.hasAnyActivity, isFalse);
@@ -75,7 +81,9 @@ void main() {
             ),
           ],
         },
+        accountBreakdown: const {},
         budgetProgress: const [],
+        transactions: const [],
       );
 
       final rows = report.toExportRows();
