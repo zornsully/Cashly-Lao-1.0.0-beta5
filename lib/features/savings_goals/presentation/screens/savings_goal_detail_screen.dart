@@ -56,13 +56,13 @@ class SavingsGoalDetailScreen extends ConsumerWidget {
     if (!confirmed || !context.mounted) return;
 
     final notifier = ref.read(savingsGoalControllerProvider.notifier);
-    final success = await notifier.deleteGoal(goal.id);
+    final result = await notifier.deleteGoal(goal.id);
 
     if (!context.mounted) return;
-    if (success) {
+    if (result.success) {
       context.pop();
     } else {
-      final message = notifier.failure?.message ?? l10n.deleteGoalFailedMessage;
+      final message = result.failure?.message ?? l10n.deleteGoalFailedMessage;
       AppSnackbar.showError(context, message);
     }
   }
@@ -74,13 +74,13 @@ class SavingsGoalDetailScreen extends ConsumerWidget {
   ) async {
     final l10n = AppLocalizations.of(context)!;
     final notifier = ref.read(savingsGoalControllerProvider.notifier);
-    final success = goal.isArchived
+    final result = goal.isArchived
         ? await notifier.unarchiveGoal(goal.id)
         : await notifier.archiveGoal(goal.id);
 
     if (!context.mounted) return;
-    if (!success) {
-      final message = notifier.failure?.message ?? l10n.saveGoalFailedMessage;
+    if (!result.success) {
+      final message = result.failure?.message ?? l10n.saveGoalFailedMessage;
       AppSnackbar.showError(context, message);
     }
   }

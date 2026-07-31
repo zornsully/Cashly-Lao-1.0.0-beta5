@@ -376,18 +376,61 @@ snackbar.
 
 `flutter analyze` — 0 issues. Full suite now includes these 8 new tests.
 
-**Still genuinely untested** (not started this pass — a full
-feature-by-feature pass is large, separate scope): `forgot_password_screen.dart`,
-`verify_email_screen.dart`, `lock_screen.dart`, `legal_document_page.dart`,
-`account_form_screen.dart`, `budget_form_screen.dart`,
-`savings_goal_detail_screen.dart`, `savings_goal_form_screen.dart`. None
-of these were found to have a *known* bug during this pass — they're
-listed here as coverage gaps, not confirmed defects. A true Phase 4
-(feature-by-feature UI/data/state/navigation/validation/loading/empty/
-error/offline/localization/accessibility/responsive/dark-light/test-
-coverage matrix, per the completion-mission spec) remains open and would
-still need real device/browser verification for its non-code-level
-checks regardless of how much further test-writing happens here.
+**Round 2** — closed `verify_email_screen.dart`'s own silent-logout bug
+(same class as `profile_screen.dart`'s: `_signOut()` called `logout()`
+without checking the result, so a failed logout — including the
+pending-writes case — failed with zero user feedback). Fixed the same
+way, added `verify_email_screen_test.dart` (5 tests, including one
+specifically named to prove the pending-writes message now surfaces).
+Also added `forgot_password_screen_test.dart` (3 tests), a screen that
+had no coverage at all. Checked all 4 remaining untested form screens
+(`budget_form_screen.dart`, `category_form_screen.dart`,
+`savings_goal_form_screen.dart`, `transaction_form_screen.dart`) by
+reading each `_submit()` in full — all four already check `success`
+correctly and show an error snackbar on failure; no bug found there.
+
+**Round 3** — closed the remaining coverage gaps and found a second,
+more serious defect:
+
+- `lock_screen.dart`, `legal_document_page.dart`, `account_form_screen.dart`
+  audited line-by-line: all three handle their success/failure paths
+  correctly. Added `lock_screen_test.dart` (4 tests: biometric success,
+  failure, `LocalAuthException` handling, retry-button flow),
+  `legal_document_page_test.dart` (3 tests: Privacy/Terms content render,
+  "Back to home" navigation), and confirmed `account_form_screen.dart`
+  needed no test additions beyond what already existed.
+- **Real bug found and fixed**: `savings_goal_detail_screen.dart`'s
+  delete/archive/unarchive menu actions crashed with an uncaught
+  `UnmountedRefException` whenever the mutation failed. Root cause:
+  `savingsGoalControllerProvider` is `.autoDispose`, and — unlike every
+  other feature's controller, whose form screen keeps it alive via
+  `ref.watch(...).isLoading` — nothing on this screen ever watches it, so
+  it can be disposed the moment the mutation's async gap ends. The code
+  read `notifier.failure` *after* that gap to build the error message;
+  once disposed, that read throws instead of ever showing the error
+  snackbar. Fixed by having `SavingsGoalController.deleteGoal`/
+  `archiveGoal`/`unarchiveGoal` return `({bool success, Failure? failure})`
+  directly (captured inside the same async closure that already produced
+  the result, before any disposal-vulnerable second read), instead of the
+  caller re-reading `notifier.failure` afterward. `createGoal`/`updateGoal`/
+  `contribute` were left on the original `Future<bool>` + `notifier.failure`
+  pattern since their call sites do keep the controller alive and were
+  never at risk. Added `savings_goal_detail_screen_test.dart` (4 tests) —
+  the delete- and archive-failure tests reproduced the crash before the
+  fix and pass cleanly after it.
+
+`flutter analyze` — 0 issues. `dart format --set-exit-if-changed` — clean.
+Full suite: 448 passing (11 new this round), 0 failing, 0 skipped.
+
+**Still genuinely untested**: `savings_goal_form_screen.dart` — read in
+full during Round 2's form-screen sweep and confirmed correct
+(`success`/`AppSnackbar.showError` present), but has no dedicated test
+file yet. A true Phase 4 (feature-by-feature UI/data/state/navigation/
+validation/loading/empty/error/offline/localization/accessibility/
+responsive/dark-light/test-coverage matrix, per the completion-mission
+spec) remains open and would still need real device/browser verification
+for its non-code-level checks regardless of how much further
+test-writing happens here.
 
 ## Security & data
 
