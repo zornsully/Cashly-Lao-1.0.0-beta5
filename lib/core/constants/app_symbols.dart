@@ -326,4 +326,152 @@ abstract final class AppSymbols {
     fontPackage: _package,
     matchTextDirection: true,
   );
+  static const IconData chevronLeft = IconData(
+    0xe5cb,
+    fontFamily: _family,
+    fontPackage: _package,
+    matchTextDirection: true,
+  );
+  static const IconData errorOutline = IconData(
+    0xf8b6,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData refresh = IconData(
+    0xe5d5,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData cloudOff = IconData(
+    0xe2c1,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData check = IconData(
+    0xe668,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData lockOutline = IconData(
+    0xe899,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData visibility = IconData(
+    0xe8f4,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData visibilityOff = IconData(
+    0xe8f5,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData dashboard = IconData(
+    0xe871,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData barChart = IconData(
+    0xe26b,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData repeat = IconData(
+    0xe040,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData checkCircle = IconData(
+    0xf0be,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData autoAwesome = IconData(
+    0xe65f,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData info = IconData(
+    0xe88e,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData flag = IconData(
+    0xf0c6,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData southEast = IconData(
+    0xf1e4,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData northEast = IconData(
+    0xf1e1,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData addChart = IconData(
+    0xef3c,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData waterfallChart = IconData(
+    0xea00,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData compareArrows = IconData(
+    0xe915,
+    fontFamily: _family,
+    fontPackage: _package,
+    matchTextDirection: true,
+  );
+  static const IconData circleFilled = IconData(
+    0xef4a,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData verified = IconData(
+    0xef76,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData logout = IconData(
+    0xe9ba,
+    fontFamily: _family,
+    fontPackage: _package,
+    matchTextDirection: true,
+  );
+  static const IconData deleteForever = IconData(
+    0xe92b,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData notificationsActive = IconData(
+    0xe7f7,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData email = IconData(
+    0xe159,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData markEmailRead = IconData(
+    0xf18c,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData markEmailUnread = IconData(
+    0xf18a,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
+  static const IconData badge = IconData(
+    0xea67,
+    fontFamily: _family,
+    fontPackage: _package,
+  );
 }

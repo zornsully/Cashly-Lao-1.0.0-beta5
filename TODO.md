@@ -120,9 +120,9 @@ free-tier policy unless the owner explicitly approves the upgrade. See
 **Impact**: the FCM push backstop (notifications when the app is fully
 closed) and `onUserDeleted`'s server-side cleanup of `notificationState`
 (the one user-owned collection with literally no client deletion path,
-since rules deny client access to it) are almost certainly not live in
-production today. Core financial correctness is unaffected — nothing
-balance/budget/report-related depends on a server.
+since rules deny client access to it) are confirmed not live in production.
+Core financial correctness is unaffected — nothing balance/budget/report-
+related depends on a server. See `docs/CLOUD_FUNCTIONS_STATUS.md`.
 
 **Required dependency/approval**: explicit owner approval to upgrade the
 `cashly-lao` Firebase project to Blaze, then a real `firebase login`
@@ -158,60 +158,72 @@ fetch from `gstatic.com`, and Analytics. If anything is blocked, widen only
 the specific directive that failed, re-deploy, and re-check — never widen
 speculatively.
 
-## Icons.* → AppSymbols.* sweep (remaining scope, counted)
+## Icons.* → AppSymbols.* sweep (done, except a deliberate landing-page exemption)
 
-**Reason deferred**: large and mechanical (87 raw `Icons.*` references across
-17 files as of this pass), and several of the files involved are
-high-blast-radius shared widgets (`error_view.dart`, `sync_status_banner.dart`,
-`app_password_field.dart`, `home_shell_screen.dart` — the bottom-nav shell
-used on every authenticated screen). A rushed pass risked exactly what the
-audit warned against: losing an accessibility label, icon weight, or
-navigation-state meaning during blind replacement. Fixed in this pass only
-the two icons already named as a specific deferred item from the Reports
-phase (`reports_screen.dart`'s export button and empty-state icon — done,
-see `AppSymbols.iosShare`/`insertChartOutlined`).
+**Reason it was originally deferred**: large and mechanical (87 raw
+`Icons.*` references across 17 files as of the audit pass), and several of
+the files involved are high-blast-radius shared widgets. A rushed pass
+risked exactly what the audit warned against: losing an accessibility
+label, icon weight, or navigation-state meaning during blind replacement.
 
-**Remaining count by file** (each needs its own AppSymbols constant lookup
-from the installed `material_symbols_icons` package — never guessed — for
-any icon without an existing equivalent):
+**Now complete for every file except the landing page** (confirmed via
+`grep -rl "Icons\." lib/` returning only the two landing files below).
+Closed in this order, each step verified with `flutter analyze` (0 issues)
+and `flutter test` (412/412) before moving to the next: the 5 shared
+widgets (`error_view.dart`, `sync_status_banner.dart`,
+`month_selector_header.dart`, `color_picker_field.dart`,
+`app_password_field.dart` — 9 icons), `home_shell_screen.dart` (23 icons —
+bottom-nav shell + desktop sidebar), `financial_insight_card.dart` (14),
+`profile_screen.dart` (7), `savings_goal_detail_screen.dart` (4),
+`savings_goals_list_screen.dart` (4), `forgot_password_screen.dart` (2),
+`register_screen.dart` (2), `account_form_screen.dart` (1),
+`login_screen.dart` (1), `verify_email_screen.dart` (1). Every new
+`AppSymbols` constant's codepoint was looked up directly from the installed
+`material_symbols_icons` 4.2960.0 package source (`symbols.dart`'s own
+`_rounded` definitions), never guessed. No accessibility label, tooltip, or
+navigation/behavior meaning changed anywhere in this sweep.
 
-- `lib/core/routing/home_shell_screen.dart` — 23 (bottom-nav shell, every
-  authenticated screen embeds this — do first, carefully, with a real
-  on-device check of tab icons/selected-state visuals before/after)
-- `lib/features/landing/presentation/screens/landing_page.dart` — 21
-  (**likely exempt** — this page has never used the `AppSpacing`/
-  `AppSymbols` design-token system; it's the public marketing page with
-  its own established local convention, same reasoning already applied to
-  its color/spacing choices. Confirm this reasoning still holds before
-  touching it, don't assume.)
-- `lib/features/financial_insights/presentation/widgets/financial_insight_card.dart` — 14
-- `lib/features/auth/presentation/screens/profile_screen.dart` — 7
-- `lib/core/widgets/app_password_field.dart` — 3
-- `lib/features/savings_goals/presentation/screens/savings_goal_detail_screen.dart` — 4
-- `lib/features/savings_goals/presentation/screens/savings_goals_list_screen.dart` — 4
-- `lib/features/auth/presentation/screens/forgot_password_screen.dart` — 2
-- `lib/features/auth/presentation/screens/register_screen.dart` — 2
-- `lib/core/widgets/error_view.dart` — 2
-- `lib/core/widgets/month_selector_header.dart` — 2
-- `lib/core/widgets/color_picker_field.dart` — 1
-- `lib/core/widgets/sync_status_banner.dart` — 1
-- `lib/features/accounts/presentation/screens/account_form_screen.dart` — 1
-- `lib/features/auth/presentation/screens/login_screen.dart` — 1
-- `lib/features/auth/presentation/screens/verify_email_screen.dart` — 1
-- `lib/features/landing/presentation/screens/legal_document_page.dart` — 1
-  (same landing-page exemption question as above)
+**One real finding, applied consistently everywhere it recurred**: Material
+Symbols Rounded, as bundled in this app, has no distinct filled-vs-outline
+glyph for most classic Material Icons names — confirmed by checking the
+package source directly, not assumed (e.g. `person_rounded` and
+`person_outline_rounded` share the literal same codepoint `0xf0d3`;
+`dashboard_outline_rounded` doesn't exist as an identifier at all). Every
+icon/selectedIcon or toggle-state pair that hit this (bottom-nav
+destinations, the sidebar, Savings Goals' archive-filter toggle) now shares
+one glyph and relies on Material 3's own selected-pill background or an
+explicit `color: selected ? colorScheme.primary : null` tint — the same
+pattern Accounts'/Categories' archive toggle already established — so no
+navigation-state meaning is lost, just the icon-shape change classic
+Material Icons used to add on top of it.
 
-**Suggested next action**: one file at a time, starting with the shared
-widgets (`error_view.dart`, `sync_status_banner.dart`, `month_selector_header.dart`,
-`color_picker_field.dart`, `app_password_field.dart` — all small, all
-high-reuse, do these first since a mistake here is the highest-leverage
-one to catch), then `home_shell_screen.dart` on its own with real
-on-device verification, then the remaining feature screens. Resolve the
-landing-page exemption question explicitly (with the project owner, since
-it's a design-system-scope decision, not a mechanical one) before deciding
-whether its 22 icons are in or out of scope.
+Also fixed a real, unrelated analyzer-noise gap discovered while here:
+`analysis_options.yaml` had no `exclude:` list at all, so a stray template
+`.dart` file bundled inside `firestore-tests/node_modules/firebase-tools` (a
+Dart `functions` scaffold template, irrelevant to this Flutter app) was
+being picked up as 6 false analyzer errors the moment
+`firestore-tests/node_modules` first existed locally. Added `analyzer:
+exclude: ["**/node_modules/**"]`.
 
-## Android R8/backup hardening — configured, completely unverified (no Android SDK here)
+**Remaining, deliberately not done**:
+
+- `lib/features/landing/presentation/screens/landing_page.dart` — 21 icons
+- `lib/features/landing/presentation/screens/legal_document_page.dart` — 1 icon
+
+Both are **likely exempt** — this page has never used the `AppSpacing`/
+`AppSymbols` design-token system; it's the public marketing page with its
+own established local convention, same reasoning already applied to its
+color/spacing choices. This is a design-system-scope decision, not a
+mechanical one — confirm with the project owner before touching it, don't
+assume either way.
+
+**Not yet done**: real on-device/browser visual verification that the
+`home_shell_screen.dart` bottom-nav/sidebar icons and the two toggle-state
+tints actually look right — this pass only confirms structural correctness
+(`flutter analyze`/`flutter test`), not rendered appearance. See this file's
+own standing "not visually verified" caveat.
+
+## Android R8/backup hardening — release packaging verified; device smoke test remains
 
 **What was done**: `android/app/build.gradle.kts`'s release build type now
 enables `isMinifyEnabled`/`isShrinkResources` with a new
@@ -222,24 +234,18 @@ already ship their own consumer ProGuard rules bundled in their AARs).
 local cache (real financial data) can never be swept into Android Auto
 Backup.
 
-**Reason this is flagged, not just logged as done**: this environment has
-**no Android SDK at all** — `flutter build apk --release` was attempted and
-failed immediately with `[!] No Android SDK found`, before Gradle ever ran.
-That means **the R8/minification change has never actually been built**,
-let alone smoke-tested on a device — exactly the "enable R8 and assume
-success" mistake the audit explicitly warned against. Do not treat this as
-verified.
+**What the 2026-07-31 audit verified**: Flutter found Android SDK 36 and
+successfully built the debug APK, release APK, and release AAB. R8/resource
+shrinking completed; the release APK is signed by the configured 4096-bit
+Cashly Lao certificate and verifies with Android APK Signature Scheme v2.
+The effective minimum SDK is 24, so v2 signing is sufficient.
 
-**Required next step, before this Android hardening is trusted**: on a
-machine with a real Android SDK (e.g. via `tool/prepare_manual_release.ps1`,
-which already builds both APK and AAB), run `flutter build apk --release`
-and `flutter build appbundle --release` and confirm they succeed under R8;
-then install the resulting APK on a real device or emulator and smoke-test
-login, viewing accounts/transactions (screens most likely to break under
-over-aggressive shrinking of reflection-free but plugin-heavy code paths),
-Google Sign-In, and push-notification-related classes. If anything breaks,
-add the specific missing keep rule to `proguard-rules.pro` — don't disable
-minification wholesale to make the symptom go away.
+**Required next step**: install the resulting APK on a real device or emulator
+and smoke-test login, viewing accounts/transactions (screens most likely to
+break under over-aggressive shrinking of reflection-free but plugin-heavy code
+paths), Google Sign-In, and push-notification-related classes. If anything
+breaks, add the specific missing keep rule to `proguard-rules.pro` — don't
+disable minification wholesale to make the symptom go away.
 
 ## Security & data
 
@@ -271,7 +277,8 @@ minification wholesale to make the symptom go away.
 - **Widget/integration test coverage.** Grew from 3 to 10 widget/screen
   test files across Phase A/B (Accounts, Categories, Budget, Settings,
   Reports, Transactions search, plus the original login/add-transaction/
-  Dashboard tests) — 241 tests total, still majority domain/data-layer
+  Dashboard tests). The 2026-07-31 audit ran 412 Flutter tests successfully;
+  the suite remains majority domain/data-layer
   by count, but every feature's list screen now has at least one
   presentation-layer test.
 - **Crash reporting** — Firebase Crashlytics is wired up

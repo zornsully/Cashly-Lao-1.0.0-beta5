@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../constants/app_spacing.dart';
+import '../constants/app_symbols.dart';
 
 /// Reusable full-body error placeholder for an `AsyncValue.when(error: ...)`
 /// branch. Every screen should use this instead of rendering the raw
@@ -23,7 +24,11 @@ class ErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
+            Icon(
+              AppSymbols.errorOutline,
+              size: 48,
+              color: theme.colorScheme.error,
+            ),
             const SizedBox(height: AppSpacing.md),
             Text(
               l10n.errorGenericTitle,
@@ -44,7 +49,7 @@ class ErrorView extends StatelessWidget {
               const SizedBox(height: AppSpacing.lg),
               OutlinedButton.icon(
                 onPressed: onRetry,
-                icon: const Icon(Icons.refresh),
+                icon: const Icon(AppSymbols.refresh),
                 label: Text(l10n.retry),
               ),
             ],

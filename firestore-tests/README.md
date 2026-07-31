@@ -10,6 +10,7 @@ not verified by execution (see `CLAUDE.md`'s Phase 1 project-memory entry).
 ```powershell
 cd firestore-tests
 npm ci
+# Firebase CLI 15 requires Java 21 or later. Ensure `java -version` reports 21+.
 npm test
 ```
 
@@ -34,12 +35,9 @@ validation, and default-deny (including the server-only `notificationState`
 collection). **Not exhaustive of every field on every collection** — see
 `TODO.md` for what's intentionally left for a follow-up pass.
 
-## Adding to CI
+## CI
 
-Not yet wired into `.github/workflows/ci.yml` — the Firestore emulator
-needs a JVM (`java`) on the runner, which `ci.yml` doesn't currently
-provision. Add a `firestore-rules` job mirroring the existing Functions
-job (`npm ci && npm test` in this directory) once that's set up, guarded
-the same way `ci.yml` already guards the Functions job on `functions/**`
-changes — guard this one on changes to `firestore.rules` or
-`firestore-tests/**`.
+The `firestore-rules` job in `.github/workflows/ci.yml` runs this suite on
+every push and pull request with Node 20 and the Ubuntu runner's Java 21.
+`firebase-tools` is pinned in this package's development dependencies, so the
+test never relies on a globally installed Firebase CLI.

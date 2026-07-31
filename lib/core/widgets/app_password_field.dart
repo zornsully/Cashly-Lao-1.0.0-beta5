@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../constants/app_symbols.dart';
 import 'app_text_field.dart';
 
 /// A password [AppTextField] with a built-in visibility toggle. Used by
@@ -41,9 +42,9 @@ class _AppPasswordFieldState extends State<AppPasswordField> {
       textInputAction: widget.textInputAction,
       onFieldSubmitted: widget.onFieldSubmitted,
       autofillHints: widget.autofillHints,
-      prefixIcon: Icons.lock_outline,
+      prefixIcon: AppSymbols.lockOutline,
       suffixIcon: IconButton(
-        icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
+        icon: Icon(_obscure ? AppSymbols.visibilityOff : AppSymbols.visibility),
         tooltip: _obscure ? l10n.showPasswordTooltip : l10n.hidePasswordTooltip,
         onPressed: () => setState(() => _obscure = !_obscure),
       ),

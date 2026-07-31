@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
 import '../constants/app_motion.dart';
 import '../constants/app_spacing.dart';
+import '../constants/app_symbols.dart';
 import '../providers/connectivity_providers.dart';
 
 /// A slim banner shown above the tab content whenever the app is offline —
@@ -47,7 +48,7 @@ class SyncStatusBanner extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    Icons.cloud_off_outlined,
+                    AppSymbols.cloudOff,
                     size: 16,
                     color: theme.colorScheme.onTertiaryContainer,
                   ),

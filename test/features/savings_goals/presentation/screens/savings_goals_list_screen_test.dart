@@ -114,4 +114,84 @@ void main() {
 
     expect(find.text('Vacation'), findsOneWidget);
   });
+
+  testWidgets('renders multiple goals in a grid on a wide layout', (
+    tester,
+  ) async {
+    final goalRepository = _MockSavingsGoalRepository();
+    final accountRepository = _MockAccountRepository();
+
+    final account = AccountEntity(
+      id: 'acc-1',
+      name: 'Vacation Fund',
+      type: AccountType.savings,
+      balance: 2000000,
+      currencyCode: 'LAK',
+      icon: AppIconKey.savings,
+      color: AppColorKey.emerald,
+      isArchived: false,
+      createdAt: DateTime(2026),
+      updatedAt: DateTime(2026),
+    );
+    final goals = [
+      SavingsGoalEntity(
+        id: 'goal-1',
+        name: 'Vacation',
+        targetAmount: 5000000,
+        accountId: 'acc-1',
+        icon: AppIconKey.savings,
+        color: AppColorKey.emerald,
+        isArchived: false,
+        lastContributionAt: DateTime(2026),
+        createdAt: DateTime(2026),
+        updatedAt: DateTime(2026),
+      ),
+      SavingsGoalEntity(
+        id: 'goal-2',
+        name: 'New Laptop',
+        targetAmount: 8000000,
+        accountId: 'acc-1',
+        icon: AppIconKey.savings,
+        color: AppColorKey.emerald,
+        isArchived: false,
+        lastContributionAt: DateTime(2026),
+        createdAt: DateTime(2026),
+        updatedAt: DateTime(2026),
+      ),
+    ];
+
+    when(
+      () => goalRepository.watchGoals(
+        includeArchived: any(named: 'includeArchived'),
+      ),
+    ).thenAnswer((_) => Stream.value(goals));
+    when(
+      () => accountRepository.watchAccounts(
+        includeArchived: any(named: 'includeArchived'),
+      ),
+    ).thenAnswer((_) => Stream.value([account]));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          savingsGoalRepositoryProvider.overrideWithValue(goalRepository),
+          accountRepositoryProvider.overrideWithValue(accountRepository),
+        ],
+        child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: SavingsGoalsListScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Default test surface is 800px wide, capped to 720px by
+    // ResponsiveCenter — comfortably over the 360px-per-column threshold,
+    // so this already exercises the GridView path (not the single-column
+    // ListView), the same way the single-goal test above does.
+    expect(find.text('Vacation'), findsOneWidget);
+    expect(find.text('New Laptop'), findsOneWidget);
+    expect(find.byType(GridView), findsOneWidget);
+  });
 }

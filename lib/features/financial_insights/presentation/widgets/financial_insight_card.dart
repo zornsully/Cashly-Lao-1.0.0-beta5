@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_currency.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/app_symbols.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/financial_insight.dart';
@@ -129,7 +130,7 @@ class FinancialInsightCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Icon(
-                        Icons.check_circle_outline_rounded,
+                        AppSymbols.checkCircle,
                         size: 19,
                         color: monthlyStatus.color,
                       ),
@@ -186,7 +187,7 @@ class _CardHeader extends StatelessWidget {
         CircleAvatar(
           backgroundColor: color.withValues(alpha: .14),
           foregroundColor: color,
-          child: const Icon(Icons.auto_awesome_rounded),
+          child: const Icon(AppSymbols.autoAwesome),
         ),
         const SizedBox(width: AppSpacing.sm),
         Expanded(
@@ -288,7 +289,7 @@ class _MonthlyScoreHero extends StatelessWidget {
             children: [
               TextButton.icon(
                 onPressed: onWhyPressed,
-                icon: const Icon(Icons.info_outline_rounded, size: 18),
+                icon: const Icon(AppSymbols.info, size: 18),
                 label: Text(l10n.smartMoneyScoreWhyThisScore),
               ),
               Text(
@@ -430,7 +431,7 @@ class _ScoreMetrics extends StatelessWidget {
         value: openingBalance == null
             ? l10n.smartMoneyScoreStatusNotEnoughData
             : CurrencyFormatter.format(openingBalance, currency),
-        icon: Icons.flag_outlined,
+        icon: AppSymbols.flag,
       ),
       _MetricItem(
         label: l10n.smartMoneyScoreRowCurrentBalance,
@@ -438,7 +439,7 @@ class _ScoreMetrics extends StatelessWidget {
           calculation?.currentBalance ?? insight.totalBalance,
           currency,
         ),
-        icon: Icons.account_balance_wallet_outlined,
+        icon: AppSymbols.accountBalanceWallet,
       ),
       _MetricItem(
         label: l10n.smartMoneyScoreRowBalanceChange,
@@ -446,8 +447,8 @@ class _ScoreMetrics extends StatelessWidget {
             ? '—'
             : '${_signedAmount(calculation.balanceChange, currency)} (${_signedPercent(calculation.balanceChangePercentage)})',
         icon: calculation != null && calculation.balanceChange < 0
-            ? Icons.south_east_rounded
-            : Icons.north_east_rounded,
+            ? AppSymbols.southEast
+            : AppSymbols.northEast,
         color: calculation == null || calculation.balanceChange == 0
             ? null
             : calculation.balanceChange > 0
@@ -457,13 +458,13 @@ class _ScoreMetrics extends StatelessWidget {
       _MetricItem(
         label: l10n.smartMoneyScoreRowIncome,
         value: CurrencyFormatter.format(insight.month.income, currency),
-        icon: Icons.add_chart_rounded,
+        icon: AppSymbols.addChart,
         color: Colors.teal,
       ),
       _MetricItem(
         label: l10n.smartMoneyScoreRowExpenses,
         value: CurrencyFormatter.format(insight.month.expense, currency),
-        icon: Icons.shopping_bag_outlined,
+        icon: AppSymbols.shoppingBag,
         color: colors.error,
       ),
       _MetricItem(
@@ -473,7 +474,7 @@ class _ScoreMetrics extends StatelessWidget {
               (insight.month.income - insight.month.expense),
           currency,
         ),
-        icon: Icons.waterfall_chart_rounded,
+        icon: AppSymbols.waterfallChart,
         color:
             (calculation?.netCashFlow ??
                     (insight.month.income - insight.month.expense)) >=
@@ -484,7 +485,7 @@ class _ScoreMetrics extends StatelessWidget {
       _MetricItem(
         label: l10n.smartMoneyScoreRowBudgetPerformance,
         value: budget.label,
-        icon: Icons.pie_chart_outline_rounded,
+        icon: AppSymbols.pieChart,
         color: budget.color ?? scoreColor,
       ),
       _MetricItem(
@@ -494,7 +495,7 @@ class _ScoreMetrics extends StatelessWidget {
             : l10n.smartMoneyScoreMetricExpensesChange(
                 _signedPercent(previousChange),
               ),
-        icon: Icons.compare_arrows_rounded,
+        icon: AppSymbols.compareArrows,
         color: previousChange == null
             ? null
             : previousChange <= 0
@@ -661,7 +662,7 @@ class _ReasonLine extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 5),
-            child: Icon(Icons.circle, size: 6, color: color),
+            child: Icon(AppSymbols.circleFilled, size: 6, color: color),
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
@@ -916,7 +917,7 @@ class _BreakdownNotice extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.info_outline_rounded, color: colors.primary),
+          Icon(AppSymbols.info, color: colors.primary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(child: Text(message)),
         ],

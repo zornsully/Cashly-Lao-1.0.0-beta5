@@ -42,10 +42,38 @@ unaffected; only these are:
   `notificationState` documents are the one confirmed permanently-retained
   artifact of account deletion today, invisible to the user).
 
-## Is it actually deployed? Unverified from this environment.
+## Is it actually deployed? Confirmed NOT deployed (2026-07-31, verified live).
 
-**This cannot be confirmed from the repository or this session.** Evidence,
-not a guess:
+**This is now a verified fact, not a guess.** A real, authenticated
+`firebase login` session was available in this session (via the npm-installed
+`firebase-tools`, not the broken `firepit` binary bundled elsewhere in this
+environment — see the note at the bottom of this section). Running:
+
+```
+firebase functions:list --project cashly-lao
+```
+
+returned:
+
+```
+Error: Failed to list functions for cashly-lao
+```
+
+with `--debug` showing the real cause — a live API response, not a CLI/auth
+failure:
+
+```
+HTTP 403 PERMISSION_DENIED (reason: SERVICE_DISABLED)
+"Cloud Functions API has not been used in project cashly-lao before or it is
+disabled."
+```
+
+This is conclusive: the Cloud Functions API has never even been *enabled* on
+the `cashly-lao` GCP project, which is only possible if **no function has
+ever been deployed** (a first deploy auto-enables the API as a side effect).
+Combined with the existing evidence that no script/workflow in this repo ever
+runs an unscoped `firebase deploy` or a `--only functions` deploy, this closes
+the question definitively:
 
 - `firebase.json` includes a `"functions": { "source": "functions" }` block,
   which means a bare `firebase deploy` (no `--only`) *would* attempt to
@@ -54,19 +82,25 @@ not a guess:
   `docs/RELEASE_PIPELINE.md`) explicitly scopes every deploy to
   `--only hosting:cashly-lao`. **No script, workflow, or documented command
   in this repository has ever deployed Functions.**
-- This session has no authenticated `firebase login` session and no Firebase
-  Console access, so live deployment state can't be checked directly.
-- **The exact command an owner with a real `firebase login` session can run
-  to check:** `firebase functions:list --project cashly-lao` (lists deployed
-  functions, or errors/returns empty if none are deployed), or Firebase
-  Console → your project → Functions.
+- **Live verification, 2026-07-31**: `firebase functions:list --project
+  cashly-lao` (via `firebase-tools` 15.25.1, authenticated as the project
+  owner) confirms the Cloud Functions API itself has never been used on this
+  project — the strongest possible signal short of reading GCP's own audit
+  log.
 
-**Practical conclusion:** absent independent evidence the owner deployed
-these outside of this repo's own tooling, they are almost certainly **not
-live**. Until confirmed otherwise, treat the FCM-backstop-when-closed
-behavior and `onUserDeleted`'s server-side cleanup as **not currently
-happening in production**, regardless of what any UI copy or prior
-documentation implied.
+**Practical conclusion:** the FCM-backstop-when-closed behavior and
+`onUserDeleted`'s server-side cleanup are **confirmed not live in
+production** as of 2026-07-31. Treat this as settled, not as a standing open
+question, until the owner actually approves and runs a Blaze-plan deploy.
+
+**Tooling note for future sessions**: this environment ships a broken
+`firepit`-based `firebase` binary (its first-run "welcome" banner crashes
+with `SyntaxError: Unexpected end of JSON input` on *every* invocation,
+before the real command ever runs — do not mistake that crash for "not
+logged in"). A working, already-authenticated `firebase-tools` install
+exists separately via npm (`npm list -g firebase-tools`); invoke it directly
+or via `npx firebase-tools@latest <command>` instead of the broken `firebase`
+binary on `PATH`.
 
 ## Why Spark can't fix this by itself
 

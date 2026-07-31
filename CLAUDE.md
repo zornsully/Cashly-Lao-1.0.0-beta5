@@ -410,8 +410,11 @@ sequence's approval gates changes here.
    `assets/release/distribution_policy.json`'s `repository` is non-null
    and owner-reviewed; no other platform has an equivalent policy yet).
 
-As of 2026-08-01 that makes **Android and Web** the only release-ready
-platforms. iOS, Windows, and macOS stay "coming soon" — none has ever
+As of 2026-07-31, **Android and Web** are the only platforms whose builds
+have been verified. They are not yet public-release-ready: Android's public
+distribution repository remains unconfigured, and Web's production headers
+and CSP remain unverified until an approved Hosting deploy. iOS, Windows,
+and macOS stay "coming soon" — none has ever
 been built, signed, or had a distribution channel approved, and each
 needs a real Apple Developer account and/or code-signing certificate
 (paid services) before any of that can start. Linux isn't a configured
@@ -1935,7 +1938,7 @@ Next recommended phase: Settings (not yet scoped) or Reports (the large
 item, still needs its own scoping conversation first) — this closes out
 every "similar size" page-level phase from the original master prompt.
 
-### 2026-08-01 — Product polish Phase 6: Settings (done)
+### 2026-07-31 — Product polish Phase 6: Settings (done)
 
 Summary:
 
@@ -2076,7 +2079,7 @@ cross-cutting items still open (full responsive breakpoint system, shared
 behavior, the app-wide `Icons.*` sweep, a native-speaker `app_lo.arb`
 review).
 
-### 2026-08-01 — Reports functionality phase: filters, insights, account
+### 2026-07-31 — Reports functionality phase: filters, insights, account
 breakdown, detailed transaction list, Expense Watch (done)
 
 Summary:
@@ -2241,7 +2244,7 @@ Next recommended step: the polish pass on Reports (icon sweep — 2 raw
 to revisit those later. Otherwise this closes the "Reports functionality"
 request as scoped.
 
-### 2026-08-01 — Permanent multi-platform release procedure + Android AAB build (done; not yet run)
+### 2026-07-31 — Permanent multi-platform release procedure + Android AAB build (verified)
 
 Summary:
 
@@ -2618,10 +2621,10 @@ up front:
   client-writable demo flag was a real App Store review risk with no
   real IAP behind it) — Reports ships free for everyone in v1. See
   [Future Vision](#future-vision) for how to reintroduce it safely.
-- Test coverage has grown to 241 tests across 10 widget/screen test
-  files (every feature's list screen has at least one presentation-
-  layer test) plus full domain/data-layer coverage — see `TODO.md` for
-  what's still open there.
+- The 2026-07-31 audit ran 412 Flutter tests successfully, including 10
+  widget/screen test files (every feature's list screen has at least one
+  presentation-layer test) plus full domain/data-layer coverage — see
+  `TODO.md` for what's still open there.
 - The iOS side of Google Sign-In and a real iOS release signing/App
   Store Connect setup are both still outstanding — this project has
   never been tested on an iOS device or simulator, only Android.
