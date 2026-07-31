@@ -350,9 +350,33 @@ transition rather than an instant cut.
   done — `flutter analyze`/`flutter test` catch correctness regressions,
   not visual or interaction regressions. Say so explicitly if a change
   hasn't been visually verified.
-- Always commit and open a pull request automatically once the requested
-  updates have been completed. No additional confirmation is required
-  before committing or creating the PR.
+
+### Git workflow policy
+
+`main` is the default, standing working branch for this project — there
+is no long-running `develop`/`staging` branch and no per-feature-branch
+model in normal use.
+
+- **Do not create a feature branch, a temporary branch, or a pull
+  request** unless the user explicitly asks for one for that specific
+  task. Work directly on `main`.
+- Make the approved change, run the checks this file requires for that
+  kind of change (at minimum `flutter analyze` and `flutter test`),
+  then commit the completed change to `main` and push it to the remote
+  (`origin/main`) — no separate, per-commit confirmation is required
+  for this default path.
+- This replaces the project's earlier default of auto-opening a pull
+  request per change. If the user asks for a branch or a PR for a
+  given task, follow that instruction for that task — this policy is
+  the default, not a restriction on doing it differently when asked.
+- This is a **branch-and-approval-flow default only.** It does not
+  loosen any other standing gate in this file — the [free-tier manual
+  release policy](#free-tier-manual-release-policy) and the
+  [multi-platform release procedure](#multi-platform-release-procedure-permanent)
+  below still require their own explicit owner approvals for
+  publishing, signing, and deployment, exactly as documented there,
+  regardless of which branch the underlying code change was committed
+  to.
 
 ### Free-tier manual release policy
 
@@ -520,8 +544,11 @@ policy](#free-tier-manual-release-policy) above:
   carve-out.** Any change to `release-manifest.json` or
   `assets/release/distribution_policy.json` — including which release is
   marked latest — stays on the existing two-approval-gate sequence.
-- **This never authorizes Git actions.** Commit, push, merge, PR, and tag
-  still each require your explicit per-instance approval, unchanged.
+- **This never authorizes release-side Git actions.** It only covers
+  committing/pushing the website-only change itself to `main`, per the
+  standing [Git workflow policy](#git-workflow-policy) above — creating
+  or modifying a GitHub Release, retagging, or merging a release branch
+  remain separately gated exactly as everywhere else in this file.
 - **No new paid services.** Stays fully Firebase Spark/GitHub Free
   compatible — no Blaze-only services, no deploy-only Cloud Functions, no
   GitHub Actions deploy credentials. Firebase Hosting deployment uses
