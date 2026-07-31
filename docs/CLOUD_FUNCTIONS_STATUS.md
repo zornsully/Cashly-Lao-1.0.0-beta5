@@ -7,6 +7,16 @@ work landed. Both statements can't be true — this file is the correction,
 and the source of truth going forward for whether that backend is actually
 live in production.
 
+## Decision (2026-08-01): staying on Spark, not deploying
+
+The owner decided to skip the Blaze upgrade for now — the FCM-closed-app
+backstop and `onUserDeleted`'s server-side cleanup are not worth taking on a
+paid plan at this stage. `functions/` stays in the repo, built and tested,
+in case this is revisited later, but it is **not deployed and not going to
+be** under the current policy. Nothing below the "Owner action required"
+section reflects an open question anymore — see that section's note for
+where this landed.
+
 ## What exists
 
 Five exported functions (`functions/src/index.ts`), all on the Cloud
@@ -128,18 +138,30 @@ the same way the two release-approval gates already work.
   (`functions/test`, run via `npm test`), and ready to deploy the moment the
   owner approves a Blaze upgrade.
 
-## Owner action required to close this out
+## Owner action required to close this out — resolved (2026-08-01): no
 
-1. Decide whether the FCM-closed-app backstop and `onUserDeleted` cleanup
-   are worth a Blaze plan upgrade for this project.
-2. If yes: explicitly approve the Blaze upgrade, then run
-   `firebase deploy --only functions --project cashly-lao` from a real
-   `firebase login` session (not part of any existing script in this repo —
-   one should be added once this is approved, mirroring the same
-   `-Approve...` explicit-switch pattern `publish_web_metadata.ps1` already
-   uses for Hosting).
-3. If no: update this doc to say so explicitly, and consider whether
-   `notificationState`'s account-deletion gap (the one confirmed
-   client-unreachable collection) needs a different closing mechanism
-   (e.g. a rules exception allowing the client to delete it directly on
-   the way out, revisiting why it was made server-only in the first place).
+The owner decided **no** — the Blaze upgrade isn't worth it for this
+project right now. Consequences of that decision, worked through rather
+than left implicit:
+
+- Functions stay in the repo (`functions/`, still built and tested via
+  `npm test`) but are not deployed, and no script in this repo should
+  deploy them without a future, separate explicit approval reopening this
+  question.
+- The FCM-closed-app push backstop and `onUserDeleted`'s server-side
+  cleanup are **not live** and should be treated as permanently inactive
+  under the current policy, not "unverified."
+- **The `notificationState` account-deletion gap this doc previously
+  flagged turns out to be moot, not open.** That collection is written
+  *only* by the Cloud Functions listed above (`onTransactionWrite`/
+  `onBudgetWrite`/`onAccountWrite`, via the Admin SDK — `firestore.rules`
+  denies the client read/write entirely). If those functions never run in
+  production, no `notificationState` document is ever created in the
+  first place, so there is nothing for `onUserDeleted` to have needed to
+  clean up. No rules change or alternate cleanup mechanism is needed. This
+  would need revisiting only if a future decision reopens Blaze/Functions
+  deployment — at that point, re-examine whether `onUserDeleted`'s cleanup
+  path is sufficient before treating this as closed again.
+- Revisit this whole decision only via an explicit, separate owner
+  approval — the same standard every other paid-plan/signing/publishing
+  decision in this project already follows.

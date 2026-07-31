@@ -134,41 +134,36 @@ class _MobileNavigationBar extends StatelessWidget {
       // narrow phones â€” only the active tab's label is shown, matching
       // Material 3's guidance for higher destination counts.
       labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-      // Material Symbols Rounded (as bundled in this app) has no distinct
-      // filled variant for these names the way classic Material Icons did —
-      // same reasoning already applied to Accounts'/Categories' archive
-      // toggle — so icon/selectedIcon intentionally share one glyph;
-      // NavigationBar's own Material 3 selected-pill background still
-      // communicates the active tab.
+      // No `selectedIcon:` on any destination below: Material Symbols
+      // Rounded (unlike the classic Material Icons this screen used to use)
+      // doesn't expose a genuinely distinct filled glyph per icon name —
+      // same finding as the Accounts/Categories archive-toggle icon. Left
+      // unset rather than passed the same icon twice; NavigationBar already
+      // distinguishes the selected tab via its own indicator pill and icon
+      // color, so nothing is lost.
       destinations: [
         NavigationDestination(
           icon: const Icon(AppSymbols.dashboard),
-          selectedIcon: const Icon(AppSymbols.dashboard),
           label: l10n.dashboardTitle,
         ),
         NavigationDestination(
           icon: const Icon(AppSymbols.accountBalanceWallet),
-          selectedIcon: const Icon(AppSymbols.accountBalanceWallet),
           label: l10n.accountsTitle,
         ),
         NavigationDestination(
           icon: const Icon(AppSymbols.receiptLong),
-          selectedIcon: const Icon(AppSymbols.receiptLong),
           label: l10n.transactionsTabLabel,
         ),
         NavigationDestination(
           icon: const Icon(AppSymbols.category),
-          selectedIcon: const Icon(AppSymbols.category),
           label: l10n.categoriesTitle,
         ),
         NavigationDestination(
           icon: const Icon(AppSymbols.pieChart),
-          selectedIcon: const Icon(AppSymbols.pieChart),
           label: l10n.budgetTitle,
         ),
         NavigationDestination(
           icon: const Icon(AppSymbols.person),
-          selectedIcon: const Icon(AppSymbols.person),
           label: l10n.profileTitle,
         ),
       ],

@@ -35,7 +35,9 @@ class SavingsGoalsListScreen extends ConsumerWidget {
                 : l10n.showArchivedTooltip,
             icon: Icon(
               AppSymbols.archive,
-              color: showArchived ? Theme.of(context).colorScheme.primary : null,
+              color: showArchived
+                  ? Theme.of(context).colorScheme.primary
+                  : null,
             ),
             onPressed: () =>
                 ref.read(showArchivedGoalsProvider.notifier).toggle(),
@@ -77,8 +79,8 @@ class SavingsGoalsListScreen extends ConsumerWidget {
             return LayoutBuilder(
               builder: (context, constraints) {
                 // Content width (not window width) drives the column count,
-                // same convention as Accounts'/Dashboard's own grids — one
-                // implementation serves phones, tablets, and desktop.
+                // same pattern already used by Accounts/Budgets/Dashboard —
+                // one implementation serves phones, tablets, and desktop.
                 final columns = (constraints.maxWidth / 360).floor().clamp(
                   1,
                   3,
@@ -107,6 +109,10 @@ class SavingsGoalsListScreen extends ConsumerWidget {
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: columns,
                     crossAxisSpacing: AppSpacing.sm,
+                    // 2.2 (not a rounder-looking guess) was chosen after an
+                    // actual widget-test run caught a real 1.2px overflow at
+                    // a wider ratio — see the test file and TODO.md's own
+                    // note on this.
                     mainAxisSpacing: AppSpacing.sm,
                     childAspectRatio: 2.2,
                   ),

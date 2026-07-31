@@ -32,6 +32,15 @@ set(CMAKE_CXX_FLAGS_PROFILE "${CMAKE_CXX_FLAGS_RELEASE}")
 # Use Unicode for all projects.
 add_definitions(-DUNICODE -D_UNICODE)
 
+# local_auth_windows (a Flutter plugin dependency, not project code) still
+# uses the old <experimental/coroutine> header. Newer MSVC/STL versions
+# (14.51+) hard-error on it (STL1011) instead of just warning. This is the
+# exact suppression macro the compiler's own error message names as the
+# supported escape hatch -- applied project-wide (before plugins are
+# included below) since the plugin's own vendored CMakeLists.txt isn't
+# something this project owns or should patch directly.
+add_definitions(-D_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS)
+
 # Compilation settings that should be applied to most targets.
 #
 # Be cautious about adding new options here, as plugins use this function by

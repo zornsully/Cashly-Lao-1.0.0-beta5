@@ -79,16 +79,33 @@ class SavingsGoalController extends AsyncNotifier<void> {
     );
   }
 
-  Future<bool> archiveGoal(String id) {
-    return _run(() => ref.read(archiveSavingsGoalUseCaseProvider).call(id));
+  /// Unlike [createGoal]/[updateGoal]/[contribute] (called only from screens
+  /// that `ref.watch` this controller for a loading spinner, keeping it
+  /// alive), archive/unarchive/delete are called only from the Detail
+  /// screen's menu, which never watches this controller — so nothing keeps
+  /// it alive once the mutated goal's own data changes out from under it
+  /// (e.g. delete making `savingsGoalProgressByIdProvider` resolve to null).
+  /// If that happens mid-flight, this `.autoDispose` controller can be
+  /// disposed before the caller gets a chance to read `failure` afterward,
+  /// which would throw `UnmountedRefException` instead of ever showing the
+  /// error message. Returning the failure directly avoids that second,
+  /// disposal-vulnerable read entirely.
+  Future<({bool success, Failure? failure})> archiveGoal(String id) {
+    return _runWithFailure(
+      () => ref.read(archiveSavingsGoalUseCaseProvider).call(id),
+    );
   }
 
-  Future<bool> unarchiveGoal(String id) {
-    return _run(() => ref.read(unarchiveSavingsGoalUseCaseProvider).call(id));
+  Future<({bool success, Failure? failure})> unarchiveGoal(String id) {
+    return _runWithFailure(
+      () => ref.read(unarchiveSavingsGoalUseCaseProvider).call(id),
+    );
   }
 
-  Future<bool> deleteGoal(String id) {
-    return _run(() => ref.read(deleteSavingsGoalUseCaseProvider).call(id));
+  Future<({bool success, Failure? failure})> deleteGoal(String id) {
+    return _runWithFailure(
+      () => ref.read(deleteSavingsGoalUseCaseProvider).call(id),
+    );
   }
 
   Future<bool> contribute({
@@ -110,6 +127,13 @@ class SavingsGoalController extends AsyncNotifier<void> {
   }
 
   Future<bool> _run<R>(Future<Either<Failure, R>> Function() action) async {
+    final result = await _runWithFailure(action);
+    return result.success;
+  }
+
+  Future<({bool success, Failure? failure})> _runWithFailure<R>(
+    Future<Either<Failure, R>> Function() action,
+  ) async {
     state = const AsyncLoading();
     final result = await action();
     // This controller is `.autoDispose` and, unlike the form screen (whose
@@ -120,19 +144,21 @@ class SavingsGoalController extends AsyncNotifier<void> {
     // resolve to null and swap the screen to an error view). If that
     // happens mid-flight, the controller is disposed before this
     // continuation resumes, and writing to `state` would throw ("Ref used
-    // after dispose") instead of this ever returning true/false — which,
-    // for delete, silently prevented the screen's `context.pop()` from
-    // ever running. `action()`'s own result (already known at this point)
-    // is still the correct success/failure to report either way; only the
-    // now-moot `state` echo needs the `ref.mounted` guard.
+    // after dispose") instead of this ever returning — which, for delete,
+    // silently prevented the screen's `context.pop()` from ever running.
+    // `action()`'s own result (already known at this point) is still the
+    // correct success/failure to report either way; only the now-moot
+    // `state` echo needs the `ref.mounted` guard. The failure itself is
+    // returned directly (not re-read from `state`/`failure` afterward) so
+    // callers never need a second, disposal-vulnerable read.
     return result.match(
       (failure) {
         if (ref.mounted) state = AsyncError<void>(failure, StackTrace.current);
-        return false;
+        return (success: false, failure: failure);
       },
       (_) {
         if (ref.mounted) state = const AsyncData(null);
-        return true;
+        return (success: true, failure: null);
       },
     );
   }

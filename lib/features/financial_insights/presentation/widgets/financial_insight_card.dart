@@ -662,7 +662,7 @@ class _ReasonLine extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 5),
-            child: Icon(AppSymbols.circleFilled, size: 6, color: color),
+            child: Icon(AppSymbols.circle, size: 6, color: color),
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(

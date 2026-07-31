@@ -422,13 +422,17 @@ abstract final class AppSymbols {
     fontFamily: _family,
     fontPackage: _package,
   );
+  // `matchTextDirection: true` here and on `logout` below is verified
+  // directly against the installed material_symbols_icons package source
+  // (compare_arrows_rounded / logout_rounded both declare it) -- not a
+  // stylistic choice, so keep it even if a future merge drops it again.
   static const IconData compareArrows = IconData(
     0xe915,
     fontFamily: _family,
     fontPackage: _package,
     matchTextDirection: true,
   );
-  static const IconData circleFilled = IconData(
+  static const IconData circle = IconData(
     0xef4a,
     fontFamily: _family,
     fontPackage: _package,
