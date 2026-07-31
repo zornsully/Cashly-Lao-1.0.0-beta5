@@ -422,15 +422,31 @@ more serious defect:
 `flutter analyze` — 0 issues. `dart format --set-exit-if-changed` — clean.
 Full suite: 448 passing (11 new this round), 0 failing, 0 skipped.
 
-**Still genuinely untested**: `savings_goal_form_screen.dart` — read in
-full during Round 2's form-screen sweep and confirmed correct
-(`success`/`AppSnackbar.showError` present), but has no dedicated test
-file yet. A true Phase 4 (feature-by-feature UI/data/state/navigation/
-validation/loading/empty/error/offline/localization/accessibility/
-responsive/dark-light/test-coverage matrix, per the completion-mission
-spec) remains open and would still need real device/browser verification
-for its non-code-level checks regardless of how much further
-test-writing happens here.
+**Round 4** — closed the last remaining coverage gap:
+`savings_goal_form_screen.dart` (already confirmed correct in Round 2's
+sweep) had no dedicated test file. Added
+`savings_goal_form_screen_test.dart` (4 tests: empty-form validation,
+successful creation with an account selected, a failure snackbar, and
+the locked-account/pre-filled-values display when editing). Needed a
+real `GoRouter` (pushed, not `initialLocation`, so `context.pop()` on
+success has somewhere to return to) rather than the plain
+`MaterialApp(home: ...)` most other form-screen tests use, since this
+was the first form-screen test in the suite to actually exercise the
+success-then-pop path end-to-end.
+
+`flutter analyze` — 0 issues. `dart format --set-exit-if-changed` — clean.
+Full suite: 452 passing (4 new this round), 0 failing, 0 skipped.
+
+Every screen identified at the start of this phase now has dedicated
+test coverage and has been audited for the fire-and-forget/silent-
+failure bug class. Two real bugs were found and fixed across the four
+rounds (`verify_email_screen.dart`'s silent logout failure,
+`savings_goal_detail_screen.dart`'s crash on failed delete/archive). A
+true Phase 4 (feature-by-feature UI/data/state/navigation/validation/
+loading/empty/error/offline/localization/accessibility/responsive/
+dark-light matrix, per the completion-mission spec) remains open and
+would still need real device/browser verification for its non-code-level
+checks regardless of how much further test-writing happens here.
 
 ## Security & data
 
