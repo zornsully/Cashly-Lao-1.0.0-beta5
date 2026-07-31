@@ -1,9 +1,54 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:cashly_lao/core/constants/app_symbols.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cashly_lao/l10n/app_localizations.dart';
 import 'package:cashly_lao/main.dart' as app;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+
+/// The Auth Emulator never sends a real verification email, so a freshly
+/// registered user is permanently stuck at `emailVerified == false` (and
+/// the router gates every unverified user to `VerifyEmailScreen`) unless
+/// something marks it verified.
+///
+/// **Confirmed by direct testing, not assumed**: the standard, self-service
+/// `identitytoolkit.googleapis.com/v1/accounts:update` endpoint (passing
+/// the user's own `idToken`) returns `200` but silently ignores the
+/// `emailVerified` field -- correctly mirroring real Identity Platform
+/// behavior, where a signed-in user can't self-grant email verification
+/// through that field (only by actually completing the emailed link flow).
+/// The emulator's own admin-only surface at `/emulator/v1/projects/
+/// {projectId}/accounts:update` (keyed by `localId`, no token/auth
+/// required, and *only* ever reachable on the local emulator, never
+/// production) is the correct way to force it during a test.
+Future<void> _markCurrentUserEmailVerifiedInEmulator() async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) return;
+  final client = HttpClient();
+  try {
+    final request = await client.postUrl(
+      Uri.parse(
+        'http://localhost:9099/emulator/v1/projects/cashly-lao/accounts:update',
+      ),
+    );
+    request.headers.contentType = ContentType.json;
+    request.write(jsonEncode({'localId': user.uid, 'emailVerified': true}));
+    final response = await request.close();
+    final body = await response.transform(utf8.decoder).join();
+    if (response.statusCode != 200 || !body.contains('"emailVerified":true')) {
+      throw StateError(
+        'Emulator accounts:update did not verify the user '
+        '(${response.statusCode}): $body',
+      );
+    }
+  } finally {
+    client.close();
+  }
+  await user.reload();
+}
 
 /// End-to-end user journey against the real app, wired to the local
 /// Firebase Emulator Suite (never production — see `main.dart`'s
@@ -41,8 +86,27 @@ void main() {
       app.main();
       await tester.pumpAndSettle(const Duration(seconds: 2));
 
+      // Firebase Auth persists a signed-in session locally across separate
+      // process launches (even against the emulator) -- without this, a
+      // user left signed in by an earlier, partial run of this same test
+      // would resume here instead of landing on the public flow this test
+      // actually wants to exercise from scratch.
+      if (FirebaseAuth.instance.currentUser != null) {
+        await FirebaseAuth.instance.signOut();
+        await tester.pumpAndSettle(const Duration(seconds: 2));
+      }
+
       // ---- 1. Register ----------------------------------------------
-      // Splash -> unauthenticated redirect lands on Login; go to Register.
+      // The router's initial location is the public landing page (marketing
+      // routes are exempt from the auth redirect), not Login directly --
+      // "Open app" navigates to /dashboard, which the redirect then bounces
+      // an unauthenticated visitor to /login from. At this test's narrow
+      // (mobile-shaped) viewport, landing_page.dart renders this as an
+      // icon-only button with a Tooltip (not a visible Text widget) -- see
+      // its own `narrow` branch.
+      expect(find.byTooltip('Open app'), findsOneWidget);
+      await tester.tap(find.byTooltip('Open app'));
+      await tester.pumpAndSettle();
       expect(find.text(l10n.signIn), findsOneWidget);
       await tester.tap(find.text(l10n.signUpLink));
       await tester.pumpAndSettle();
@@ -57,7 +121,18 @@ void main() {
       await tester.tap(find.text(l10n.createAccountButton));
       await tester.pumpAndSettle(const Duration(seconds: 3));
 
-      // ---- 2. Lands on Dashboard --------------------------------------
+      // ---- 2. Verify the emulator user, then land on Dashboard ----------
+      // Registration lands on VerifyEmailScreen first (the router gates
+      // every unverified signed-in user there) -- the Auth Emulator never
+      // sends a real email, so nothing would ever clear that gate without
+      // marking it verified directly. Tapping the screen's own real "I've
+      // verified" button (which calls the same `reloadUser()` use case a
+      // real user's tap would) is both more reliable than a bare SDK
+      // reload and a more faithful test of the actual path a real user
+      // takes.
+      await _markCurrentUserEmailVerifiedInEmulator();
+      await tester.tap(find.text(l10n.verifiedButton));
+      await tester.pumpAndSettle(const Duration(seconds: 2));
       expect(find.text(l10n.dashboardTitle), findsWidgets);
 
       // ---- 3. Create two accounts (second one enables the Transfer /
@@ -80,9 +155,9 @@ void main() {
 
       // ---- 4/5. Add an income and an expense transaction ---------------
       Future<void> pickDropdownOption(int dropdownIndex, String text) async {
-        await tester.tap(find.byType(DropdownButtonFormField<String>).at(
-          dropdownIndex,
-        ));
+        await tester.tap(
+          find.byType(DropdownButtonFormField<String>).at(dropdownIndex),
+        );
         await tester.pumpAndSettle();
         await tester.tap(find.text(text).last);
         await tester.pumpAndSettle();
@@ -155,22 +230,16 @@ void main() {
       await tester.pumpAndSettle(const Duration(seconds: 2));
 
       // ---- 10. Create a savings goal --------------------------------------
-      await tester.tap(find.byIcon(AppSymbols.addRounded).first);
-      await tester.pumpAndSettle();
       // Reached via the Dashboard's Savings Goals shortcut, not a bottom
-      // tab — go there first.
-      await tester.pageBack();
-      await tester.pumpAndSettle();
+      // tab, and BudgetsListScreen (where the previous step left off) has
+      // no floating action button of its own — go to Dashboard first.
       await tester.tap(find.text(l10n.dashboardTitle).first);
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip(l10n.savingsGoalsTooltip));
       await tester.pumpAndSettle();
       await tester.tap(find.byIcon(AppSymbols.addRounded));
       await tester.pumpAndSettle();
-      await tester.enterText(
-        find.byType(TextFormField).at(0),
-        'New Laptop',
-      );
+      await tester.enterText(find.byType(TextFormField).at(0), 'New Laptop');
       await tester.enterText(find.byType(TextFormField).at(1), '8000000');
       await pickDropdownOption(0, 'Savings Jar');
       await tester.tap(find.text(l10n.addGoalButton));
