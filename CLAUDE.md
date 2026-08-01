@@ -2582,6 +2582,128 @@ procedure already requires before any real Android/Web publish, which
 remains explicitly gated on your two separate approvals per your standing
 instruction.
 
+### 2026-08-01 — Web security headers deployed; live Android APK-on-Hosting cleaned up (done)
+
+Summary:
+
+Asked to "check the web security headers" (the item this file already tracked
+as "added, not yet live-verified"). Verified the CSP against real runtime
+network activity rather than re-reasoning from `pubspec.yaml`: built the web
+app against the local Auth/Firestore emulators, served the real `build/web`
+output through `firebase emulators:start --only hosting` (confirmed directly
+that the Hosting emulator does *not* apply `firebase.json`'s custom `headers`
+rules at all — a real emulator/production divergence — but it still serves
+the actual build, so runtime network activity is real), and used
+`performance.getEntriesByType('resource')` plus a DOM scan for injected
+`<script>` tags in a real browser to capture every external origin the app
+actually contacts. Found and fixed two real CSP gaps before ever deploying:
+Google Identity Services' own script (`https://accounts.google.com/gsi/client`)
+was missing from `script-src` (only `frame-src` had that domain, for the
+sign-in popup, not the button's own JS), and that script's own font fetch
+(`https://fonts.gstatic.com/...roboto...woff2`, confirmed via
+`initiatorType: "fetch"`) needed `connect-src` in addition to `font-src`,
+since CSP governs `fetch()`-loaded resources by call type, not file type.
+CanvasKit and the Firebase JS SDK bundles (`gstatic.com`) were already
+correctly covered — confirmed directly, not assumed.
+
+Checking the live site before deploying surfaced a real, unrelated, higher-
+stakes finding: **the currently-live site was serving a real, working
+Android APK directly from Firebase Hosting**
+(`https://cashly-lao.web.app/downloads/cashly-lao-v1.0.2.apk.zip`, verified
+functional — 41,465,710 bytes, checksum matched its own manifest entry) —
+something this file's own free-tier manual release policy explicitly
+forbids ("Firebase Hosting serves the website and `release-manifest.json`;
+it must never serve an APK or another installer"). Tracing the history: this
+was a leftover from `0590258` ("Prepare private Firebase APK release
+v1.0.2"), which predates `a1c3fb7` (the free-tier manual-release redesign
+that introduced the fail-closed `coming_soon` default and the
+"never-on-Hosting" APK rule). The website had never actually been redeployed
+since that redesign landed, so production was still running the old,
+pre-redesign build — the repo's own `web/release-manifest.json` already
+correctly said `coming_soon`, production just hadn't caught up to it.
+
+Surfaced this to you directly rather than silently deploying either
+direction (silently overwriting a live, working download without your
+sign-off would be exactly the kind of hard-to-reverse action worth stopping
+for, and silently preserving a policy-violating Hosting-served-APK setup
+would just be quietly re-shipping something this file's own policy already
+says shouldn't exist). You chose: deploy the repo's actual committed state
+as-is (Android back to `coming_soon`) plus the security headers — bringing
+production into compliance with this file's own current policy rather than
+inventing new release data or perpetuating the stale, non-compliant one.
+
+Files modified:
+
+- `firebase.json` — `Content-Security-Policy` gained `https://accounts.google.com`
+  in `script-src` and `https://fonts.gstatic.com` in both `font-src` and
+  `connect-src`.
+- `TODO.md` — the web-security-headers section rewritten with the full
+  verification methodology and findings.
+
+No `web/release-manifest.json` change was committed — it already correctly
+said `coming_soon`; only the *live* deployment needed to catch up to it.
+
+Validation:
+
+- `flutter analyze` — 0 issues. `flutter test` — 453/453 passing.
+- Deployed via `flutter build web --release` (production build, no emulator
+  flag) then `firebase deploy --only hosting:cashly-lao --project cashly-lao`
+  (run through a working local `npx firebase-tools` session — this
+  environment's plain `firebase` on PATH is still the broken, unauthenticated
+  `firepit` first-run installer documented in the 2026-07-31 entry above;
+  `npx firebase-tools login:list` confirmed a real authenticated session as
+  the project owner).
+- Live URL: `https://cashly-lao.web.app` (verified via `https://cashly-lao.firebaseapp.com`,
+  the project's other default Hosting domain, since this sandboxed
+  environment's own outbound network path can't reach `.web.app` at all via
+  `curl` — confirmed unrelated to this project specifically, since even
+  unrelated `.web.app` domains fail identically from here; the real browser
+  tool reaches `.web.app` fine, and both domains serve the same Hosting
+  site).
+- Post-deploy verification actually performed against the live site (not
+  just a clean deploy exit code): fetched real response headers directly —
+  `Content-Security-Policy`, `Permissions-Policy`, `Referrer-Policy`,
+  `X-Content-Type-Options`, and `X-Frame-Options` are all present and match
+  `firebase.json` exactly (`Strict-Transport-Security` shows Firebase's own
+  built-in default instead of this file's configured value — Firebase
+  Hosting appears to always inject its own HSTS header regardless of custom
+  config; not a problem, since the live value is strictly stronger than
+  what was configured). Loaded the live site in a real browser with the CSP
+  now actually enforced and confirmed zero CSP-violation console messages,
+  with every external origin from the earlier dry-run (including both fixed
+  ones) loading successfully. Confirmed `release-manifest.json` now serves
+  `coming_soon` for Android, and the old APK path now returns the SPA
+  fallback (matching `index.html`'s byte size) instead of the file.
+
+Known limitations:
+
+- Only the pre-auth landing page was exercised. Firestore's real `wss`/
+  `https` connection, Auth's own sign-in/verification network calls, and
+  the actual Google Sign-In OAuth popup/redirect completing remain
+  unverified against the live, header-enforcing site — this environment has
+  no accessible DOM to click through Flutter's CanvasKit-rendered UI
+  (confirmed: `read_page` returns empty, and enabling Flutter's semantics
+  bridge via its own "Enable accessibility" placeholder didn't populate a
+  readable tree either) and no real Google account to complete a sign-in
+  with. If either flow turns out to hit a CSP violation in real use, widen
+  only the specific directive that failed, re-deploy, and re-check — never
+  widen speculatively.
+- The stale pre-redesign build's `distribution_policy.json` (governing
+  which public GitHub repo, if any, an Android download is trusted from)
+  was never committed either — the live site's old build didn't even ship
+  that file (confirmed: it 404s under the old build, predating that file's
+  introduction). The current repo's `distribution_policy.json` still
+  correctly has `repository: null`, matching the fail-closed default this
+  file's release policy requires until a real distribution repo is
+  reviewed and approved.
+
+Next recommended step: none required for the headers themselves. When a
+real Android release is next prepared, it goes through this file's existing
+[multi-platform release procedure](#multi-platform-release-procedure-permanent)
+from step 1 — including a real, owner-approved public distribution
+repository, which has never existed for this project outside of the now-
+retired pre-redesign Hosting-served APK.
+
 ## Product Roadmap
 
 The full staged roadmap — objectives, features, deliverables,

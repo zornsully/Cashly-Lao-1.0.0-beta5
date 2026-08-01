@@ -140,62 +140,51 @@ ever reopened.
 approval — same standard as every other paid-plan/signing/publishing
 decision in this project.
 
-## Web security headers — CSP verified against real network activity (2026-08-01); still not live
+## Web security headers — deployed and live-verified (2026-08-01)
 
 **What was done**: `firebase.json`'s Hosting config sends
 `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`,
-`Permissions-Policy`, `Strict-Transport-Security`, and a
-`Content-Security-Policy` scoped to the domains the app actually calls.
-
-**2026-08-01 verification pass — real evidence, not just re-reasoning**:
-confirmed live that `https://cashly-lao.web.app` is reachable and healthy,
-but its current deployment predates the headers change (`Last-Modified`
-five days before the headers commit) — fetched directly via the browser's
-own `fetch()`, only Firebase's default HSTS is present; every custom
-header is absent. Also discovered the Firebase **Hosting emulator itself
-doesn't apply `firebase.json`'s custom `headers` rules at all** (a known
-emulator/production divergence), so it can't be used to test header
-*enforcement* — but it can still serve the real `build/web` output for
-inspecting *actual* runtime network activity. Built the web app
-(`--dart-define=USE_FIREBASE_EMULATOR=true`) and served it via
-`firebase emulators:start --only hosting`, loaded it in a real browser,
+`Permissions-Policy`, and a `Content-Security-Policy` scoped to the domains
+the app actually calls. Verified against *real* runtime network activity
+(built the web app, served it via `firebase emulators:start --only hosting`,
 and used `performance.getEntriesByType('resource')` plus a DOM scan for
 injected `<script>` tags to capture the complete, real list of external
-origins the app contacts on load (Firebase JS SDK bundles and CanvasKit
-from `gstatic.com`, Google Identity Services from `accounts.google.com`,
-gtag from `googletagmanager.com`, Analytics from `google-analytics.com`,
-Firebase Installations) — not just inferred from `pubspec.yaml`.
+origins the app contacts) rather than only re-reasoning from
+`pubspec.yaml` — that pass caught two real gaps before ever deploying:
+Google Identity Services' own script (`https://accounts.google.com/gsi/client`)
+was missing from `script-src` (only `frame-src` had that domain, for the
+sign-in popup, not the button's own JS — would have silently broken Google
+Sign-In), and that script's own font fetch
+(`https://fonts.gstatic.com/.../roboto-*.woff2`, confirmed via
+`initiatorType: "fetch"`) needed `connect-src` in addition to `font-src`,
+since CSP governs `fetch()`-loaded resources by call type, not file type.
+Both fixed. CanvasKit's `.wasm`/`.js` and the Firebase SDK bundles (all
+from `gstatic.com`) were already correctly covered.
 
-**Two real gaps found and fixed this way, before ever deploying**:
-1. Google Identity Services' own script (`https://accounts.google.com/gsi/client`)
-   was missing from `script-src` — only `frame-src` had `accounts.google.com`
-   (for the sign-in popup), not `script-src` (for loading the button's own
-   JS). Would have silently broken the Google Sign-In button.
-2. That same script fetches a font (`https://fonts.gstatic.com/.../roboto-*.woff2`)
-   via JS `fetch()` (confirmed via `initiatorType: "fetch"`), which CSP
-   governs under `connect-src`, not `font-src`, despite being a font file —
-   added to both directives defensively, since browser CSP implementations
-   can differ on which directive actually applies to `fetch()`-loaded fonts.
+**Deployed and confirmed live 2026-08-01** — see CLAUDE.md's dated entry
+for full detail, including a real, unrelated finding surfaced along the
+way (the live site had been serving a real Android APK directly from
+Firebase Hosting, a leftover from before this project's own free-tier
+release-policy redesign, which explicitly forbids that — cleaned up as
+part of this same deploy, with the owner's explicit direction). Post-
+deploy, fetched the live response headers directly: `Content-Security-
+Policy`, `Permissions-Policy`, `Referrer-Policy`, `X-Content-Type-Options`,
+and `X-Frame-Options` all present and correct (`Strict-Transport-Security`
+shows Firebase's own stronger built-in default instead, which Hosting
+appears to always inject regardless of custom config — not a problem).
+Loaded the live, now header-enforcing site in a real browser and confirmed
+**zero CSP-violation console messages**, with every external origin from
+the dry-run — including both fixed ones — loading successfully.
 
-CanvasKit's `.wasm`/`.js` and the Firebase SDK bundles (all from
-`gstatic.com`) were already correctly covered — confirmed directly, not
-assumed.
-
-**Still not closed — what a live deploy would still need to verify**:
-this pass only exercised the pre-auth landing page (no click-through
-interaction was possible in this environment — Flutter's CanvasKit
-renderer exposes no accessibility tree for automated clicking, and no
-real Google account was available to complete an actual sign-in). Not
-yet observed: Firestore's real `wss`/`https` connection once
-authenticated, Auth's own sign-in/verification calls, and the actual
-Google Sign-In OAuth popup/redirect flow completing. **Required next
-step, after the next website deploy**: fetch `https://cashly-lao.web.app/`
-and confirm the headers are now present (the exact `fetch()` snippet
-used for this pass works for that too); then, ideally on a device where
-sign-in can actually be completed, confirm the browser console shows no
-CSP violations during real sign-in and Firestore usage. If anything is
-still blocked, widen only the specific directive that failed, re-deploy,
-and re-check — never widen speculatively.
+**Still open — not exercisable in this environment**: only the pre-auth
+landing page was verified against the live, enforcing CSP. Firestore's
+real `wss`/`https` connection once authenticated, Auth's own sign-in/
+verification calls, and the actual Google Sign-In OAuth popup/redirect
+flow completing remain unverified — this environment has no accessible DOM
+to click through Flutter's CanvasKit-rendered UI, and no real Google
+account to sign in with. If either flow turns out to hit a CSP violation
+in real use, widen only the specific directive that failed, re-deploy, and
+re-check — never widen speculatively.
 
 ## Icons.* → AppSymbols.* sweep (done, except a deliberate landing-page exemption)
 
