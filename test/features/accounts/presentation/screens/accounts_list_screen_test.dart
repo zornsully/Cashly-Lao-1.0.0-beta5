@@ -59,11 +59,13 @@ void main() {
     await pumpScreen(tester, repository);
 
     expect(find.text('Cash Wallet'), findsOneWidget);
+    expect(find.text('Net worth'), findsOneWidget);
+    expect(find.text('Assets'), findsOneWidget);
     expect(
       find.text(
         CurrencyFormatter.format(750, SupportedCurrencies.byCode('USD')),
       ),
-      findsOneWidget,
+      findsWidgets,
     );
   });
 
@@ -82,4 +84,33 @@ void main() {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     expect(find.text(l10n.noAccountsYetTitle), findsOneWidget);
   });
+
+  testWidgets(
+    'groups accounts by currency and keeps negative balances neutral',
+    (tester) async {
+      final repository = _MockAccountRepository();
+      final negativeLak = account.copyWith(
+        name: 'A very long Lao account name that must not collide',
+        currencyCode: 'LAK',
+        balance: -1903045,
+      );
+      final positiveLak = account.copyWith(
+        currencyCode: 'LAK',
+        balance: 8103630,
+      );
+      when(
+        () => repository.watchAccounts(
+          includeArchived: any(named: 'includeArchived'),
+        ),
+      ).thenAnswer((_) => Stream.value([account, negativeLak, positiveLak]));
+
+      await pumpScreen(tester, repository);
+
+      expect(find.text('LAK Accounts · 2'), findsOneWidget);
+      expect(find.text('USD Accounts · 1'), findsOneWidget);
+      expect(find.text('Overdrawn'), findsOneWidget);
+      expect(find.text('-₭1,903,045'), findsWidgets);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

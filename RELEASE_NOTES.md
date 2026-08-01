@@ -1,6 +1,6 @@
-# Cashly Lao 1.0.3
+# Cashly Lao 1.0.4
 
-> Reviewed notes for the `v1.0.3` candidate. Publication remains subject to
+> Reviewed notes for the `v1.0.4` candidate. Publication remains subject to
 > local signed-artifact validation and explicit owner approval. No release is
 > published or deployed automatically.
 
@@ -11,6 +11,9 @@
   to Login.
 - Added the responsive, selected-currency Cashly Lao dashboard for web,
   tablet, and mobile.
+- Redesigned Accounts around compact currency groups, correct per-currency
+  asset/liability/net-worth summaries, filters, sorting, and safer negative
+  balance presentation.
 
 ## Improvements
 

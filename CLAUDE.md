@@ -262,6 +262,18 @@ or widget code — everything routes through a named constant:
   Android versionCode/versionName and iOS build values. Increment both the
   semantic version and build number for every production candidate.
 
+### Accounts page rules
+
+- Accounts are summarized and grouped per currency only. Positive balances are
+  assets, negative balances are liabilities, and net worth is assets minus
+  liabilities within that same currency; never mix LAK and USD without a valid
+  exchange rate.
+- A displayed account percentage is its one-decimal **share of positive assets
+  in its own currency**. Hide it for zero or negative balances and show
+  `Overdrawn` as secondary status instead of a badge beside the account name.
+- The Accounts screen retains Firebase/Riverpod data, archive/delete actions,
+  compact type filters, and the shared `CurrencyFormatter` contract.
+
 ### Component Guidelines
 
 Built once in `core/widgets`, reused everywhere — a screen should almost
