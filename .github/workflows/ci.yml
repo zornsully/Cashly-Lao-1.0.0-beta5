@@ -31,7 +31,10 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
-          flutter-version: '3.44.6'
+          # Keep CI on the same stable engine used for the production web
+          # build. Flutter 3.44.8 includes the CanvasKit engine hotfix used
+          # while remediating the blank-page incident.
+          flutter-version: '3.44.8'
           channel: stable
           cache: true
 
