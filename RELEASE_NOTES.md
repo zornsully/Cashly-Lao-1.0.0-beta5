@@ -1,27 +1,26 @@
-# Cashly Lao 1.0.2
+# Cashly Lao 1.0.3
 
-> Reviewed notes for the `v1.0.2` candidate. Publication remains subject to
+> Reviewed notes for the `v1.0.3` candidate. Publication remains subject to
 > local signed-artifact validation and explicit owner approval. No release is
 > published or deployed automatically.
 
 ## New features
 
-- Added a responsive Cashly Lao dashboard for web, tablet, and mobile.
-- Added a balance-led Smart Money Score with daily, weekly, and monthly
-  explanations and practical next steps.
-- Added dynamic release information to the landing page, including platform
-  availability, release details, and safe download states.
+- Native Android and iOS entry now bypasses the marketing site completely:
+  restored sessions continue to Dashboard, while signed-out users go directly
+  to Login.
+- Added the responsive, selected-currency Cashly Lao dashboard for web,
+  tablet, and mobile.
 
 ## Improvements
 
-- Added persistent Firestore cache support and safer offline transaction
-  queueing.
-- Added structured release metadata and signed Android artifact checks.
+- The public landing page remains available on the web only, including its
+  verified release information and download area.
+- Legal pages now return native users to the app flow rather than Landing.
 
 ## Bug fixes
 
-- Improved release-download error handling so unavailable metadata does not
-  expose a broken download button.
+- Prevented mobile deep links to `/` from displaying the web marketing page.
 
 ## Security updates
 

@@ -43,7 +43,6 @@ import 'app_routes.dart';
 import 'home_shell_screen.dart';
 
 const _publicRoutes = {
-  AppRoutes.landing,
   AppRoutes.privacy,
   AppRoutes.terms,
   AppRoutes.login,
@@ -64,6 +63,21 @@ const _authOnlyRoutes = {
   AppRoutes.forgotPassword,
   AppRoutes.verifyEmail,
 };
+
+/// Selects the correct first screen for each product surface.
+///
+/// The public product site is intentionally web-only. Native apps start at
+/// the auth gate, whose redirect then sends a restored session to Dashboard
+/// or a signed-out session to Login.
+@visibleForTesting
+String appInitialLocationForPlatform({required bool isWeb}) =>
+    isWeb ? AppRoutes.landing : AppRoutes.splash;
+
+@visibleForTesting
+bool isMarketingRouteAvailable({
+  required bool isWeb,
+  required String location,
+}) => isWeb && _marketingRoutes.contains(location);
 
 /// The app's single [GoRouter] instance. Auth guarding lives entirely in
 /// [redirect]: no screen needs to manually check "am I logged in?" before
@@ -91,7 +105,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   ref.onDispose(refreshNotifier.dispose);
 
   return GoRouter(
-    initialLocation: AppRoutes.landing,
+    initialLocation: appInitialLocationForPlatform(isWeb: kIsWeb),
     refreshListenable: refreshNotifier,
     observers: [
       if (AppPlatformCapabilities.supportsFirebaseAnalytics)
@@ -101,9 +115,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final authState = ref.read(authStateChangesProvider);
       final location = state.matchedLocation;
 
-      // The marketing and legal pages must remain reachable before the
-      // Firebase auth stream produces its first value and for signed-in users.
-      if (_marketingRoutes.contains(location)) return null;
+      // The marketing site is web-only. Native launches always flow through
+      // Splash while Firebase restores the session, never through Landing.
+      if (isMarketingRouteAvailable(isWeb: kIsWeb, location: location)) {
+        return null;
+      }
 
       if (!authState.hasValue) {
         return location == AppRoutes.splash ? null : AppRoutes.splash;
@@ -112,6 +128,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final user = authState.value;
 
       if (user == null) {
+        if (!kIsWeb && location == AppRoutes.landing) {
+          return AppRoutes.login;
+        }
         return _publicRoutes.contains(location) ? null : AppRoutes.login;
       }
 

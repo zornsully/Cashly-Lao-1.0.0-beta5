@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -15,6 +16,7 @@ class LegalDocumentPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isWebsite = kIsWeb;
     final content = switch (_document) {
       _LegalDocument.privacy => _privacyContent,
       _LegalDocument.terms => _termsContent,
@@ -48,12 +50,22 @@ class LegalDocumentPage extends StatelessWidget {
                           ),
                           const Spacer(),
                           TextButton.icon(
-                            onPressed: () => context.go(AppRoutes.landing),
+                            onPressed: () {
+                              if (context.canPop()) {
+                                context.pop();
+                                return;
+                              }
+                              context.go(
+                                isWebsite ? AppRoutes.landing : AppRoutes.login,
+                              );
+                            },
                             icon: const Icon(
                               Icons.arrow_back_rounded,
                               size: 17,
                             ),
-                            label: const Text('Back to home'),
+                            label: Text(
+                              isWebsite ? 'Back to home' : 'Back to sign in',
+                            ),
                             style: TextButton.styleFrom(
                               foregroundColor: _LegalColors.green,
                               textStyle: const TextStyle(

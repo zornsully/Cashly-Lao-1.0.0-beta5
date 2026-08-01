@@ -250,6 +250,18 @@ or widget code — everything routes through a named constant:
   to edge. The mobile `Scaffold` owns its bottom navigation so scrollable
   screen content cannot sit beneath it.
 
+### Product entry flow
+
+- The public Landing route and its marketing/download content are **web-only**.
+  Android and iOS start at Splash while Firebase restores authentication, then
+  route authenticated users to Dashboard and signed-out users to Login.
+- A native deep link to `/` is redirected to Login once authentication is
+  known; it must never render the marketing page. Privacy and Terms remain
+  shared routes, and their native back action returns to the app flow.
+- The shared version in `pubspec.yaml` is the release source of truth for
+  Android versionCode/versionName and iOS build values. Increment both the
+  semantic version and build number for every production candidate.
+
 ### Component Guidelines
 
 Built once in `core/widgets`, reused everywhere — a screen should almost

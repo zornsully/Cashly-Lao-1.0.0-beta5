@@ -21,6 +21,7 @@ void main() {
       initialLocation: path,
       routes: [
         GoRoute(path: '/', builder: (context, state) => const SizedBox()),
+        GoRoute(path: '/login', builder: (context, state) => const SizedBox()),
         GoRoute(path: path, builder: (context, state) => page),
       ],
     );
@@ -57,16 +58,18 @@ void main() {
     expect(find.text('Not financial advice'), findsOneWidget);
   });
 
-  testWidgets('"Back to home" navigates to the landing route', (tester) async {
+  testWidgets('native back action navigates to sign in instead of landing', (
+    tester,
+  ) async {
     final router = await pumpLegalDocumentPage(
       tester,
       const LegalDocumentPage.privacy(),
       '/privacy',
     );
 
-    await tester.tap(find.widgetWithText(TextButton, 'Back to home'));
+    await tester.tap(find.widgetWithText(TextButton, 'Back to sign in'));
     await tester.pumpAndSettle();
 
-    expect(router.routerDelegate.currentConfiguration.uri.path, '/');
+    expect(router.routerDelegate.currentConfiguration.uri.path, '/login');
   });
 }
