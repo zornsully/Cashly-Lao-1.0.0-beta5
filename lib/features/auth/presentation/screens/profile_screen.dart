@@ -39,11 +39,18 @@ class ProfileScreen extends ConsumerWidget {
         title: Text(l10n.editNameDialogTitle),
         content: Form(
           key: formKey,
-          child: TextFormField(
-            controller: controller,
-            autofocus: true,
-            decoration: InputDecoration(labelText: l10n.fullNameLabel),
-            validator: (value) => Validators.displayName(dialogContext, value),
+          // See the same fix's comment on the delete-account dialog below
+          // -- AlertDialog's IntrinsicWidth content sizing doesn't compose
+          // reliably with a TextFormField descendant.
+          child: SizedBox(
+            width: double.maxFinite,
+            child: TextFormField(
+              controller: controller,
+              autofocus: true,
+              decoration: InputDecoration(labelText: l10n.fullNameLabel),
+              validator: (value) =>
+                  Validators.displayName(dialogContext, value),
+            ),
           ),
         ),
         actions: [
@@ -98,27 +105,40 @@ class ProfileScreen extends ConsumerWidget {
         title: Text(l10n.deleteUserAccountTitle),
         content: Form(
           key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                hasPasswordProvider
-                    ? l10n.deleteUserAccountMessageWithPassword
-                    : l10n.deleteUserAccountMessageGoogle,
-              ),
-              if (hasPasswordProvider) ...[
-                const SizedBox(height: AppSpacing.md),
-                AppPasswordField(
-                  label: l10n.confirmYourPasswordLabel,
-                  controller: passwordController,
-                  autofillHints: const [],
-                  validator: (value) => (value == null || value.isEmpty)
-                      ? l10n.passwordRequiredError
-                      : null,
+          // `AlertDialog` sizes its content with an internal
+          // `IntrinsicWidth`, which doesn't compose reliably with a
+          // `TextFormField` descendant (its `InputDecorator` has its own
+          // internal `Expanded`/flexible children) -- a well-known
+          // Flutter/Material gotcha, not specific to this app, that can
+          // produce a wildly wrong (effectively unbounded) intrinsic
+          // width and a cascading layout overflow. Giving the content an
+          // explicit width via `SizedBox(width: double.maxFinite)` is the
+          // standard fix: it hands `IntrinsicWidth` a concrete value
+          // instead of asking it to measure the field intrinsically.
+          child: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  hasPasswordProvider
+                      ? l10n.deleteUserAccountMessageWithPassword
+                      : l10n.deleteUserAccountMessageGoogle,
                 ),
+                if (hasPasswordProvider) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  AppPasswordField(
+                    label: l10n.confirmYourPasswordLabel,
+                    controller: passwordController,
+                    autofillHints: const [],
+                    validator: (value) => (value == null || value.isEmpty)
+                        ? l10n.passwordRequiredError
+                        : null,
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
         actions: [
