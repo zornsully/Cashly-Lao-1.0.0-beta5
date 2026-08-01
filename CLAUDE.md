@@ -2704,6 +2704,129 @@ from step 1 — including a real, owner-approved public distribution
 repository, which has never existed for this project outside of the now-
 retired pre-redesign Hosting-served APK.
 
+### 2026-08-01 — Blank-page production outage: CSP widened, Flutter SDK
+upgraded to 3.44.8, redeployed (fix unverified — owner confirmation needed)
+
+Summary:
+
+Shortly after the 2026-08-01 headers deploy above, you sent a screenshot of
+`cashly-lao.web.app` in your own real Chrome browser showing a completely
+blank white page (page chrome/extensions visible, page content empty). This
+entry covers the investigation and the two changes now live in production —
+neither has been visually confirmed to fix it yet.
+
+Investigation, in order:
+
+1. Hypothesized the CSP's `connect-src` was missing `googletagmanager.com`
+   (Firebase Analytics' web SDK fetches from it at runtime, not just script-
+   tag load). Fixed and redeployed. **This did not resolve the blank page.**
+2. Built a print-instrumented `main.dart` (every line of `main()`, including
+   `runApp()`, wrapped in `debugPrint`) and served it locally via
+   `firebase emulators:start --only hosting` to get ground truth. Every
+   diagnostic line fired, including one placed in a
+   `WidgetsBinding.instance.addPostFrameCallback` after `runApp()` — i.e.
+   Dart's own framework believed a first frame was committed. Ruled out:
+   Firebase Analytics, Google Sign-In/GIS (confirmed `window.google.accounts`
+   populated), and `main()` hanging on anything.
+3. Swapped `CashlyApp` for a trivial `MaterialApp(home: Text(...))` — same
+   result, so the failure isn't specific to Cashly's own widget tree.
+4. Confirmed CanvasKit itself loads (`window.flutterCanvasKit` resolves) and
+   can create a working WebGL surface when called manually
+   (`CanvasKit.MakeWebGLCanvasSurface` on a hand-created canvas succeeded)
+   — yet Flutter's own engine never creates a `<canvas>` inside
+   `flt-glass-pane` (consistently 0 children, confirmed via full DOM dump).
+   Ruled out debug-vs-release Dart compilation as a factor (identical
+   behavior in both).
+5. Found that Flutter shipped two stable hotfixes after the installed
+   3.44.6 — 3.44.7 and 3.44.8 — and 3.44.8 bumps the **engine** hash
+   specifically (`83675ed2...` → `13ffd72b...` after upgrading), separate
+   from framework-level commits. Framework-level commits between 3.44.6 and
+   3.44.8 were CI/Android/macOS-only (no web-specific fix visible at that
+   layer), but the engine is where CanvasKit/Skia rendering code lives, and
+   a hotfix bumping it is a deliberate, non-routine action. Upgraded the
+   local Flutter SDK from 3.44.6 to 3.44.8 (`flutter upgrade`, after
+   clearing stale `dart.exe`/`flutter_tester.exe` processes that were
+   holding a file lock on the SDK cache and failing the first attempt).
+6. Rebuilt and redeployed with the upgraded SDK. **Also not yet visually
+   confirmed** — the automated browser tool used for verification in this
+   session hit its own limitation: screenshot calls started failing with
+   "the Browser pane is not displayed, so the page is not compositing
+   frames," and `document.visibilityState` correspondingly read `"hidden"`.
+   This means the DOM-level checks performed afterward (`document
+   .querySelectorAll('canvas').length` reading 0) are not reliable
+   evidence either way — a backgrounded/non-displayed browser pane may
+   never composite a frame regardless of what the app is doing, so this
+   session could not distinguish "still broken" from "tool couldn't see
+   it." One earlier screenshot, taken before this limitation was
+   understood, did capture a genuine blank white page matching your own
+   report — so the bug's existence is confirmed, but neither fix's effect
+   has been confirmed since.
+
+Files modified:
+
+- `firebase.json` — `Content-Security-Policy`'s `connect-src` gained
+  `https://www.googletagmanager.com` (script-src already had it).
+- Local environment only, not a repo file: Flutter SDK upgraded 3.44.6 →
+  3.44.8 on this machine (`c:\src\flutter`). No project file pins a Flutter
+  version today, so nothing in the repo needed a corresponding edit — but
+  recording this here since it's exactly the kind of non-obvious
+  environment change a future session needs to know about if this same
+  symptom resurfaces or if `flutter --version` ever looks unexpectedly
+  newer than assumed.
+
+Validation:
+
+- `flutter analyze` — 0 issues (re-run after the SDK upgrade).
+- `flutter test` — full suite, 462 passing, 0 failing, 0 skipped (re-run
+  after the SDK upgrade).
+- `flutter build web --release` — compiles clean under 3.44.8.
+- Deployed via `npx firebase-tools deploy --only hosting:cashly-lao
+  --project cashly-lao` — "Deploy complete!". Verified via direct `curl`
+  against `https://cashly-lao.firebaseapp.com/main.dart.js` that the newly
+  built bundle and the updated CSP header are actually live
+  (`Last-Modified` matches the deploy time).
+- **Not verified**: that the live site actually renders now. This is a
+  genuine gap against this project's own standing rule ("never record a
+  deployment as successful without independently verifying the live
+  site") — recorded honestly rather than silently claimed.
+
+Known limitations:
+
+- The root cause is still not confirmed. The Flutter SDK upgrade is a
+  well-motivated, low-risk attempt (same stable channel, hotfix-only,
+  engine hash genuinely changed) but not a proven fix — it was deployed
+  because it was the most concrete, actionable lead found, not because
+  the exact upstream bug was identified and matched to a specific fixed
+  issue number.
+- If the blank page persists after this deploy, the CanvasKit/WebGL
+  rendering-surface angle is still the strongest remaining lead (engine
+  believes a frame committed; no canvas element ever appears; manual
+  surface creation via the same CanvasKit instance works fine) — next
+  steps worth trying: capture real Chrome DevTools console/network output
+  directly from your own browser (this session's automated tooling could
+  not get a trustworthy read in its current state), try an incognito
+  window with extensions disabled (rules out a privacy/fingerprint-
+  blocking extension interfering with WebGL), and check `chrome://gpu` for
+  hardware-acceleration/WebGL2 status.
+- The Hosting emulator does not apply `firebase.json`'s custom `headers`
+  (confirmed again this session) — it was used only to serve real build
+  output for DOM/console inspection, never for header verification.
+
+Next steps:
+
+1. **You check `https://cashly-lao.web.app` directly in your own Chrome
+   (hard refresh / cache-cleared, since the previous entry's `index.html`
+   sits behind `Cache-Control: max-age=3600` and a normal reload may not
+   revalidate)** and report back whether it renders now.
+2. If still blank: capture your own browser's DevTools console output and
+   a `chrome://gpu` screenshot — that's the fastest way to get a
+   trustworthy signal this session's tooling couldn't reliably produce.
+3. If it now renders: no further action needed on this outage, but the
+   Flutter SDK bump (3.44.6 → 3.44.8) is worth keeping in mind as the
+   likely cause if it's ever relevant again (e.g. deliberately pinning a
+   minimum Flutter version somewhere, should this project ever want to
+   guard against this specific regression recurring on a fresh machine).
+
 ## Product Roadmap
 
 The full staged roadmap — objectives, features, deliverables,
