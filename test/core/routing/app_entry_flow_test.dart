@@ -11,6 +11,23 @@ void main() {
     );
   });
 
+  test('web preserves a direct public route on refresh', () {
+    expect(
+      appInitialLocationForPlatform(
+        isWeb: true,
+        browserLocation: AppRoutes.privacy,
+      ),
+      AppRoutes.privacy,
+    );
+    expect(
+      appInitialLocationForPlatform(
+        isWeb: true,
+        browserLocation: AppRoutes.login,
+      ),
+      AppRoutes.login,
+    );
+  });
+
   test('native apps start at the auth gate instead of the landing page', () {
     expect(appInitialLocationForPlatform(isWeb: false), AppRoutes.splash);
     expect(

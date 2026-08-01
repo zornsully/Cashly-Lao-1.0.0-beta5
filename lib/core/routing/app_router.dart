@@ -70,8 +70,20 @@ const _authOnlyRoutes = {
 /// the auth gate, whose redirect then sends a restored session to Dashboard
 /// or a signed-out session to Login.
 @visibleForTesting
-String appInitialLocationForPlatform({required bool isWeb}) =>
-    isWeb ? AppRoutes.landing : AppRoutes.splash;
+String appInitialLocationForPlatform({
+  required bool isWeb,
+  String? browserLocation,
+}) {
+  if (!isWeb) {
+    return AppRoutes.splash;
+  }
+  // Flutter's web platform route defaults to `/` during bootstrap. Preserve
+  // the browser URL explicitly so a refresh of /privacy, /terms, or /login
+  // displays the requested public page instead of the landing page.
+  return browserLocation?.startsWith('/') == true
+      ? browserLocation!
+      : AppRoutes.landing;
+}
 
 @visibleForTesting
 bool isMarketingRouteAvailable({
@@ -95,31 +107,50 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   // stuck without one — the app never left the splash screen for any
   // user, ever.
   final refreshNotifier = _AuthRefreshNotifier();
-  ref.listen(authStateChangesProvider, (_, _) => refreshNotifier.refresh());
+  if (!kIsWeb) {
+    ref.listen(authStateChangesProvider, (_, _) => refreshNotifier.refresh());
+  }
   // App lock gate needs the router to re-evaluate `redirect` whenever
   // either changes: the session unlocks/re-locks, or the preference itself
   // is toggled in Settings (so turning it off there immediately clears the
   // gate rather than waiting for the next navigation).
   ref.listen(isUnlockedProvider, (_, _) => refreshNotifier.refresh());
-  ref.listen(userPreferencesProvider, (_, _) => refreshNotifier.refresh());
+  if (!kIsWeb) {
+    ref.listen(userPreferencesProvider, (_, _) => refreshNotifier.refresh());
+  }
   ref.onDispose(refreshNotifier.dispose);
 
   return GoRouter(
-    initialLocation: appInitialLocationForPlatform(isWeb: kIsWeb),
+    initialLocation: appInitialLocationForPlatform(
+      isWeb: kIsWeb,
+      browserLocation: kIsWeb ? Uri.base.path : null,
+    ),
+    overridePlatformDefaultLocation: kIsWeb,
     refreshListenable: refreshNotifier,
     observers: [
-      if (AppPlatformCapabilities.supportsFirebaseAnalytics)
+      if (!kIsWeb && AppPlatformCapabilities.supportsFirebaseAnalytics)
         FirebaseAnalyticsObserver(analytics: ref.read(analyticsProvider)),
     ],
     redirect: (context, state) {
-      final authState = ref.read(authStateChangesProvider);
       final location = state.matchedLocation;
 
       // The marketing site is web-only. Native launches always flow through
       // Splash while Firebase restores the session, never through Landing.
+      // This check must come before touching Firebase-backed providers: the
+      // public web shell needs to render even when Firebase is unavailable.
       if (isMarketingRouteAvailable(isWeb: kIsWeb, location: location)) {
         return null;
       }
+
+      // Login, registration, and password recovery must remain reachable
+      // while the background Firebase initialization is still in progress.
+      // These pages show their own recoverable service state when an action
+      // needs Firebase, rather than turning a public URL into a blank page.
+      if (kIsWeb && _publicRoutes.contains(location)) {
+        return null;
+      }
+
+      final authState = ref.read(authStateChangesProvider);
 
       if (!authState.hasValue) {
         return location == AppRoutes.splash ? null : AppRoutes.splash;

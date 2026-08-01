@@ -611,6 +611,35 @@ step. Never record a deployment as successful without independently
 verifying the live site — a clean local build and a clean `firebase deploy`
 exit code are not the same claim as "the live site now shows this."
 
+### Web startup and no-blank-screen rule
+
+The browser must always display one of three states: a branded Cashly Lao
+loading screen, the application, or a readable recoverable error with Retry.
+`main.dart` must call `runApp` before starting network-dependent work; only the
+minimum Firebase initialization may gate the app, and it must time out. Native-
+only notifications, Crashlytics, biometrics, file paths, and other platform
+services must be guarded, while optional web services such as Analytics run
+without blocking first paint and report their own errors. Do not hide startup
+exceptions with an empty catch.
+
+For a web repair, build the exact `build/web` output, verify it locally, then
+deploy a Firebase preview channel before production. Verify the preview and
+production URL in a clean/incognito browser: rendered page, console without
+uncaught exceptions, successful critical startup requests, direct-route
+refresh, navigation/authentication, and no stale service worker. Confirm the
+generated `web/index.html` has `<base href="/">` and only the current
+`flutter_bootstrap.js` startup path. Deploy `build/web` via the root
+`firebase.json`; startup files (`index.html`, `flutter_bootstrap.js`, and the
+service worker) must be non-cacheable.
+
+Mobile and web keep separate entry flows: web alone may show the public
+landing page; native opens Dashboard for an authenticated user and Login or
+Onboarding otherwise. Download links remain fail-closed until a current,
+validated, owner-approved release has been published through the manual
+release policy above. Every release updates version/build metadata, platform,
+date, size, release notes, and the tested public download link before the
+website is deployed.
+
 ## Quality Assurance Checklist
 
 Before calling any screen or feature "done," confirm:

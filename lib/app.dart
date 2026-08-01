@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -53,7 +54,7 @@ class _CashlyAppState extends ConsumerState<CashlyApp>
     // MaterialApp resolve from the device's own locale against
     // supportedLocales, landing on English for any device not already set
     // to Lao — the same safe default as the stored preference itself.
-    final preferences = ref.watch(userPreferencesProvider).value;
+    final preferences = kIsWeb ? null : ref.watch(userPreferencesProvider).value;
     final themeMode = preferences?.themeMode.themeMode ?? ThemeMode.system;
     final locale = preferences?.language.locale;
     // MaterialApp's `locale:` only drives ARB-based AppLocalizations lookups

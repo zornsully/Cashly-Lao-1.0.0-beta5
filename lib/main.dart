@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -11,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app.dart';
 import 'core/providers/fcm_background_handler.dart';
 import 'core/providers/local_notifications_providers.dart';
+import 'core/startup/cashly_startup_app.dart';
 import 'core/utils/platform_capabilities.dart';
 import 'firebase_options.dart';
 
@@ -24,8 +27,53 @@ const bool _useFirebaseEmulator = bool.fromEnvironment('USE_FIREBASE_EMULATOR');
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    debugPrint('Cashly Flutter error: ${details.exceptionAsString()}');
+  };
+  PlatformDispatcher.instance.onError = (error, stackTrace) {
+    debugPrint('Cashly uncaught error: ${_sanitizeStartupError(error)}');
+    debugPrintStack(stackTrace: stackTrace);
+    return true;
+  };
+  if (kIsWeb) {
+    // The public website must remain usable even when a Firebase service is
+    // slow or unavailable. Firebase-dependent routes handle their own state.
+    runApp(const ProviderScope(child: CashlyApp()));
+    unawaited(_initializeWebServices());
+    return;
+  }
+  runApp(
+    ProviderScope(
+      child: CashlyStartupApp(
+        initialize: initializeRequiredServices,
+        appBuilder: (_) => const CashlyApp(),
+      ),
+    ),
+  );
+}
+
+Future<void> _initializeWebServices() async {
+  try {
+    await initializeRequiredServices();
+  } catch (error, stackTrace) {
+    debugPrint('FAILED: web Firebase services — ${_sanitizeStartupError(error)}');
+    debugPrintStack(stackTrace: stackTrace);
+  }
+}
+
+/// Initializes the minimum services needed to render and authenticate.
+///
+/// Optional integrations deliberately start after this completes. In
+/// particular, browser analytics may wait on a remote configuration request;
+/// waiting for it before [runApp] previously produced a blank web page.
+Future<void> initializeRequiredServices() async {
+  await _runStartupStep('firebase-initialization', () => Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      ).timeout(const Duration(seconds: 15)));
+  debugPrint('START: firestore-offline-cache');
   _configureFirestoreOfflineCache();
+  debugPrint('SUCCESS: firestore-offline-cache');
   if (_useFirebaseEmulator) {
     await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
     FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
@@ -33,8 +81,8 @@ Future<void> main() async {
   // Browser builds use Firebase Auth/Firestore but don't share Android's
   // local-notification channels or background-isolate delivery model.
   if (AppPlatformCapabilities.supportsCurrentNotificationBridge) {
-    await initializeLocalNotifications();
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    unawaited(_initializeOptionalNotifications());
   }
 
   // Debug builds run on developer machines, not real users — collecting
@@ -42,9 +90,7 @@ Future<void> main() async {
   // Crashlytics has no Flutter web implementation, so its native error hooks
   // must stay off the browser startup path.
   if (AppPlatformCapabilities.supportsCrashReporting) {
-    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
-      !kDebugMode,
-    );
+    unawaited(_initializeOptionalCrashReporting());
     FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
     PlatformDispatcher.instance.onError = (error, stack) {
       FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
@@ -52,12 +98,73 @@ Future<void> main() async {
     };
   }
   if (AppPlatformCapabilities.supportsFirebaseAnalytics) {
-    await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(!kDebugMode);
+    unawaited(_initializeOptionalAnalytics());
   }
-  // Errors outside Flutter's own error zone (e.g. in async callbacks) don't
-  // go through FlutterError.onError, so they need their own hook.
+}
 
-  runApp(const ProviderScope(child: CashlyApp()));
+Future<T> _runStartupStep<T>(String stage, Future<T> Function() action) async {
+  debugPrint('START: $stage');
+  try {
+    final result = await action();
+    debugPrint('SUCCESS: $stage');
+    return result;
+  } catch (error, stackTrace) {
+    final failure = StartupFailure(stage, _sanitizeStartupError(error));
+    debugPrint('FAILED: $stage — ${failure.message}');
+    debugPrintStack(stackTrace: stackTrace);
+    Error.throwWithStackTrace(failure, stackTrace);
+  }
+}
+
+String _sanitizeStartupError(Object error) {
+  if (error is TimeoutException) {
+    return 'Timed out while waiting for the service.';
+  }
+  // Firebase error codes are essential diagnostics, but a raw exception may
+  // contain an API key or session token. Preserve the useful message while
+  // redacting those credential-shaped values before it reaches the console.
+  return error
+      .toString()
+      .replaceAll(RegExp(r'AIza[0-9A-Za-z_-]{20,}'), '[redacted-api-key]')
+      .replaceAll(RegExp(r'Bearer\\s+[^\\s]+', caseSensitive: false), 'Bearer [redacted]')
+      .replaceAll(RegExp(r'(token|idToken|accessToken)=([^&\\s]+)', caseSensitive: false), r'$1=[redacted]');
+}
+
+class StartupFailure implements Exception {
+  const StartupFailure(this.stage, this.message);
+  final String stage;
+  final String message;
+  @override
+  String toString() => 'StartupFailure($stage)';
+}
+
+Future<void> _initializeOptionalNotifications() async {
+  try {
+    await initializeLocalNotifications();
+  } catch (error, stackTrace) {
+    debugPrint('Optional local notifications unavailable: $error');
+    debugPrintStack(stackTrace: stackTrace);
+  }
+}
+
+Future<void> _initializeOptionalCrashReporting() async {
+  try {
+    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
+      !kDebugMode,
+    );
+  } catch (error, stackTrace) {
+    debugPrint('Optional crash reporting unavailable: $error');
+    debugPrintStack(stackTrace: stackTrace);
+  }
+}
+
+Future<void> _initializeOptionalAnalytics() async {
+  try {
+    await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(!kDebugMode);
+  } catch (error, stackTrace) {
+    debugPrint('Optional analytics unavailable: $error');
+    debugPrintStack(stackTrace: stackTrace);
+  }
 }
 
 /// Keeps a signed-in person's finance data available while their connection
@@ -77,7 +184,7 @@ void _configureFirestoreOfflineCache() {
             webPersistentTabManager: WebPersistentMultipleTabManager(),
           )
         : const Settings(persistenceEnabled: true);
-  } on FirebaseException catch (error) {
-    debugPrint('Firestore persistent cache unavailable: ${error.code}');
+  } catch (error) {
+    debugPrint('Firestore persistent cache unavailable: $error');
   }
 }
