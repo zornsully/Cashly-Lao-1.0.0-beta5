@@ -249,8 +249,7 @@ class _EditDisplayNameDialog extends StatefulWidget {
   final String? initialName;
 
   @override
-  State<_EditDisplayNameDialog> createState() =>
-      _EditDisplayNameDialogState();
+  State<_EditDisplayNameDialog> createState() => _EditDisplayNameDialogState();
 }
 
 class _EditDisplayNameDialogState extends State<_EditDisplayNameDialog> {

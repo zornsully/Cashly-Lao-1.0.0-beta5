@@ -143,7 +143,10 @@ class _ShellContentState extends State<_ShellContent>
         // whether it lives inside the desktop shell.
         const SafeArea(bottom: false, child: SyncStatusBanner()),
         Expanded(
-          child: FadeTransition(opacity: _opacity, child: widget.navigationShell),
+          child: FadeTransition(
+            opacity: _opacity,
+            child: widget.navigationShell,
+          ),
         ),
       ],
     );
