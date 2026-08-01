@@ -71,6 +71,7 @@ class _AccountsListScreenState extends ConsumerState<AccountsListScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 1200;
     final showArchived = ref.watch(showArchivedAccountsProvider);
     final accountsAsync = ref.watch(accountsProvider(showArchived));
     return Scaffold(
@@ -121,6 +122,15 @@ class _AccountsListScreenState extends ConsumerState<AccountsListScreen> {
             onPressed: () =>
                 ref.read(showArchivedAccountsProvider.notifier).toggle(),
           ),
+          if (isDesktop)
+            Padding(
+              padding: const EdgeInsets.only(right: AppSpacing.md),
+              child: FilledButton.icon(
+                onPressed: () => context.push(AppRoutes.accountNew),
+                icon: const Icon(Icons.add_rounded),
+                label: Text(l10n.addAccountButton),
+              ),
+            ),
         ],
       ),
       body: ResponsiveCenter(
@@ -130,14 +140,16 @@ class _AccountsListScreenState extends ConsumerState<AccountsListScreen> {
           data: (accounts) => _buildContent(context, l10n, accounts),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        key: const ValueKey('accounts-fab'),
-        heroTag: 'accounts-fab',
-        tooltip: l10n.addAccountButton,
-        onPressed: () => context.push(AppRoutes.accountNew),
-        icon: const Icon(Icons.account_balance_wallet_outlined),
-        label: Text(l10n.addAccountButton),
-      ),
+      floatingActionButton: isDesktop
+          ? null
+          : FloatingActionButton.extended(
+              key: const ValueKey('accounts-fab'),
+              heroTag: 'accounts-fab',
+              tooltip: l10n.addAccountButton,
+              onPressed: () => context.push(AppRoutes.accountNew),
+              icon: const Icon(Icons.account_balance_wallet_outlined),
+              label: Text(l10n.addAccountButton),
+            ),
     );
   }
 
@@ -178,7 +190,11 @@ class _AccountsListScreenState extends ConsumerState<AccountsListScreen> {
         .toList();
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = constraints.maxWidth >= 860 ? 2 : 1;
+        final columns = constraints.maxWidth >= 1180
+            ? 3
+            : constraints.maxWidth >= 760
+            ? 2
+            : 1;
         return ListView(
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.md,

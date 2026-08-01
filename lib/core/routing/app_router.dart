@@ -40,6 +40,7 @@ import '../../features/transactions/presentation/screens/transactions_list_scree
 import '../providers/app_lock_state_provider.dart';
 import '../utils/platform_capabilities.dart';
 import 'app_routes.dart';
+import 'desktop_page_frame.dart';
 import 'home_shell_screen.dart';
 
 const _publicRoutes = {
@@ -317,11 +318,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.reports,
-        builder: (context, state) => const ReportsScreen(),
+        builder: (context, state) => const DesktopPageFrame(
+          activeRoute: AppRoutes.reports,
+          child: ReportsScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.settings,
-        builder: (context, state) => const SettingsScreen(),
+        builder: (context, state) => const DesktopPageFrame(
+          activeRoute: AppRoutes.settings,
+          child: SettingsScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.settingsAccount,
@@ -329,7 +336,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.savingsGoals,
-        builder: (context, state) => const SavingsGoalsListScreen(),
+        builder: (context, state) => const DesktopPageFrame(
+          activeRoute: AppRoutes.savingsGoals,
+          child: SavingsGoalsListScreen(),
+        ),
       ),
       // Registered before savingsGoalDetail: both /savings-goals/new and
       // /savings-goals/:id would otherwise match the literal path

@@ -48,6 +48,7 @@ class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen>
     // HomeShellScreen, not here — see ensureDefaultCategoriesProvider.
     final showArchived = ref.watch(showArchivedCategoriesProvider);
     final l10n = AppLocalizations.of(context)!;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 1200;
 
     return Scaffold(
       appBar: AppBar(
@@ -66,6 +67,20 @@ class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen>
             onPressed: () =>
                 ref.read(showArchivedCategoriesProvider.notifier).toggle(),
           ),
+          if (isDesktop)
+            Padding(
+              padding: const EdgeInsets.only(right: AppSpacing.md),
+              child: FilledButton.icon(
+                onPressed: () => context.push(
+                  AppRoutes.categoryNew,
+                  extra: _tabController.index == 0
+                      ? CategoryType.expense
+                      : CategoryType.income,
+                ),
+                icon: const Icon(AppSymbols.addRounded),
+                label: Text(l10n.addCategoryButton),
+              ),
+            ),
         ],
         bottom: TabBar(
           controller: _tabController,
@@ -82,7 +97,9 @@ class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen>
           _CategoryTypeList(type: CategoryType.income),
         ],
       ),
-      floatingActionButton: AnimatedBuilder(
+      floatingActionButton: isDesktop
+          ? null
+          : AnimatedBuilder(
         animation: _tabController,
         builder: (context, _) {
           final type = _tabController.index == 0

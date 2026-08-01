@@ -13,7 +13,7 @@ abstract final class _BrandColors {
   static const Color primaryBlue = Color(0xFF2563EB);
   static const Color secondaryGreen = Color(0xFF10B981);
   static const Color darkNavy = Color(0xFF0F172A);
-  static const Color neutralGray = Color(0xFFF1F5F9);
+  static const Color neutralGray = Color(0xFFF7F9FC);
   static const Color accentGold = Color(0xFFF59E0B);
 
   /// Not part of the named palette (which has no error color) — chosen to
@@ -235,7 +235,7 @@ abstract final class AppTheme {
         elevation: AppElevation.cardElevation,
         shadowColor: shadowColor.withValues(alpha: 0.15),
         surfaceTintColor: Colors.transparent,
-        color: colorScheme.surfaceContainerHigh,
+        color: isDark ? colorScheme.surfaceContainerHigh : Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
@@ -244,7 +244,7 @@ abstract final class AppTheme {
         elevation: AppElevation.dialogElevation,
         shadowColor: shadowColor.withValues(alpha: 0.2),
         surfaceTintColor: Colors.transparent,
-        backgroundColor: colorScheme.surfaceContainerHigh,
+        backgroundColor: isDark ? colorScheme.surfaceContainerHigh : Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),

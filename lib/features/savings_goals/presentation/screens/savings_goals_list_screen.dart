@@ -22,6 +22,7 @@ class SavingsGoalsListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 1200;
     final showArchived = ref.watch(showArchivedGoalsProvider);
     final progressAsync = ref.watch(savingsGoalProgressProvider(showArchived));
 
@@ -42,6 +43,15 @@ class SavingsGoalsListScreen extends ConsumerWidget {
             onPressed: () =>
                 ref.read(showArchivedGoalsProvider.notifier).toggle(),
           ),
+          if (isDesktop)
+            Padding(
+              padding: const EdgeInsets.only(right: AppSpacing.md),
+              child: FilledButton.icon(
+                onPressed: () => context.push(AppRoutes.savingsGoalNew),
+                icon: const Icon(AppSymbols.addRounded),
+                label: Text(l10n.addGoalButton),
+              ),
+            ),
         ],
       ),
       body: ResponsiveCenter(
@@ -124,7 +134,9 @@ class SavingsGoalsListScreen extends ConsumerWidget {
           },
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: isDesktop
+          ? null
+          : FloatingActionButton(
         // See the same fix's comment in accounts_list_screen.dart -- every
         // shell tab's FAB otherwise shares Flutter's implicit default hero
         // tag, since the shell keeps all branches mounted simultaneously.

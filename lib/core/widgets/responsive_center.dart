@@ -1,22 +1,34 @@
 import 'package:flutter/material.dart';
 
-/// Caps a screen's main content at a comfortable reading width and centers
-/// it, so list/dashboard screens don't stretch full-bleed edge to edge on
-/// a tablet. A no-op on phone-width screens, since the constraint is
-/// wider than the available space there.
+/// Gives authenticated pages a generous desktop workspace without letting
+/// ultrawide displays turn financial tables into unreadable full-bleed rows.
+/// Individual list/card pages keep their compact mobile padding; this wrapper
+/// adds the remaining desktop gutter so their total horizontal padding is 32px.
 class ResponsiveCenter extends StatelessWidget {
-  const ResponsiveCenter({required this.child, super.key, this.maxWidth = 720});
+  const ResponsiveCenter({
+    required this.child,
+    super.key,
+    this.maxWidth = 1440,
+  });
 
   final Widget child;
   final double maxWidth;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: maxWidth),
-        child: child,
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final desktopGutter = constraints.maxWidth >= 1200 ? 16.0 : 0.0;
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: desktopGutter),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxWidth),
+              child: child,
+            ),
+          ),
+        );
+      },
     );
   }
 }

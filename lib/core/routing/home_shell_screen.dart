@@ -29,8 +29,8 @@ class HomeShellScreen extends ConsumerWidget {
   // The dashboard itself adopts a two-column tablet layout at 600px, but
   // the persistent 244px sidebar starts only on desktop. This prevents a
   // navigation rail from crowding 7–10 inch Android tablets.
-  static const double _tabletBreakpoint = 1024;
-  static const double _expandedSidebarBreakpoint = 1180;
+  static const double _tabletBreakpoint = 768;
+  static const double _expandedSidebarBreakpoint = 1200;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -245,9 +245,11 @@ class _ApplicationSidebar extends ConsumerWidget {
         : 'C';
 
     return SizedBox(
-      width: expanded ? 244 : 76,
+      width: expanded ? 240 : 76,
       child: ColoredBox(
-        color: colorScheme.surfaceContainerHigh,
+        color: theme.brightness == Brightness.light
+            ? Colors.white
+            : colorScheme.surfaceContainerHigh,
         child: SafeArea(
           right: false,
           child: Column(

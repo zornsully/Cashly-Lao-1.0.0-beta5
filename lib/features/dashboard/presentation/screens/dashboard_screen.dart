@@ -244,7 +244,7 @@ class _WideDashboard extends StatelessWidget {
 
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1400),
+        constraints: const BoxConstraints(maxWidth: 1440),
         child: ListView(
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.xl,
