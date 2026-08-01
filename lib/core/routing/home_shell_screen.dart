@@ -26,7 +26,10 @@ class HomeShellScreen extends ConsumerWidget {
 
   final StatefulNavigationShell navigationShell;
 
-  static const double _tabletBreakpoint = 760;
+  // The dashboard itself adopts a two-column tablet layout at 600px, but
+  // the persistent 244px sidebar starts only on desktop. This prevents a
+  // navigation rail from crowding 7–10 inch Android tablets.
+  static const double _tabletBreakpoint = 1024;
   static const double _expandedSidebarBreakpoint = 1180;
 
   @override

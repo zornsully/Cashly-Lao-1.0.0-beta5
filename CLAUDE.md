@@ -228,6 +228,28 @@ or widget code — everything routes through a named constant:
   build apk` specifically on Windows. Add new icons the same way,
   don't reintroduce the bulk import.)
 
+### Financial dashboard rules
+
+- A dashboard balance card always has a single selected currency. LAK is the
+  default lens and USD is always available, but account totals in different
+  currencies are never added together unless an explicit, valid conversion is
+  available from the data layer.
+- `CurrencyFormatter` is the application-wide money presentation contract:
+  amounts use grouping separators; zero-decimal currencies such as LAK render
+  as `₭6,200,585`; USD renders as `$806.79`; and a negative sign always comes
+  before the symbol (`-₭271,000`, `-$271.00`). Do not hand-format a monetary
+  value in a feature widget.
+- Dashboard totals, Smart Money insight, transaction rows, budgets, and
+  account balances stay Riverpod-backed. Presentation components must never
+  substitute example figures or merge cross-currency totals for visual
+  convenience.
+- Dashboard layout is adaptive rather than platform-specific: under 600px it
+  is a single touch-first column; 600–1023px uses the compact desktop grid
+  without a sidebar; desktop begins at 1024px with the 244px application
+  sidebar; wide content remains constrained instead of stretching cards edge
+  to edge. The mobile `Scaffold` owns its bottom navigation so scrollable
+  screen content cannot sit beneath it.
+
 ### Component Guidelines
 
 Built once in `core/widgets`, reused everywhere — a screen should almost

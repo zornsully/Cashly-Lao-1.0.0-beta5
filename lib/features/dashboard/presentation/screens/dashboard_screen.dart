@@ -37,7 +37,6 @@ import '../../domain/entities/category_spending.dart';
 import '../../domain/entities/dashboard_summary.dart';
 import '../providers/dashboard_providers.dart';
 import '../widgets/category_spending_bar.dart';
-import '../widgets/stat_card.dart';
 
 /// Dashboard data is deliberately shared with the compact layout below. Only
 /// the arrangement changes at wider breakpoints; all totals, transactions,
@@ -51,7 +50,10 @@ class DashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
-  static const double _wideLayoutBreakpoint = 760;
+  // Phones use a focused single column. From 600px onward, the same
+  // dashboard data rearranges into the tablet/desktop grid rather than
+  // stretching mobile cards across unused width.
+  static const double _wideLayoutBreakpoint = 600;
 
   String? _selectedCurrencyCode;
 
@@ -140,12 +142,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             );
           }
 
-          final currencies = summary.totalBalanceByCurrency.keys.toList()
-            ..sort();
+          // LAK is Cashly's default dashboard lens, with USD always readily
+          // available. Existing account currencies remain selectable too;
+          // nothing is silently converted or combined across currencies.
+          final currencies = <String>{
+            SupportedCurrencies.lak.code,
+            SupportedCurrencies.usd.code,
+            ...summary.totalBalanceByCurrency.keys,
+          }.toList()..sort();
           final selectedCurrencyCode =
               currencies.contains(_selectedCurrencyCode)
               ? _selectedCurrencyCode!
-              : currencies.first;
+              : SupportedCurrencies.lak.code;
           final categoriesById = {
             for (final category in summary.categories) category.id: category,
           };
@@ -176,6 +184,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   child: _CompactDashboard(
                     month: month,
                     currencies: currencies,
+                    selectedCurrencyCode: selectedCurrencyCode,
+                    onSelectedCurrencyChanged: (currencyCode) {
+                      setState(() => _selectedCurrencyCode = currencyCode);
+                    },
                     summary: summary,
                     financialInsights:
                         financialInsightsAsync.value ??
@@ -222,28 +234,13 @@ class _WideDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     final selectedCurrency = SupportedCurrencies.byCode(selectedCurrencyCode);
     final balance = summary.totalBalanceByCurrency[selectedCurrencyCode] ?? 0;
     final income = summary.totalIncomeByCurrency[selectedCurrencyCode] ?? 0;
     final expense = summary.totalExpenseByCurrency[selectedCurrencyCode] ?? 0;
-    final net = income - expense;
-    final otherCurrencies = currencies
-        .where((currencyCode) => currencyCode != selectedCurrencyCode)
-        .toList(growable: false);
-    final otherCurrencyCode = otherCurrencies.isEmpty
-        ? null
-        : otherCurrencies.first;
-    final otherBalance = otherCurrencyCode == null
-        ? null
-        : CurrencyFormatter.format(
-            summary.totalBalanceByCurrency[otherCurrencyCode] ?? 0,
-            SupportedCurrencies.byCode(otherCurrencyCode),
-          );
     final selectedInsights = financialInsights
         .where((insight) => insight.currencyCode == selectedCurrencyCode)
         .toList(growable: false);
-    final semanticColors = AppSemanticColors.of(context);
 
     return Center(
       child: ConstrainedBox(
@@ -263,6 +260,15 @@ class _WideDashboard extends StatelessWidget {
               onSelectedCurrencyChanged: onSelectedCurrencyChanged,
             ),
             const SizedBox(height: AppSpacing.lg),
+            _BalanceSummaryCard(
+              currencies: currencies,
+              selectedCurrencyCode: selectedCurrencyCode,
+              onSelectedCurrencyChanged: onSelectedCurrencyChanged,
+              balance: balance,
+              income: income,
+              expense: expense,
+            ),
+            const SizedBox(height: AppSpacing.md),
             _QuickActions(
               onAddIncome: () => context.push(
                 AppRoutes.transactionNew,
@@ -280,72 +286,6 @@ class _WideDashboard extends StatelessWidget {
               minTileWidth: 200,
             ),
             const SizedBox(height: AppSpacing.lg),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                // The sidebar intentionally consumes desktop width, so this
-                // uses the actual content constraint rather than the whole
-                // window. That preserves two-card tablet rows and gives
-                // desktop users four cards as soon as their content area can
-                // comfortably support them.
-                final columns = constraints.maxWidth >= 960
-                    ? 4
-                    : constraints.maxWidth >= 500
-                    ? 2
-                    : 1;
-                return GridView.count(
-                  crossAxisCount: columns,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisSpacing: AppSpacing.md,
-                  mainAxisSpacing: AppSpacing.md,
-                  childAspectRatio: columns == 4 ? 1.55 : 1.78,
-                  children: [
-                    _DashboardMetricCard(
-                      label: l10n.dashboardMetricTotalBalance,
-                      amount: balance,
-                      currency: selectedCurrency,
-                      icon: AppSymbols.accountBalanceWallet,
-                      color: Theme.of(context).colorScheme.primary,
-                      caption: l10n.dashboardMetricTotalBalanceCaption,
-                      secondaryValue: otherBalance == null
-                          ? null
-                          : l10n.dashboardMetricAlsoBalance(
-                              otherCurrencyCode!,
-                              otherBalance,
-                            ),
-                    ),
-                    _DashboardMetricCard(
-                      label: l10n.dashboardMetricMonthlyIncome,
-                      amount: income,
-                      currency: selectedCurrency,
-                      icon: AppSymbols.arrowDownward,
-                      color: semanticColors.positiveForeground,
-                      caption: l10n.dashboardMetricThisMonthCaption,
-                    ),
-                    _DashboardMetricCard(
-                      label: l10n.dashboardMetricMonthlyExpenses,
-                      amount: expense,
-                      currency: selectedCurrency,
-                      icon: AppSymbols.arrowUpward,
-                      color: semanticColors.negativeForeground,
-                      caption: l10n.dashboardMetricThisMonthCaption,
-                    ),
-                    _DashboardMetricCard(
-                      label: l10n.dashboardMetricNetCashFlow,
-                      amount: net,
-                      currency: selectedCurrency,
-                      icon: net < 0
-                          ? AppSymbols.trendingDown
-                          : AppSymbols.trendingUp,
-                      color: net < 0
-                          ? semanticColors.negativeForeground
-                          : semanticColors.positiveForeground,
-                      caption: l10n.dashboardMetricNetCaption,
-                    ),
-                  ],
-                );
-              },
-            ),
             if (selectedInsights.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.lg),
               for (final insight in selectedInsights) ...[
@@ -491,6 +431,16 @@ class _DashboardDesktopHeader extends StatelessWidget {
                 label: selectedCurrencyCode,
                 showsDisclosure: currencies.length > 1,
               ),
+            ),
+            IconButton(
+              tooltip: l10n.savingsGoalsTooltip,
+              onPressed: () => context.push(AppRoutes.savingsGoals),
+              icon: const Icon(AppSymbols.savings),
+            ),
+            IconButton(
+              tooltip: l10n.reportsTooltip,
+              onPressed: () => context.push(AppRoutes.reports),
+              icon: const Icon(AppSymbols.insertChartOutlined),
             ),
             IconButton(
               tooltip: l10n.dashboardNotificationsTooltip,
@@ -775,29 +725,34 @@ class _QuickActionTile extends StatelessWidget {
   }
 }
 
-class _DashboardMetricCard extends StatelessWidget {
-  const _DashboardMetricCard({
-    required this.label,
-    required this.amount,
-    required this.currency,
-    required this.icon,
-    required this.color,
-    required this.caption,
-    this.secondaryValue,
+/// The single source of visual truth for the dashboard's selected-currency
+/// totals. It deliberately accepts only one currency at a time: accounts in
+/// different currencies are never added together without an explicit rate.
+class _BalanceSummaryCard extends StatelessWidget {
+  const _BalanceSummaryCard({
+    required this.currencies,
+    required this.selectedCurrencyCode,
+    required this.onSelectedCurrencyChanged,
+    required this.balance,
+    required this.income,
+    required this.expense,
   });
 
-  final String label;
-  final double amount;
-  final AppCurrency currency;
-  final IconData icon;
-  final Color color;
-  final String caption;
-  final String? secondaryValue;
+  final List<String> currencies;
+  final String selectedCurrencyCode;
+  final ValueChanged<String> onSelectedCurrencyChanged;
+  final double balance;
+  final double income;
+  final double expense;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final semanticColors = AppSemanticColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final currency = SupportedCurrencies.byCode(selectedCurrencyCode);
+
     return Card(
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
@@ -806,52 +761,126 @@ class _DashboardMetricCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Wrap(
+              spacing: AppSpacing.xs,
+              runSpacing: AppSpacing.xs,
               children: [
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(11),
+                for (final currencyCode in currencies)
+                  ChoiceChip(
+                    label: Text(currencyCode),
+                    selected: currencyCode == selectedCurrencyCode,
+                    onSelected: (_) => onSelectedCurrencyChanged(currencyCode),
+                    visualDensity: VisualDensity.compact,
                   ),
-                  child: Icon(icon, color: color, size: 19),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(
-                    label,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
               ],
             ),
-            const Spacer(),
+            const SizedBox(height: AppSpacing.lg),
             Text(
-              CurrencyFormatter.format(amount, currency),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: color,
+              l10n.dashboardMetricTotalBalance,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 2),
-            Text(
-              secondaryValue ?? caption,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
+            const SizedBox(height: AppSpacing.xs),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerStart,
+              child: Text(
+                CurrencyFormatter.format(balance, currency),
+                style: theme.textTheme.headlineLarge?.copyWith(
+                  color: colorScheme.onSurface,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isNarrow = constraints.maxWidth < 340;
+                final incomeMetric = _BalanceMetric(
+                  label: l10n.dashboardMetricMonthlyIncome,
+                  amount: income,
+                  currency: currency,
+                  color: semanticColors.positiveForeground,
+                );
+                final expenseMetric = _BalanceMetric(
+                  label: l10n.dashboardMetricMonthlyExpenses,
+                  amount: expense,
+                  currency: currency,
+                  color: semanticColors.negativeForeground,
+                );
+                if (isNarrow) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      incomeMetric,
+                      const SizedBox(height: AppSpacing.md),
+                      expenseMetric,
+                    ],
+                  );
+                }
+                return Row(
+                  children: [
+                    Expanded(child: incomeMetric),
+                    Container(
+                      width: 1,
+                      height: 42,
+                      color: colorScheme.outlineVariant,
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(child: expenseMetric),
+                  ],
+                );
+              },
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _BalanceMetric extends StatelessWidget {
+  const _BalanceMetric({
+    required this.label,
+    required this.amount,
+    required this.currency,
+    required this.color,
+  });
+
+  final String label;
+  final double amount;
+  final AppCurrency currency;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 2),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: AlignmentDirectional.centerStart,
+          child: Text(
+            CurrencyFormatter.format(amount, currency),
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -1108,6 +1137,8 @@ class _CompactDashboard extends StatelessWidget {
   const _CompactDashboard({
     required this.month,
     required this.currencies,
+    required this.selectedCurrencyCode,
+    required this.onSelectedCurrencyChanged,
     required this.summary,
     required this.financialInsights,
     required this.budgetProgress,
@@ -1118,6 +1149,8 @@ class _CompactDashboard extends StatelessWidget {
 
   final DateTime month;
   final List<String> currencies;
+  final String selectedCurrencyCode;
+  final ValueChanged<String> onSelectedCurrencyChanged;
   final DashboardSummary summary;
   final List<FinancialInsight> financialInsights;
   final List<BudgetProgress> budgetProgress;
@@ -1143,6 +1176,15 @@ class _CompactDashboard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.md),
+        _BalanceSummaryCard(
+          currencies: currencies,
+          selectedCurrencyCode: selectedCurrencyCode,
+          onSelectedCurrencyChanged: onSelectedCurrencyChanged,
+          balance: summary.totalBalanceByCurrency[selectedCurrencyCode] ?? 0,
+          income: summary.totalIncomeByCurrency[selectedCurrencyCode] ?? 0,
+          expense: summary.totalExpenseByCurrency[selectedCurrencyCode] ?? 0,
+        ),
+        const SizedBox(height: AppSpacing.md),
         _QuickActions(
           onAddIncome: () => context.push(
             AppRoutes.transactionNew,
@@ -1160,11 +1202,9 @@ class _CompactDashboard extends StatelessWidget {
           minTileWidth: 140,
         ),
         const SizedBox(height: AppSpacing.lg),
-        for (final currencyCode in currencies) ...[
-          _CurrencyOverview(currencyCode: currencyCode, summary: summary),
-          const SizedBox(height: AppSpacing.lg),
-        ],
-        for (final insight in financialInsights) ...[
+        for (final insight in financialInsights.where(
+          (item) => item.currencyCode == selectedCurrencyCode,
+        )) ...[
           FinancialInsightCard(insight: insight),
           const SizedBox(height: AppSpacing.lg),
         ],
@@ -1197,32 +1237,27 @@ class _CompactDashboard extends StatelessWidget {
           (spending) => spending.isNotEmpty,
         )) ...[
           _SectionHeader(title: l10n.spendingByCategoryTitle),
-          for (final currencyCode in currencies)
-            if (summary.spendingByCategory[currencyCode]?.isNotEmpty ?? false)
-              Card(
-                margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (currencies.length > 1) ...[
-                        Text(
-                          currencyCode,
-                          style: Theme.of(context).textTheme.labelLarge,
+          if (summary.spendingByCategory[selectedCurrencyCode]?.isNotEmpty ??
+              false)
+            Card(
+              margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (final spending
+                        in summary.spendingByCategory[selectedCurrencyCode]!)
+                      CategorySpendingBar(
+                        spending: spending,
+                        currency: SupportedCurrencies.byCode(
+                          selectedCurrencyCode,
                         ),
-                        const SizedBox(height: AppSpacing.sm),
-                      ],
-                      for (final spending
-                          in summary.spendingByCategory[currencyCode]!)
-                        CategorySpendingBar(
-                          spending: spending,
-                          currency: SupportedCurrencies.byCode(currencyCode),
-                        ),
-                    ],
-                  ),
+                      ),
+                  ],
                 ),
               ),
+            ),
           const SizedBox(height: AppSpacing.lg),
         ],
         if (budgetProgress.isNotEmpty) ...[
@@ -1255,59 +1290,6 @@ class _CompactDashboard extends StatelessWidget {
               ),
             ),
           ),
-      ],
-    );
-  }
-}
-
-class _CurrencyOverview extends StatelessWidget {
-  const _CurrencyOverview({required this.currencyCode, required this.summary});
-
-  final String currencyCode;
-  final DashboardSummary summary;
-
-  @override
-  Widget build(BuildContext context) {
-    final currency = SupportedCurrencies.byCode(currencyCode);
-    final balance = summary.totalBalanceByCurrency[currencyCode] ?? 0;
-    final income = summary.totalIncomeByCurrency[currencyCode] ?? 0;
-    final expense = summary.totalExpenseByCurrency[currencyCode] ?? 0;
-    final l10n = AppLocalizations.of(context)!;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        StatCard(
-          label: l10n.totalBalanceLabel(currencyCode),
-          amount: balance,
-          currency: currency,
-          icon: AppSymbols.accountBalanceWallet,
-          color: Theme.of(context).colorScheme.primary,
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        Row(
-          children: [
-            Expanded(
-              child: StatCard(
-                label: l10n.incomeMonthLabel,
-                amount: income,
-                currency: currency,
-                icon: AppSymbols.arrowDownward,
-                color: AppSemanticColors.of(context).positiveForeground,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: StatCard(
-                label: l10n.expenseMonthLabel,
-                amount: expense,
-                currency: currency,
-                icon: AppSymbols.arrowUpward,
-                color: Theme.of(context).colorScheme.error,
-              ),
-            ),
-          ],
-        ),
       ],
     );
   }

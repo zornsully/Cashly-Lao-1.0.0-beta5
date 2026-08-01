@@ -88,7 +88,7 @@ void main() {
   );
 
   testWidgets(
-    'uses a four-card desktop dashboard without changing live totals',
+    'uses one selected-currency balance card without changing live totals',
     (tester) async {
       await tester.binding.setSurfaceSize(const Size(1280, 900));
       addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -145,6 +145,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      // LAK is the dashboard default even when the account fixture is USD.
+      // Selecting USD must update all three real-data totals together.
+      await tester.tap(find.widgetWithText(ChoiceChip, 'USD'));
+      await tester.pumpAndSettle();
+
       final currency = SupportedCurrencies.byCode('USD');
       expect(find.text(CurrencyFormatter.format(500, currency)), findsWidgets);
       expect(find.text(CurrencyFormatter.format(200, currency)), findsWidgets);
@@ -152,7 +157,7 @@ void main() {
       expect(find.text('Total balance'), findsOneWidget);
       expect(find.text('Monthly income'), findsOneWidget);
       expect(find.text('Monthly expenses'), findsOneWidget);
-      expect(find.text('Net cash flow'), findsOneWidget);
+      expect(find.text('Net cash flow'), findsNothing);
       expect(find.text('Income & expenses'), findsOneWidget);
       expect(find.text('Add income'), findsOneWidget);
       expect(find.text('Add expense'), findsOneWidget);
@@ -162,10 +167,8 @@ void main() {
       final balancePosition = tester.getTopLeft(find.text('Total balance'));
       final incomePosition = tester.getTopLeft(find.text('Monthly income'));
       final expensePosition = tester.getTopLeft(find.text('Monthly expenses'));
-      final netPosition = tester.getTopLeft(find.text('Net cash flow'));
-      expect(balancePosition.dy, incomePosition.dy);
+      expect(balancePosition.dy, lessThan(incomePosition.dy));
       expect(incomePosition.dy, expensePosition.dy);
-      expect(expensePosition.dy, netPosition.dy);
 
       await tester.binding.setSurfaceSize(const Size(900, 900));
       await tester.pump();
@@ -173,10 +176,17 @@ void main() {
       final tabletBalance = tester.getTopLeft(find.text('Total balance'));
       final tabletIncome = tester.getTopLeft(find.text('Monthly income'));
       final tabletExpense = tester.getTopLeft(find.text('Monthly expenses'));
-      final tabletNet = tester.getTopLeft(find.text('Net cash flow'));
-      expect(tabletBalance.dy, tabletIncome.dy);
-      expect(tabletExpense.dy, greaterThan(tabletIncome.dy));
-      expect(tabletExpense.dy, tabletNet.dy);
+      expect(tabletBalance.dy, lessThan(tabletIncome.dy));
+      expect(tabletIncome.dy, tabletExpense.dy);
+
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      await tester.pumpAndSettle();
+
+      // The same shared data and currency choice must remain usable on a
+      // narrow Android-sized viewport without switching to duplicate cards.
+      expect(find.text('Total balance'), findsOneWidget);
+      expect(find.widgetWithText(ChoiceChip, 'USD'), findsOneWidget);
+      expect(tester.takeException(), isNull);
     },
   );
 }
