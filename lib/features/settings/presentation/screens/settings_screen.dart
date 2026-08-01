@@ -166,7 +166,7 @@ class SettingsScreen extends ConsumerWidget {
                   title: Text(l10n.manageAccountLabel),
                   subtitle: Text(l10n.manageAccountHelperMessage),
                   trailing: const Icon(AppSymbols.chevronRight),
-                  onTap: () => context.push(AppRoutes.profile),
+                  onTap: () => context.push(AppRoutes.settingsAccount),
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),

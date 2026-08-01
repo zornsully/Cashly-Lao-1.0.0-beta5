@@ -293,6 +293,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SettingsScreen(),
       ),
       GoRoute(
+        path: AppRoutes.settingsAccount,
+        builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
         path: AppRoutes.savingsGoals,
         builder: (context, state) => const SavingsGoalsListScreen(),
       ),

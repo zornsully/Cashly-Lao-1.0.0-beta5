@@ -65,4 +65,8 @@ abstract final class AppRoutes {
 
   /// Reached via an icon button on the Profile tab.
   static const String settings = '/settings';
+
+  /// Dedicated account-management entry point from Settings. It reuses the
+  /// authenticated profile management flow rather than a placeholder screen.
+  static const String settingsAccount = '/settings/account';
 }
