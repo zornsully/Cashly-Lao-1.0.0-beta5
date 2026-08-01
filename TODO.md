@@ -249,26 +249,19 @@ is now on `AppSymbols`. Both landing files are **left untouched
 deliberately**, not missed: that page has never used the `AppSpacing`/
 `AppSymbols` design-token system, following its own established local
 convention as the public, pre-auth marketing page (same reasoning already
-applied to its color/spacing choices elsewhere). Resolve this explicitly
-with the project owner — it's a design-system-scope decision, not a
-mechanical one — before deciding whether those 22 icons are in or out of
-scope.
+applied to its color/spacing choices elsewhere).
 
 `flutter analyze` (0 issues) and `flutter test` (412/412, later 413/413
 once the Savings Goals grid fix below added a test) both still clean
 after every step of this sweep.
 
-**Remaining, deliberately not done**:
-
-- `lib/features/landing/presentation/screens/landing_page.dart` — 21 icons
-- `lib/features/landing/presentation/screens/legal_document_page.dart` — 1 icon
-
-Both are **likely exempt** — this page has never used the `AppSpacing`/
-`AppSymbols` design-token system; it's the public marketing page with its
-own established local convention, same reasoning already applied to its
-color/spacing choices. This is a design-system-scope decision, not a
-mechanical one — confirm with the project owner before touching it, don't
-assume either way.
+**Resolved 2026-08-01 — owner decision: stays on `Icons.*`, permanently.**
+Asked directly rather than assumed; confirmed to leave
+`landing_page.dart` (21 icons) and `legal_document_page.dart` (1 icon) on
+their existing local convention, consistent with that page's established
+exemption from the app's design-token system elsewhere (colors, spacing).
+This is a closed decision, not an open item — don't revisit without a
+reason to reopen it.
 
 **Not yet done**: real on-device/browser visual verification that the
 `home_shell_screen.dart` bottom-nav/sidebar icons and the two toggle-state
@@ -484,6 +477,40 @@ loading/empty/error/offline/localization/accessibility/responsive/
 dark-light matrix, per the completion-mission spec) remains open and
 would still need real device/browser verification for its non-code-level
 checks regardless of how much further test-writing happens here.
+
+**Round 5 (2026-08-01)** — extended this same audit to the two
+`profile_screen.dart` dialogs (edit display name, delete account) after
+they were refactored into proper `StatefulWidget`s while fixing a real
+`TextEditingController`-disposed race (see the integration-test work in
+CLAUDE.md's dated entries) — real new branching logic with zero prior
+test coverage, exactly this phase's own target pattern.
+`profile_screen_test.dart` previously covered only the logout flow; added
+9 tests (edit-name pre-fill/save/validation/failure/cancel, delete-
+account validation/cancel/success/failure, plus a dedicated test for the
+Google-only-account password-skip path) against a mocked
+`AuthRepository`. This also closes part of the gap left by the
+integration test's own account-deletion step, which is blocked by a
+platform-level Firebase Auth Emulator limitation and can't exercise the
+real `reauthenticateWithCredential()` call — the success/failure/
+validation paths around it are now verified at the widget-test level
+instead. `flutter analyze` — 0 issues. Full suite: 462 passing (9 new).
+
+**Real, open gap identified but not closed this round**:
+`home_shell_screen.dart` (the app's own navigation shell — bottom nav +
+desktop sidebar, plus the `_ShellContentState` crossfade fix from the
+integration-test work) has **no dedicated widget test at all**. Not
+closed here because a proper harness needs a real `GoRouter` with a full
+`StatefulShellRoute` plus overrides for every provider the shell watches
+(auth state, categories, budget/goal-reminder/FCM-token/presence/push
+watchers) — a materially larger undertaking than the profile-dialog
+tests above, and rushing it risks a shallow test that doesn't actually
+exercise the tab-switching path that mattered. In the meantime,
+`integration_test/app_flow_test.dart` (which passes cleanly end-to-end)
+already exercises this exact code path repeatedly in practice — every
+step of that test that switches tabs (Accounts → Transactions → Budget →
+Dashboard → Savings Goals → Reports → Profile) goes through
+`_ShellContentState`'s crossfade, so a regression there would already be
+caught, just not by a fast, isolated unit-level test.
 
 ## Security & data
 
