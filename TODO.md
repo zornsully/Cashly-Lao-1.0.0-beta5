@@ -526,6 +526,31 @@ checks regardless of how much further test-writing happens here.
   analyze` + `flutter test` on every push/PR to `main`, plus a second,
   independent job (`npm ci` / lint / build / test) for the Cloud
   Functions backend in `functions/`.
+- **End-to-end integration test** — `integration_test/app_flow_test.dart`
+  drives the real app (register → accounts → transactions → transfer →
+  edit/delete → budget → savings goal → report → language switch →
+  logout/login → delete-account dialog) against a local Firebase
+  Emulator Suite, run via `flutter test integration_test/app_flow_test.dart
+  -d windows --dart-define=USE_FIREBASE_EMULATOR=true` (see
+  `integration_test/README.md`). Passes cleanly end-to-end. **Known,
+  deliberate gap**: it stops short of a *real* account deletion —
+  confirming would call `user.reauthenticateWithCredential(...)`
+  (`profile_screen.dart`), which never resolves against the Firebase
+  Auth Emulator on Windows desktop specifically (Windows' `firebase_auth`
+  wraps Firebase's native C++ SDK rather than a REST implementation, and
+  that native plugin's reauthentication path hangs indefinitely against
+  the emulator — confirmed directly with an isolated call under an
+  explicit 90-second timeout that never resolved). This is a
+  platform/SDK-level gap, not an app bug — the delete flow's own
+  reauthenticate-before-delete pattern is correct and matches Firebase's
+  documented guidance, and works against real Firebase. The test instead
+  verifies the dialog opens, its password field actually validates (an
+  empty submission is rejected without attempting deletion), and Cancel
+  safely returns to Profile. **Real end-to-end account deletion remains
+  a manual QA step before release.** Not wired into CI (needs a Windows
+  runner, a live emulator process, and Developer Mode/native-toolchain
+  setup CI doesn't have) — run it locally before a release, same as the
+  Firestore rules-emulator suite in `firestore-tests/`.
 
 ## Localization & accessibility
 
