@@ -114,18 +114,33 @@ class AuthController extends AsyncNotifier<void> {
   }
 
   Future<bool> _run<R>(Future<Either<Failure, R>> Function() action) async {
-    state = const AsyncLoading();
-    final result = await action();
-    return result.match(
-      (failure) {
-        state = AsyncError<void>(failure, StackTrace.current);
-        return false;
-      },
-      (_) {
-        state = const AsyncData(null);
-        return true;
-      },
-    );
+    // This provider is `autoDispose`, and several of its actions
+    // (deleteAccount above all — Firebase signs the user out as a direct
+    // side effect) change auth state in a way that makes the router
+    // redirect away from whatever screen is watching this controller
+    // (e.g. ProfileScreen) *while this same action is still in flight*.
+    // Once that screen unmounts, nothing is left watching the provider,
+    // so Riverpod is free to dispose it before the final `state = ...`
+    // write below runs -- which then throws UnmountedRefException after
+    // the underlying auth operation already succeeded. Same fix and same
+    // reasoning as TransactionController._run.
+    final keepAliveLink = ref.keepAlive();
+    try {
+      state = const AsyncLoading();
+      final result = await action();
+      return result.match(
+        (failure) {
+          state = AsyncError<void>(failure, StackTrace.current);
+          return false;
+        },
+        (_) {
+          state = const AsyncData(null);
+          return true;
+        },
+      );
+    } finally {
+      keepAliveLink.close();
+    }
   }
 }
 
