@@ -224,6 +224,7 @@ class _SavingsGoalFormScreenState extends ConsumerState<SavingsGoalFormScreen> {
                     else ...[
                       DropdownButtonFormField<String>(
                         initialValue: _accountId,
+                        isExpanded: true,
                         decoration: InputDecoration(
                           labelText: l10n.linkedAccountLabel,
                           prefixIcon: const Icon(

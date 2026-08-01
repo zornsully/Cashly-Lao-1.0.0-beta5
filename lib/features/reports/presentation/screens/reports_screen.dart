@@ -1008,6 +1008,7 @@ class _ReportFilterSheet extends ConsumerWidget {
         const SizedBox(height: AppSpacing.lg),
         DropdownButtonFormField<String?>(
           initialValue: filter.accountId,
+          isExpanded: true,
           decoration: InputDecoration(labelText: l10n.accountFilterLabel),
           items: [
             DropdownMenuItem(value: null, child: Text(l10n.allAccountsLabel)),
@@ -1022,6 +1023,7 @@ class _ReportFilterSheet extends ConsumerWidget {
         const SizedBox(height: AppSpacing.md),
         DropdownButtonFormField<String?>(
           initialValue: filter.categoryId,
+          isExpanded: true,
           decoration: InputDecoration(labelText: l10n.categoryFilterLabel),
           items: [
             DropdownMenuItem(value: null, child: Text(l10n.allCategoriesLabel)),

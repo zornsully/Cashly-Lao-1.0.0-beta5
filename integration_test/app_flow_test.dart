@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:cashly_lao/core/constants/app_symbols.dart';
+import 'package:cashly_lao/core/widgets/primary_button.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cashly_lao/l10n/app_localizations.dart';
 import 'package:cashly_lao/main.dart' as app;
@@ -12,36 +13,59 @@ import 'package:integration_test/integration_test.dart';
 /// The Auth Emulator never sends a real verification email, so a freshly
 /// registered user is permanently stuck at `emailVerified == false` (and
 /// the router gates every unverified user to `VerifyEmailScreen`) unless
-/// something marks it verified.
+/// something completes the same verification flow a real email click
+/// would.
 ///
-/// **Confirmed by direct testing, not assumed**: the standard, self-service
-/// `identitytoolkit.googleapis.com/v1/accounts:update` endpoint (passing
-/// the user's own `idToken`) returns `200` but silently ignores the
-/// `emailVerified` field -- correctly mirroring real Identity Platform
-/// behavior, where a signed-in user can't self-grant email verification
-/// through that field (only by actually completing the emailed link flow).
-/// The emulator's own admin-only surface at `/emulator/v1/projects/
-/// {projectId}/accounts:update` (keyed by `localId`, no token/auth
-/// required, and *only* ever reachable on the local emulator, never
-/// production) is the correct way to force it during a test.
+/// Two prior approaches were tried and confirmed wrong by direct testing,
+/// not assumption: (1) the self-service `identitytoolkit.googleapis.com/
+/// v1/accounts:update` endpoint with the user's own `idToken` returns
+/// `200` but silently ignores `emailVerified` -- real Identity Platform
+/// behavior, since a signed-in user can't self-grant verification that
+/// way; (2) a guessed admin-only path (`/emulator/v1/projects/{id}/
+/// accounts:update`) returned a real `404` -- it doesn't exist. The
+/// **actual** documented emulator testing surface is
+/// `/emulator/v1/projects/{id}/oobCodes`, which lists every pending
+/// out-of-band action (including the `VERIFY_EMAIL` one this app's own
+/// `sendEmailVerification()` call generates on registration, with a real
+/// `oobCode`) -- exactly what the emulator's own console log prints as a
+/// clickable link. Submitting that `oobCode` to the standard
+/// `accounts:update` endpoint completes verification exactly as clicking
+/// the real link would.
 Future<void> _markCurrentUserEmailVerifiedInEmulator() async {
   final user = FirebaseAuth.instance.currentUser;
   if (user == null) return;
   final client = HttpClient();
   try {
-    final request = await client.postUrl(
+    final listRequest = await client.getUrl(
       Uri.parse(
-        'http://localhost:9099/emulator/v1/projects/cashly-lao/accounts:update',
+        'http://localhost:9099/emulator/v1/projects/cashly-lao/oobCodes',
       ),
     );
-    request.headers.contentType = ContentType.json;
-    request.write(jsonEncode({'localId': user.uid, 'emailVerified': true}));
-    final response = await request.close();
-    final body = await response.transform(utf8.decoder).join();
-    if (response.statusCode != 200 || !body.contains('"emailVerified":true')) {
+    final listResponse = await listRequest.close();
+    final listBody = await listResponse.transform(utf8.decoder).join();
+    final oobCodes = (jsonDecode(listBody) as Map<String, dynamic>)['oobCodes']
+        as List<dynamic>;
+    final match = oobCodes.cast<Map<String, dynamic>>().lastWhere(
+      (entry) =>
+          entry['email'] == user.email && entry['requestType'] == 'VERIFY_EMAIL',
+      orElse: () => throw StateError(
+        'No pending VERIFY_EMAIL oobCode found for ${user.email}',
+      ),
+    );
+
+    final confirmRequest = await client.postUrl(
+      Uri.parse(
+        'http://localhost:9099/identitytoolkit.googleapis.com/v1/accounts:update?key=fake-api-key',
+      ),
+    );
+    confirmRequest.headers.contentType = ContentType.json;
+    confirmRequest.write(jsonEncode({'oobCode': match['oobCode']}));
+    final confirmResponse = await confirmRequest.close();
+    final confirmBody = await confirmResponse.transform(utf8.decoder).join();
+    if (confirmResponse.statusCode != 200) {
       throw StateError(
-        'Emulator accounts:update did not verify the user '
-        '(${response.statusCode}): $body',
+        'Confirming oobCode did not verify the user '
+        '(${confirmResponse.statusCode}): $confirmBody',
       );
     }
   } finally {
@@ -138,13 +162,30 @@ void main() {
       // ---- 3. Create two accounts (second one enables the Transfer /
       // Savings Goal steps below) --------------------------------------
       Future<void> createAccount(String name, String balance) async {
-        await tester.tap(find.text(l10n.accountsTitle));
+        // The bottom nav's `onlyShowSelected` label behavior hides an
+        // unselected tab's inline text label entirely, so tapping it by
+        // text only works once it's already selected. Every
+        // `NavigationDestination` always carries a `Tooltip` with its
+        // label text regardless of selection state (Flutter's own
+        // accessibility affordance for icon-only destinations) -- that's
+        // reliable for switching *to* a not-yet-selected tab.
+        await tester.tap(find.byTooltip(l10n.accountsTitle));
         await tester.pumpAndSettle();
-        await tester.tap(find.byIcon(AppSymbols.addRounded).first);
+        // Every shell-tab FAB shares the same `addRounded` icon and the
+        // shell keeps already-visited branches mounted, so a plain
+        // icon-based finder is ambiguous once more than one tab's FAB is
+        // alive at once -- each FAB carries its own unique `Key` for
+        // exactly this reason (see accounts_list_screen.dart).
+        await tester.tap(find.byKey(const ValueKey('accounts-fab')));
         await tester.pumpAndSettle();
         await tester.enterText(find.byType(TextFormField).at(0), name);
         await tester.enterText(find.byType(TextFormField).at(1), balance);
-        await tester.tap(find.text(l10n.addAccountButton));
+        // `l10n.addAccountButton` ("Add account") appears twice while
+        // creating a new account: once as the AppBar title, once as the
+        // submit button's label -- target the actual `PrimaryButton`
+        // widget directly rather than guessing tree-traversal order with
+        // `.first`/`.last` against duplicate text.
+        await tester.tap(find.byType(PrimaryButton));
         await tester.pumpAndSettle(const Duration(seconds: 2));
       }
 
@@ -163,9 +204,9 @@ void main() {
         await tester.pumpAndSettle();
       }
 
-      await tester.tap(find.text(l10n.transactionsTabLabel));
+      await tester.tap(find.byTooltip(l10n.transactionsTabLabel));
       await tester.pumpAndSettle();
-      await tester.tap(find.byIcon(AppSymbols.addRounded).first);
+      await tester.tap(find.byKey(const ValueKey('transactions-fab')));
       await tester.pumpAndSettle();
       // Default segment is Expense; switch to Income for this one.
       await tester.tap(find.text(l10n.incomeLabel));
@@ -173,10 +214,12 @@ void main() {
       await tester.enterText(find.byType(TextFormField).at(0), '500000');
       await pickDropdownOption(0, 'Main Wallet');
       await pickDropdownOption(1, 'Salary');
-      await tester.tap(find.text(l10n.addTransactionButton));
+      // `l10n.addTransactionButton` also appears as the AppBar title on
+      // this form -- target the `PrimaryButton` widget directly.
+      await tester.tap(find.byType(PrimaryButton));
       await tester.pumpAndSettle(const Duration(seconds: 2));
 
-      await tester.tap(find.byIcon(AppSymbols.addRounded).first);
+      await tester.tap(find.byKey(const ValueKey('transactions-fab')));
       await tester.pumpAndSettle();
       // Expense is the default segment already.
       await tester.enterText(find.byType(TextFormField).at(0), '75000');
@@ -186,20 +229,24 @@ void main() {
         find.byType(TextFormField).at(1),
         'Weekly groceries',
       );
-      await tester.tap(find.text(l10n.addTransactionButton));
+      // `l10n.addTransactionButton` also appears as the AppBar title on
+      // this form -- target the `PrimaryButton` widget directly.
+      await tester.tap(find.byType(PrimaryButton));
       await tester.pumpAndSettle(const Duration(seconds: 2));
 
       expect(find.text('Weekly groceries'), findsOneWidget);
 
       // ---- 6. Transfer between the two accounts ------------------------
-      await tester.tap(find.byIcon(AppSymbols.addRounded).first);
+      await tester.tap(find.byKey(const ValueKey('transactions-fab')));
       await tester.pumpAndSettle();
       await tester.tap(find.text(l10n.transferLabel));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextFormField).at(0), '100000');
       await pickDropdownOption(0, 'Main Wallet');
       await pickDropdownOption(1, 'Savings Jar');
-      await tester.tap(find.text(l10n.addTransactionButton));
+      // `l10n.addTransactionButton` also appears as the AppBar title on
+      // this form -- target the `PrimaryButton` widget directly.
+      await tester.tap(find.byType(PrimaryButton));
       await tester.pumpAndSettle(const Duration(seconds: 2));
 
       // ---- 7. Edit the expense transaction ------------------------------
@@ -221,28 +268,33 @@ void main() {
       await tester.pumpAndSettle(const Duration(seconds: 2));
 
       // ---- 9. Create a budget --------------------------------------------
-      await tester.tap(find.text(l10n.budgetTitle));
+      await tester.tap(find.byTooltip(l10n.budgetTitle));
       await tester.pumpAndSettle();
       await tester.tap(find.text(l10n.setBudgetButton).first);
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextFormField).first, '2000000');
-      await tester.tap(find.text(l10n.setBudgetButton));
+      // Same AppBar-title-vs-submit-button collision as the account/
+      // transaction forms above -- target the `PrimaryButton` directly.
+      await tester.tap(find.byType(PrimaryButton));
       await tester.pumpAndSettle(const Duration(seconds: 2));
 
       // ---- 10. Create a savings goal --------------------------------------
       // Reached via the Dashboard's Savings Goals shortcut, not a bottom
       // tab, and BudgetsListScreen (where the previous step left off) has
       // no floating action button of its own — go to Dashboard first.
-      await tester.tap(find.text(l10n.dashboardTitle).first);
+      await tester.tap(find.byTooltip(l10n.dashboardTitle));
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip(l10n.savingsGoalsTooltip));
       await tester.pumpAndSettle();
-      await tester.tap(find.byIcon(AppSymbols.addRounded));
+      // Same ambiguity as the other FABs above -- use its unique key.
+      await tester.tap(find.byKey(const ValueKey('savings-goals-fab')));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextFormField).at(0), 'New Laptop');
       await tester.enterText(find.byType(TextFormField).at(1), '8000000');
       await pickDropdownOption(0, 'Savings Jar');
-      await tester.tap(find.text(l10n.addGoalButton));
+      // Same AppBar-title-vs-submit-button collision as the other forms --
+      // target the `PrimaryButton` directly.
+      await tester.tap(find.byType(PrimaryButton));
       await tester.pumpAndSettle(const Duration(seconds: 2));
       expect(find.text('New Laptop'), findsWidgets);
 
@@ -256,7 +308,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // ---- 12. Change language, confirm, then switch back ------------------
-      await tester.tap(find.text(l10n.profileTitle));
+      await tester.tap(find.byTooltip(l10n.profileTitle));
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip(l10n.settingsTitle));
       await tester.pumpAndSettle();
@@ -284,7 +336,7 @@ void main() {
       expect(find.text(l10n.dashboardTitle), findsWidgets);
 
       // ---- 14. Delete account ------------------------------------------
-      await tester.tap(find.text(l10n.profileTitle));
+      await tester.tap(find.byTooltip(l10n.profileTitle));
       await tester.pumpAndSettle();
       await tester.tap(find.text(l10n.deleteAccountButtonLabel));
       await tester.pumpAndSettle();

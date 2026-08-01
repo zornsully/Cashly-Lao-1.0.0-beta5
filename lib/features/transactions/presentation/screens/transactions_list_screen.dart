@@ -243,6 +243,12 @@ class _TransactionsListScreenState
         ),
       ),
       floatingActionButton: FloatingActionButton(
+        // See the same fix's comment in accounts_list_screen.dart -- every
+        // shell tab's FAB otherwise shares Flutter's implicit default hero
+        // tag, since the shell keeps all branches mounted simultaneously.
+        // The key gives integration tests an unambiguous target too.
+        key: const ValueKey('transactions-fab'),
+        heroTag: 'transactions-fab',
         onPressed: () => context.push(AppRoutes.transactionNew),
         child: const Icon(AppSymbols.addRounded),
       ),
@@ -317,6 +323,7 @@ class _FilterSortSheet extends ConsumerWidget {
         const SizedBox(height: AppSpacing.lg),
         DropdownButtonFormField<String?>(
           initialValue: filter.accountId,
+          isExpanded: true,
           decoration: InputDecoration(labelText: l10n.accountFilterLabel),
           items: [
             DropdownMenuItem(value: null, child: Text(l10n.allAccountsLabel)),
@@ -331,6 +338,7 @@ class _FilterSortSheet extends ConsumerWidget {
         const SizedBox(height: AppSpacing.md),
         DropdownButtonFormField<String?>(
           initialValue: filter.categoryId,
+          isExpanded: true,
           decoration: InputDecoration(labelText: l10n.categoryFilterLabel),
           items: [
             DropdownMenuItem(value: null, child: Text(l10n.allCategoriesLabel)),
@@ -345,6 +353,7 @@ class _FilterSortSheet extends ConsumerWidget {
         const SizedBox(height: AppSpacing.md),
         DropdownButtonFormField<TransactionSortOption>(
           initialValue: filter.sortOption,
+          isExpanded: true,
           decoration: InputDecoration(labelText: l10n.sortByLabel),
           items: [
             for (final option in TransactionSortOption.values)

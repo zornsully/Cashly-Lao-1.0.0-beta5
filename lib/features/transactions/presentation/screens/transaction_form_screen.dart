@@ -293,6 +293,11 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                     const SizedBox(height: AppSpacing.md),
                     DropdownButtonFormField<String>(
                       initialValue: _accountId,
+                      // See account_form_screen.dart's currency dropdown for
+                      // why every DropdownButtonFormField in this app sets
+                      // this -- avoids a real overflow when the selected
+                      // label doesn't leave room for the trailing arrow.
+                      isExpanded: true,
                       decoration: InputDecoration(
                         labelText: _isTransfer
                             ? l10n.fromAccountLabel
@@ -319,6 +324,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                     if (_isTransfer)
                       DropdownButtonFormField<String>(
                         initialValue: _toAccountId,
+                        isExpanded: true,
                         decoration: InputDecoration(
                           labelText: l10n.toAccountLabel,
                           prefixIcon: const Icon(
@@ -381,6 +387,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                     else
                       DropdownButtonFormField<String>(
                         initialValue: _categoryId,
+                        isExpanded: true,
                         decoration: InputDecoration(
                           labelText: l10n.categoryFieldLabel,
                           prefixIcon: const Icon(AppSymbols.category),

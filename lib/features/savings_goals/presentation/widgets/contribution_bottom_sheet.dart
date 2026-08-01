@@ -109,6 +109,7 @@ class _ContributionBottomSheetState
           const SizedBox(height: AppSpacing.md),
           DropdownButtonFormField<String>(
             initialValue: _sourceAccountId,
+            isExpanded: true,
             decoration: InputDecoration(
               labelText: l10n.contributionSourceAccountLabel,
               prefixIcon: const Icon(AppSymbols.accountBalanceWallet),

@@ -316,6 +316,7 @@ class SettingsScreen extends ConsumerWidget {
                         initialValue: SupportedCurrencies.byCode(
                           preferences.defaultCurrencyCode,
                         ),
+                        isExpanded: true,
                         decoration: InputDecoration(
                           labelText: l10n.currencyLabel,
                         ),

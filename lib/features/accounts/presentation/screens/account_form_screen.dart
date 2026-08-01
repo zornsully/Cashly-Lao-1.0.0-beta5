@@ -208,6 +208,16 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
                                 )
                               : DropdownButtonFormField<AppCurrency>(
                                   initialValue: _currency,
+                                  // Without this, the dropdown's internal
+                                  // selected-value + arrow row sizes to
+                                  // content instead of the field's actual
+                                  // width, which can overflow by a few
+                                  // pixels when the row it shares with the
+                                  // balance field leaves it narrow -- a
+                                  // real, confirmed bug (see
+                                  // integration_test/app_flow_test.dart's
+                                  // investigation notes), not a guess.
+                                  isExpanded: true,
                                   decoration: InputDecoration(
                                     labelText: l10n.currencyLabel,
                                   ),

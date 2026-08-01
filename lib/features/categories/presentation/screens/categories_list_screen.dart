@@ -89,6 +89,13 @@ class _CategoriesListScreenState extends ConsumerState<CategoriesListScreen>
               ? CategoryType.expense
               : CategoryType.income;
           return FloatingActionButton(
+            // See the same fix's comment in accounts_list_screen.dart --
+            // every shell tab's FAB otherwise shares Flutter's implicit
+            // default hero tag, since the shell keeps all branches mounted
+            // simultaneously. The key gives integration tests an
+            // unambiguous target too.
+            key: const ValueKey('categories-fab'),
+            heroTag: 'categories-fab',
             onPressed: () => context.push(AppRoutes.categoryNew, extra: type),
             child: const Icon(AppSymbols.addRounded),
           );

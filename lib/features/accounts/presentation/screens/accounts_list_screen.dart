@@ -197,6 +197,19 @@ class AccountsListScreen extends ConsumerWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton(
+        // The navigation shell keeps every tab's branch mounted at once
+        // (so state survives switching tabs), which means every tab's own
+        // FAB coexists in the same Element subtree simultaneously. Without
+        // an explicit tag, all of them share Flutter's implicit default
+        // FAB hero tag, and Hero's own duplicate-tag check throws the
+        // moment any hero flight scans that subtree. These add-flows are
+        // unrelated screens, not meant to morph into each other, so opting
+        // out entirely is correct, not just a workaround. The same key
+        // also gives integration tests an unambiguous way to find this
+        // exact FAB when another branch's identical-icon FAB is also
+        // mounted (see integration_test/app_flow_test.dart).
+        key: const ValueKey('accounts-fab'),
+        heroTag: 'accounts-fab',
         onPressed: () => context.push(AppRoutes.accountNew),
         child: const Icon(AppSymbols.addRounded),
       ),

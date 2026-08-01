@@ -84,10 +84,55 @@ class HomeShellScreen extends ConsumerWidget {
 
 /// Keeps the routed branches alive while providing the same subtle branch
 /// transition in both compact and wide shells.
-class _ShellContent extends StatelessWidget {
+///
+/// `navigationShell` is a single, long-lived widget (its own `IndexedStack`
+/// swaps branch content internally, keyed by an internal `GlobalKey` that
+/// must never appear twice in the tree at once). An `AnimatedSwitcher` keyed
+/// by `currentIndex` used to wrap it here, but that re-keys the *same*
+/// `navigationShell` instance on every tab switch — during the crossfade,
+/// `AnimatedSwitcher` briefly holds both the outgoing and incoming
+/// `KeyedSubtree`s simultaneously, both containing that one shell object, so
+/// its internal `GlobalKey` ends up duplicated in the same frame and Flutter
+/// throws. Fading the shell's opacity in place (never removing/re-adding the
+/// widget itself) gets the same tab-switch crossfade feel without ever
+/// producing two copies of it.
+class _ShellContent extends StatefulWidget {
   const _ShellContent({required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
+
+  @override
+  State<_ShellContent> createState() => _ShellContentState();
+}
+
+class _ShellContentState extends State<_ShellContent>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: AppMotion.normal,
+    value: 1,
+  );
+  late final Animation<double> _opacity = CurvedAnimation(
+    parent: _controller,
+    curve: AppMotion.enter,
+  );
+
+  @override
+  void didUpdateWidget(covariant _ShellContent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.navigationShell.currentIndex !=
+        widget.navigationShell.currentIndex) {
+      _controller
+        ..value = 0
+        ..forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -98,15 +143,7 @@ class _ShellContent extends StatelessWidget {
         // whether it lives inside the desktop shell.
         const SafeArea(bottom: false, child: SyncStatusBanner()),
         Expanded(
-          child: AnimatedSwitcher(
-            duration: AppMotion.normal,
-            switchInCurve: AppMotion.enter,
-            switchOutCurve: AppMotion.exit,
-            child: KeyedSubtree(
-              key: ValueKey(navigationShell.currentIndex),
-              child: navigationShell,
-            ),
-          ),
+          child: FadeTransition(opacity: _opacity, child: widget.navigationShell),
         ),
       ],
     );

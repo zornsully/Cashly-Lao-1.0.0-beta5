@@ -166,6 +166,7 @@ class _BudgetFormScreenState extends ConsumerState<BudgetFormScreen> {
                           flex: 2,
                           child: DropdownButtonFormField<AppCurrency>(
                             initialValue: _currency,
+                            isExpanded: true,
                             decoration: InputDecoration(
                               labelText: l10n.currencyLabel,
                             ),
