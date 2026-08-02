@@ -20,6 +20,10 @@ void main() {
     addTearDown(container.dispose);
   });
 
+  test('starts ready before any auth action is requested', () {
+    expect(container.read(authControllerProvider).isLoading, isFalse);
+  });
+
   // Regression guard for the same class of bug the Analytics safety net hit
   // earlier: reading a Firebase-SDK-level provider (messagingProvider, here
   // via the FCM unregister step) can throw *synchronously during provider

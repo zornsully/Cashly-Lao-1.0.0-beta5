@@ -15,9 +15,9 @@ import 'auth_providers.dart';
 /// Firebase's own auth state changes, which in turn drives navigation via
 /// the router's redirect. This controller only reports whether the
 /// in-flight action succeeded, so screens know when to show a snackbar.
-class AuthController extends AsyncNotifier<void> {
+class AuthController extends Notifier<AsyncValue<void>> {
   @override
-  void build() {}
+  AsyncValue<void> build() => const AsyncData(null);
 
   Failure? get failure => switch (state) {
     AsyncError(:final error) when error is Failure => error,
@@ -145,4 +145,6 @@ class AuthController extends AsyncNotifier<void> {
 }
 
 final authControllerProvider =
-    AsyncNotifierProvider.autoDispose<AuthController, void>(AuthController.new);
+    NotifierProvider.autoDispose<AuthController, AsyncValue<void>>(
+      AuthController.new,
+    );
