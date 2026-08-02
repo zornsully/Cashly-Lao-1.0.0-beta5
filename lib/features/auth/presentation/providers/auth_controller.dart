@@ -17,7 +17,7 @@ import 'auth_providers.dart';
 /// in-flight action succeeded, so screens know when to show a snackbar.
 class AuthController extends AsyncNotifier<void> {
   @override
-  Future<void> build() async {}
+  void build() {}
 
   Failure? get failure => switch (state) {
     AsyncError(:final error) when error is Failure => error,
