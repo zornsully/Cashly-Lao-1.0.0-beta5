@@ -92,6 +92,21 @@ bool isMarketingRouteAvailable({
   required String location,
 }) => isWeb && _marketingRoutes.contains(location);
 
+/// Resolves an app route while Firebase Auth is still restoring its first
+/// session value. Web must never expose the native-only splash route: it can
+/// render Login immediately and the router will return a restored session to
+/// Dashboard once the Auth stream emits.
+@visibleForTesting
+String? pendingAuthRedirectForPlatform({
+  required bool isWeb,
+  required String location,
+}) {
+  if (location == AppRoutes.splash) {
+    return isWeb ? AppRoutes.login : null;
+  }
+  return isWeb ? AppRoutes.login : AppRoutes.splash;
+}
+
 /// The app's single [GoRouter] instance. Auth guarding lives entirely in
 /// [redirect]: no screen needs to manually check "am I logged in?" before
 /// rendering, and no screen needs to manually navigate after a successful
@@ -108,9 +123,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   // stuck without one — the app never left the splash screen for any
   // user, ever.
   final refreshNotifier = _AuthRefreshNotifier();
-  if (!kIsWeb) {
-    ref.listen(authStateChangesProvider, (_, _) => refreshNotifier.refresh());
-  }
+  // The public-route guard below runs before Auth is read, so listening here
+  // never delays the web landing page. Once Firebase finishes bootstrapping,
+  // this refresh moves a restored browser session from Login to Dashboard.
+  ref.listen(authStateChangesProvider, (_, _) => refreshNotifier.refresh());
   // App lock gate needs the router to re-evaluate `redirect` whenever
   // either changes: the session unlocks/re-locks, or the preference itself
   // is toggled in Settings (so turning it off there immediately clears the
@@ -151,10 +167,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return null;
       }
 
+      // /splash belongs to the native entry flow. Old hashes, bookmarks, or
+      // an interrupted Auth restore must land at Login on web instead of
+      // leaving a browser visitor behind an indefinite spinner.
+      if (kIsWeb && location == AppRoutes.splash) {
+        return AppRoutes.login;
+      }
+
       final authState = ref.read(authStateChangesProvider);
 
       if (!authState.hasValue) {
-        return location == AppRoutes.splash ? null : AppRoutes.splash;
+        return pendingAuthRedirectForPlatform(
+          isWeb: kIsWeb,
+          location: location,
+        );
       }
 
       final user = authState.value;

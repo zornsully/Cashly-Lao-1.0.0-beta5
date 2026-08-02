@@ -7,11 +7,17 @@ import 'core/providers/app_lock_state_provider.dart';
 import 'core/providers/presence_providers.dart';
 import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'features/auth/presentation/providers/auth_providers.dart';
 import 'features/settings/presentation/providers/settings_providers.dart';
 import 'l10n/app_localizations.dart';
 
 class CashlyApp extends ConsumerStatefulWidget {
-  const CashlyApp({super.key});
+  const CashlyApp({this.webServicesReady, super.key});
+
+  /// The web app renders immediately, but Auth must be retried once Firebase
+  /// completes initialization. This prevents an early Auth subscription from
+  /// keeping the router on the splash route forever.
+  final Future<void>? webServicesReady;
 
   @override
   ConsumerState<CashlyApp> createState() => _CashlyAppState();
@@ -23,6 +29,17 @@ class _CashlyAppState extends ConsumerState<CashlyApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    final webServicesReady = widget.webServicesReady;
+    if (kIsWeb && webServicesReady != null) {
+      webServicesReady.then(
+        (_) {
+          if (mounted) ref.invalidate(authStateChangesProvider);
+        },
+        // Failure is logged by main.dart. The public shell and login page
+        // remain available with their own recoverable service states.
+        onError: (Object error, StackTrace stackTrace) {},
+      );
+    }
   }
 
   @override

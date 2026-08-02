@@ -38,9 +38,13 @@ Future<void> main() async {
   };
   if (kIsWeb) {
     // The public website must remain usable even when a Firebase service is
-    // slow or unavailable. Firebase-dependent routes handle their own state.
-    runApp(const ProviderScope(child: CashlyApp()));
-    unawaited(_initializeWebServices());
+    // slow or unavailable. Begin Firebase setup before the router subscribes
+    // to Auth, but do not await it before rendering the public shell.
+    final webServicesReady = initializeRequiredServices();
+    runApp(
+      ProviderScope(child: CashlyApp(webServicesReady: webServicesReady)),
+    );
+    unawaited(_reportWebServiceInitialization(webServicesReady));
     return;
   }
   runApp(
@@ -53,9 +57,9 @@ Future<void> main() async {
   );
 }
 
-Future<void> _initializeWebServices() async {
+Future<void> _reportWebServiceInitialization(Future<void> initialization) async {
   try {
-    await initializeRequiredServices();
+    await initialization;
   } catch (error, stackTrace) {
     debugPrint('FAILED: web Firebase services — ${_sanitizeStartupError(error)}');
     debugPrintStack(stackTrace: stackTrace);
