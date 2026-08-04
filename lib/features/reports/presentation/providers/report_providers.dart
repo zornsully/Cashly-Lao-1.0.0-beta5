@@ -19,18 +19,25 @@ import '../../domain/entities/monthly_report.dart';
 import '../../domain/entities/monthly_trend_point.dart';
 import '../../domain/entities/report_filter.dart';
 import '../../domain/entities/report_insights.dart';
+import '../../domain/entities/report_period.dart';
 import '../../domain/usecases/build_monthly_report_usecase.dart';
 import '../../domain/usecases/build_monthly_trend_usecase.dart';
 import '../../domain/usecases/compute_report_insights_usecase.dart';
 import '../../domain/usecases/convert_report_totals_usecase.dart';
 import '../../domain/usecases/detect_expense_watch_usecase.dart';
 import '../../domain/usecases/export_report_to_csv_usecase.dart';
+import '../../domain/usecases/export_transactions_to_csv_usecase.dart';
 
 final exportReportToCsvUseCaseProvider = Provider<ExportReportToCsvUseCase>((
   ref,
 ) {
   return const ExportReportToCsvUseCase();
 });
+
+final exportTransactionsToCsvUseCaseProvider =
+    Provider<ExportTransactionsToCsvUseCase>((ref) {
+      return const ExportTransactionsToCsvUseCase();
+    });
 
 /// How many months (inclusive of the selected one) the Income vs Expense
 /// trend chart covers.
@@ -58,6 +65,19 @@ class SelectedReportMonth extends Notifier<DateTime> {
   void nextMonth() {
     state = DateTime(state.year, state.month + 1);
   }
+
+  /// Moves the report's calendar anchor without changing the selected
+  /// preset. Date based presets retain their local calendar semantics.
+  void move(ReportPeriod period, int direction) {
+    assert(direction == -1 || direction == 1);
+    state = switch (period) {
+      ReportPeriod.today => state.add(Duration(days: direction)),
+      ReportPeriod.week => state.add(Duration(days: 7 * direction)),
+      ReportPeriod.month || ReportPeriod.custom =>
+        DateTime(state.year, state.month + direction, state.day),
+      ReportPeriod.year => DateTime(state.year + direction, state.month, state.day),
+    };
+  }
 }
 
 final selectedReportMonthProvider =
@@ -72,6 +92,9 @@ class ReportFilterNotifier extends Notifier<ReportFilter> {
 
   void setCustomRange(DateTime? start, DateTime? endExclusive) {
     state = ReportFilter(
+      period: start != null && endExclusive != null
+          ? ReportPeriod.custom
+          : ReportPeriod.month,
       customRangeStart: start,
       customRangeEndExclusive: endExclusive,
       accountId: state.accountId,
@@ -80,33 +103,86 @@ class ReportFilterNotifier extends Notifier<ReportFilter> {
     );
   }
 
+  void setPeriod(ReportPeriod period) {
+    state = ReportFilter(
+      period: period,
+      customRangeStart: period == ReportPeriod.custom
+          ? state.customRangeStart
+          : null,
+      customRangeEndExclusive: period == ReportPeriod.custom
+          ? state.customRangeEndExclusive
+          : null,
+      accountId: state.accountId,
+      categoryId: state.categoryId,
+      currencyCode: state.currencyCode,
+      type: state.type,
+    );
+  }
+
+  void shiftCustomRange(int direction) {
+    assert(direction == -1 || direction == 1);
+    if (!state.hasCustomRange) return;
+    final length = state.customRangeEndExclusive!.difference(
+      state.customRangeStart!,
+    );
+    state = ReportFilter(
+      period: ReportPeriod.custom,
+      customRangeStart: state.customRangeStart!.add(length * direction),
+      customRangeEndExclusive: state.customRangeEndExclusive!.add(
+        length * direction,
+      ),
+      accountId: state.accountId,
+      categoryId: state.categoryId,
+      currencyCode: state.currencyCode,
+      type: state.type,
+    );
+  }
+
   void setAccountId(String? accountId) {
     state = ReportFilter(
+      period: state.period,
       customRangeStart: state.customRangeStart,
       customRangeEndExclusive: state.customRangeEndExclusive,
       accountId: accountId,
       categoryId: state.categoryId,
+      currencyCode: state.currencyCode,
       type: state.type,
     );
   }
 
   void setCategoryId(String? categoryId) {
     state = ReportFilter(
+      period: state.period,
       customRangeStart: state.customRangeStart,
       customRangeEndExclusive: state.customRangeEndExclusive,
       accountId: state.accountId,
       categoryId: categoryId,
+      currencyCode: state.currencyCode,
       type: state.type,
     );
   }
 
   void setType(TransactionType? type) {
     state = ReportFilter(
+      period: state.period,
       customRangeStart: state.customRangeStart,
       customRangeEndExclusive: state.customRangeEndExclusive,
       accountId: state.accountId,
       categoryId: state.categoryId,
+      currencyCode: state.currencyCode,
       type: type,
+    );
+  }
+
+  void setCurrencyCode(String? currencyCode) {
+    state = ReportFilter(
+      period: state.period,
+      customRangeStart: state.customRangeStart,
+      customRangeEndExclusive: state.customRangeEndExclusive,
+      accountId: state.accountId,
+      categoryId: state.categoryId,
+      currencyCode: currencyCode,
+      type: state.type,
     );
   }
 
@@ -120,19 +196,20 @@ final reportFilterProvider =
       ReportFilterNotifier.new,
     );
 
-/// The actual date window a report covers: the filter's custom range if
-/// set, otherwise the whole of [selectedReportMonthProvider].
+/// The actual local-time calendar window a report covers. All downstream
+/// providers share this exact helper so charts, totals, comparisons and
+/// exports cannot disagree about which transaction belongs in a period.
 ({DateTime start, DateTime endExclusive}) _effectiveRange(
   DateTime month,
   ReportFilter filter,
 ) {
-  if (filter.hasCustomRange) {
-    return (
-      start: filter.customRangeStart!,
-      endExclusive: filter.customRangeEndExclusive!,
-    );
-  }
-  return (start: month, endExclusive: DateTime(month.year, month.month + 1));
+  final range = ReportDateRange.forPeriod(
+    period: filter.period,
+    anchor: month,
+    customStart: filter.customRangeStart,
+    customEndExclusive: filter.customRangeEndExclusive,
+  );
+  return (start: range.start, endExclusive: range.endExclusive);
 }
 
 /// The trailing window Expense Watch compares against: 3 calendar months
@@ -178,10 +255,11 @@ List<TransactionEntity> _applyAccountCategoryTypeFilter({
 }) {
   if (filter.accountId == null &&
       filter.categoryId == null &&
+      filter.currencyCode == null &&
       filter.type == null) {
     return rangeTransactions;
   }
-  return _filterTransactions(
+  final filtered = _filterTransactions(
     transactions: rangeTransactions,
     accounts: accounts,
     categories: categories,
@@ -191,6 +269,15 @@ List<TransactionEntity> _applyAccountCategoryTypeFilter({
       type: filter.type,
     ),
   );
+  if (filter.currencyCode == null) return filtered;
+  final accountsById = {for (final account in accounts) account.id: account};
+  return filtered
+      .where(
+        (transaction) =>
+            accountsById[transaction.accountId]?.currencyCode ==
+            filter.currencyCode,
+      )
+      .toList(growable: false);
 }
 
 const _buildMonthlyReport = BuildMonthlyReportUseCase();
@@ -212,7 +299,7 @@ final monthlyReportProvider = Provider<AsyncValue<MonthlyReport>>((ref) {
   );
   final budgetsAsync = ref.watch(budgetsForMonthProvider(month));
   final monthTransactionsAsync = ref.watch(transactionsForMonthProvider(month));
-  final rangeTransactionsAsync = filter.hasCustomRange
+  final rangeTransactionsAsync = filter.period != ReportPeriod.month
       ? ref.watch(
           transactionsInRangeProvider((
             start: range.start,

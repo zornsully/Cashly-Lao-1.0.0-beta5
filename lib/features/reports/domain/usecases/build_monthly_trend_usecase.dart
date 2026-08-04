@@ -31,6 +31,12 @@ class BuildMonthlyTrendUseCase {
     final expenseByMonthAndCurrency = <DateTime, Map<String, double>>{};
 
     for (final transaction in transactions) {
+      // Transfers only move money between this user's accounts; treating one
+      // as spending would make the trend disagree with the report totals.
+      if (transaction.type != TransactionType.income &&
+          transaction.type != TransactionType.expense) {
+        continue;
+      }
       final account = accountsById[transaction.accountId];
       if (account == null) continue;
 
