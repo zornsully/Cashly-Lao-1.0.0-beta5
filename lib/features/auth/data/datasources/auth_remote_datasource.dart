@@ -219,7 +219,7 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
 
   @override
   Future<UserModel> signInWithGoogle() async {
-    if (kIsWeb) return _signInWithGoogleRedirect();
+    if (kIsWeb) return _signInWithGooglePopup();
     if (!_googleSignIn.supportsAuthenticate()) {
       throw const AuthException(
         'Google Sign-In is not supported on this platform.',
@@ -287,20 +287,28 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
     }
   }
 
-  /// A top-level redirect is more reliable than a popup in embedded browsers
-  /// and browsers with strict popup blocking. Firebase restores the session
-  /// and emits [userChanges] when it returns to Cashly, which drives the
-  /// router to Dashboard without needing a popup result on the old page.
-  Future<UserModel> _signInWithGoogleRedirect() async {
+  /// Web sign-in uses Firebase's popup flow so a completed credential is
+  /// returned to the auth controller. A bounded wait prevents an embedded
+  /// browser or blocked popup from leaving Login permanently disabled.
+  Future<UserModel> _signInWithGooglePopup() async {
     try {
-      await _firebaseAuth.signInWithRedirect(fb.GoogleAuthProvider());
-
-      // A successful browser implementation leaves this page immediately.
-      // Keep the action pending until navigation rather than falsely showing
-      // a completed login before Firebase returns from Google.
-      return Completer<UserModel>().future;
+      final userCredential = await _firebaseAuth
+          .signInWithPopup(fb.GoogleAuthProvider())
+          .timeout(const Duration(seconds: 60));
+      final user = userCredential.user;
+      if (user == null) {
+        throw const AuthException('Google sign-in did not return a user.');
+      }
+      final model = UserModel.fromFirebaseUser(user);
+      await _repairProfileDocIfMissing(model);
+      return model;
     } on fb.FirebaseAuthException catch (e) {
       throw _mapAuthException(e);
+    } on TimeoutException {
+      throw const AuthException(
+        'Google sign-in timed out. Allow pop-ups for Cashly Lao and try again.',
+        code: 'popup-timeout',
+      );
     } on FirebaseException catch (e) {
       throw _mapGooglePopupFirebaseException(e);
     }
@@ -574,6 +582,8 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
         'This website is not authorized for Google Sign-In yet.',
       'popup-blocked' =>
         'Your browser blocked the Google sign-in window. Allow pop-ups for Cashly Lao and try again.',
+      'popup-timeout' =>
+        'Google sign-in timed out. Allow pop-ups for Cashly Lao and try again.',
       'popup-closed-by-user' => 'Google sign-in was closed before it finished.',
       'cancelled-popup-request' =>
         'Another Google sign-in window is already open. Please finish or close it first.',
