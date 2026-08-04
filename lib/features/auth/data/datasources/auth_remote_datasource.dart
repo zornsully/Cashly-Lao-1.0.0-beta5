@@ -1,3 +1,5 @@
+import 'dart:async';
+
 // ignore_for_file: prefer_initializing_formals
 // Every constructor parameter here maps 1:1 to a same-named private field,
 // so `this.field` initializing-formal syntax would work for the names that
@@ -217,7 +219,7 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
 
   @override
   Future<UserModel> signInWithGoogle() async {
-    if (kIsWeb) return _signInWithGooglePopup();
+    if (kIsWeb) return _signInWithGoogleRedirect();
     if (!_googleSignIn.supportsAuthenticate()) {
       throw const AuthException(
         'Google Sign-In is not supported on this platform.',
@@ -285,18 +287,18 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
     }
   }
 
-  Future<UserModel> _signInWithGooglePopup() async {
+  /// A top-level redirect is more reliable than a popup in embedded browsers
+  /// and browsers with strict popup blocking. Firebase restores the session
+  /// and emits [userChanges] when it returns to Cashly, which drives the
+  /// router to Dashboard without needing a popup result on the old page.
+  Future<UserModel> _signInWithGoogleRedirect() async {
     try {
-      final userCredential = await _firebaseAuth.signInWithPopup(
-        fb.GoogleAuthProvider(),
-      );
-      final user = userCredential.user;
-      if (user == null) {
-        throw const AuthException('Sign-in did not return a user.');
-      }
-      final model = UserModel.fromFirebaseUser(user);
-      await _repairProfileDocIfMissing(model);
-      return model;
+      await _firebaseAuth.signInWithRedirect(fb.GoogleAuthProvider());
+
+      // A successful browser implementation leaves this page immediately.
+      // Keep the action pending until navigation rather than falsely showing
+      // a completed login before Firebase returns from Google.
+      return Completer<UserModel>().future;
     } on fb.FirebaseAuthException catch (e) {
       throw _mapAuthException(e);
     } on FirebaseException catch (e) {
