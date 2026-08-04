@@ -28,6 +28,21 @@ void main() {
     );
   });
 
+  test('web exposes every public marketing page as a direct route', () {
+    for (final route in [
+      AppRoutes.features,
+      AppRoutes.screenshots,
+      AppRoutes.download,
+      AppRoutes.privacy,
+    ]) {
+      expect(isMarketingRouteAvailable(isWeb: true, location: route), isTrue);
+      expect(
+        appInitialLocationForPlatform(isWeb: true, browserLocation: route),
+        route,
+      );
+    }
+  });
+
   test('native apps start at the auth gate instead of the landing page', () {
     expect(appInitialLocationForPlatform(isWeb: false), AppRoutes.splash);
     expect(

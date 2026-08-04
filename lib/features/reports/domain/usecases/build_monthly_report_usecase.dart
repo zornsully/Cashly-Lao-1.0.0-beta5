@@ -63,6 +63,7 @@ class BuildMonthlyReportUseCase {
 
     final budgetProgress = _buildBudgetProgress(
       budgets: budgets,
+      month: month,
       monthTransactions: monthTransactionsForBudgets,
       accounts: accounts,
       categories: categories,

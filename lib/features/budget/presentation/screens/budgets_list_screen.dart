@@ -54,6 +54,8 @@ class BudgetsListScreen extends ConsumerWidget {
           ref.read(budgetControllerProvider.notifier).failure?.message ??
           l10n.deleteBudgetFailedMessage;
       AppSnackbar.showError(context, message);
+    } else {
+      AppSnackbar.showSuccess(context, 'Budget deleted.');
     }
   }
 
@@ -62,7 +64,7 @@ class BudgetsListScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final month = ref.watch(selectedBudgetMonthProvider);
     final categoriesAsync = ref.watch(
-      categoriesProvider((type: CategoryType.expense, includeArchived: false)),
+      categoriesProvider((type: CategoryType.expense, includeArchived: true)),
     );
     final progressAsync = ref.watch(budgetProgressProvider);
 
@@ -98,9 +100,27 @@ class BudgetsListScreen extends ConsumerWidget {
                   for (final progress in progressList)
                     progress.category.id: progress,
                 };
+                // Keep an archived category visible only while it still has
+                // a budget, so every selected-month budget remains
+                // editable/deletable without offering new budgets for
+                // categories the user has retired.
+                final visibleCategories = categories
+                    .where(
+                      (category) =>
+                          !category.isArchived ||
+                          progressByCategory.containsKey(category.id),
+                    )
+                    .toList();
+                if (visibleCategories.isEmpty) {
+                  return EmptyState(
+                    icon: AppSymbols.savings,
+                    title: 'No budgets for this month',
+                    message: 'Add an expense category to set a monthly budget.',
+                  );
+                }
 
                 Widget buildTile(int index) {
-                  final category = categories[index];
+                  final category = visibleCategories[index];
                   final progress = progressByCategory[category.id];
 
                   if (progress != null) {
@@ -146,7 +166,7 @@ class BudgetsListScreen extends ConsumerWidget {
                                 AppSpacing.md,
                                 AppSpacing.xxl,
                               ),
-                              itemCount: categories.length,
+                              itemCount: visibleCategories.length,
                               separatorBuilder: (_, _) =>
                                   const SizedBox(height: AppSpacing.sm),
                               itemBuilder: (context, index) => buildTile(index),
@@ -166,7 +186,7 @@ class BudgetsListScreen extends ConsumerWidget {
                                   mainAxisSpacing: AppSpacing.sm,
                                   childAspectRatio: 2.2,
                                 ),
-                            itemCount: categories.length,
+                            itemCount: visibleCategories.length,
                             itemBuilder: (context, index) => buildTile(index),
                           );
                         },

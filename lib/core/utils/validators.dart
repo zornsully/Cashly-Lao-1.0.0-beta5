@@ -72,7 +72,8 @@ abstract final class Validators {
     final l10n = AppLocalizations.of(context)!;
     final trimmed = value?.trim() ?? '';
     if (trimmed.isEmpty) return l10n.amountRequiredError;
-    if (double.tryParse(trimmed) == null) return l10n.amountInvalidError;
+    final parsed = double.tryParse(trimmed);
+    if (parsed == null || !parsed.isFinite) return l10n.amountInvalidError;
     return null;
   }
 
@@ -85,7 +86,7 @@ abstract final class Validators {
     final trimmed = value?.trim() ?? '';
     if (trimmed.isEmpty) return l10n.amountRequiredError;
     final parsed = double.tryParse(trimmed);
-    if (parsed == null) return l10n.amountInvalidError;
+    if (parsed == null || !parsed.isFinite) return l10n.amountInvalidError;
     if (parsed <= 0) return l10n.amountMustBePositiveError;
     return null;
   }

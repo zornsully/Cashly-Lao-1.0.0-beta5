@@ -100,6 +100,7 @@ final budgetProgressForMonthProvider =
       return AsyncValue.data(
         _buildBudgetProgress(
           budgets: budgets,
+          month: month,
           monthTransactions: transactions,
           accounts: accounts,
           categories: categories,

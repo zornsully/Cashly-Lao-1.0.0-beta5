@@ -157,10 +157,19 @@ service cloud.firestore {
           && request.resource.data.categoryId is string
           && request.resource.data.categoryId.size() > 0
           && request.resource.data.month is timestamp
+          && request.resource.data.monthKey is string
+          && request.resource.data.monthKey.size() == 7
+          && budgetId == request.resource.data.categoryId + '_' + request.resource.data.monthKey
+          && request.resource.data.year is int
+          && request.resource.data.monthNumber is int
+          && request.resource.data.monthNumber >= 1
+          && request.resource.data.monthNumber <= 12
           && request.resource.data.limitAmount is number
           && request.resource.data.limitAmount > 0
           && request.resource.data.currencyCode is string
-          && request.resource.data.currencyCode.size() > 0;
+          && request.resource.data.currencyCode.size() > 0
+          && request.resource.data.createdAt is timestamp
+          && request.resource.data.updatedAt is timestamp;
         // `categoryId`/`month` are fixed at creation (BudgetEntity.copyWith
         // only exposes limitAmount/currencyCode, and the document ID itself
         // is derived from `{categoryId}_{yyyy-MM}` — see budget_remote_
@@ -171,10 +180,27 @@ service cloud.firestore {
           && request.auth.uid == userId
           && request.resource.data.categoryId == resource.data.categoryId
           && request.resource.data.month == resource.data.month
+          && request.resource.data.monthKey is string
+          && request.resource.data.monthKey.size() == 7
+          && budgetId == request.resource.data.categoryId + '_' + request.resource.data.monthKey
+          && request.resource.data.year is int
+          && request.resource.data.monthNumber is int
+          && request.resource.data.monthNumber >= 1
+          && request.resource.data.monthNumber <= 12
+          // Older documents predate the monthKey fields. Their first edit
+          // may add the canonical metadata; after that it is immutable.
+          && (!('monthKey' in resource.data)
+            || request.resource.data.monthKey == resource.data.monthKey)
+          && (!('year' in resource.data)
+            || request.resource.data.year == resource.data.year)
+          && (!('monthNumber' in resource.data)
+            || request.resource.data.monthNumber == resource.data.monthNumber)
           && request.resource.data.limitAmount is number
           && request.resource.data.limitAmount > 0
           && request.resource.data.currencyCode is string
-          && request.resource.data.currencyCode.size() > 0;
+          && request.resource.data.currencyCode.size() > 0
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.updatedAt is timestamp;
       }
 
       // One document per `{yyyy-MM}_{currency}` keeps a Smart Money Score's

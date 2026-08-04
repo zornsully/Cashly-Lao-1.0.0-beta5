@@ -9,6 +9,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 
 import 'app.dart';
 import 'core/providers/fcm_background_handler.dart';
@@ -27,6 +28,9 @@ const bool _useFirebaseEmulator = bool.fromEnvironment('USE_FIREBASE_EMULATOR');
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Public pages use real paths (`/features`, `/download`) rather than hash
+  // fragments. Firebase Hosting rewrites those paths to the Flutter shell.
+  if (kIsWeb) usePathUrlStrategy();
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
     debugPrint('Cashly Flutter error: ${details.exceptionAsString()}');

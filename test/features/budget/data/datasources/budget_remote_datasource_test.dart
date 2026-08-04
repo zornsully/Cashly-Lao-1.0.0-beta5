@@ -37,7 +37,7 @@ void main() {
       );
 
       expect(created.id, 'food_2026-03');
-      expect(created.month, DateTime(2026, 3));
+      expect(created.month, DateTime.utc(2026, 3));
 
       final doc = await firestore
           .collection('users')
@@ -148,5 +148,37 @@ void main() {
         .first;
     expect(march, hasLength(1));
     expect(march.single.categoryId, 'food');
+  });
+
+  test('keeps one user\'s budgets out of another user\'s collection', () async {
+    await dataSource.createBudget(
+      categoryId: 'food',
+      month: DateTime(2026, 3),
+      limitAmount: 500000,
+      currencyCode: 'LAK',
+    );
+
+    final otherUser = _MockUser();
+    when(() => otherUser.uid).thenReturn('uid-2');
+    when(() => firebaseAuth.currentUser).thenReturn(otherUser);
+
+    expect(
+      await dataSource.watchBudgetsForMonth(DateTime(2026, 3)).first,
+      isEmpty,
+    );
+  });
+
+  test('rejects zero, negative, NaN, and infinite budget amounts', () async {
+    for (final limit in [0.0, -1.0, double.nan, double.infinity]) {
+      expect(
+        () => dataSource.createBudget(
+          categoryId: 'food',
+          month: DateTime(2026, 3),
+          limitAmount: limit,
+          currencyCode: 'LAK',
+        ),
+        throwsA(isA<ServerException>()),
+      );
+    }
   });
 }

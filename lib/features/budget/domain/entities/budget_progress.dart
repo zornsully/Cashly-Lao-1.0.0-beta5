@@ -16,16 +16,27 @@ class BudgetProgress extends Equatable {
   final CategoryEntity category;
   final double spentAmount;
 
-  double get remainingAmount => budget.limitAmount - spentAmount;
+  double get remainingAmount {
+    if (!budget.limitAmount.isFinite || !spentAmount.isFinite) return 0;
+    return budget.limitAmount - spentAmount;
+  }
 
   /// Can exceed 100 when overspent — callers that render a progress bar
   /// should clamp separately from the number they display as text.
   double get percentageUsed {
-    if (budget.limitAmount == 0) return 0;
-    return (spentAmount / budget.limitAmount) * 100;
+    if (!budget.limitAmount.isFinite ||
+        !spentAmount.isFinite ||
+        budget.limitAmount <= 0) {
+      return 0;
+    }
+    final value = (spentAmount / budget.limitAmount) * 100;
+    return value.isFinite ? value : 0;
   }
 
-  bool get isOverspent => spentAmount > budget.limitAmount;
+  bool get isOverspent =>
+      budget.limitAmount.isFinite &&
+      spentAmount.isFinite &&
+      spentAmount > budget.limitAmount;
 
   @override
   List<Object?> get props => [budget, category, spentAmount];
