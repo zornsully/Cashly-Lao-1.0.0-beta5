@@ -45,7 +45,9 @@ class ReportDateRange extends Equatable {
         );
       case ReportPeriod.week:
         final day = DateTime(anchor.year, anchor.month, anchor.day);
-        final start = day.subtract(Duration(days: day.weekday - DateTime.monday));
+        final start = day.subtract(
+          Duration(days: day.weekday - DateTime.monday),
+        );
         return ReportDateRange(
           start: start,
           endExclusive: start.add(const Duration(days: 7)),
@@ -58,13 +60,22 @@ class ReportDateRange extends Equatable {
         );
       case ReportPeriod.year:
         final start = DateTime(anchor.year);
-        return ReportDateRange(start: start, endExclusive: DateTime(anchor.year + 1));
+        return ReportDateRange(
+          start: start,
+          endExclusive: DateTime(anchor.year + 1),
+        );
       case ReportPeriod.custom:
-        if (customStart == null || customEndExclusive == null ||
+        if (customStart == null ||
+            customEndExclusive == null ||
             !customEndExclusive.isAfter(customStart)) {
-          throw ArgumentError('A custom report range must have an end after its start.');
+          throw ArgumentError(
+            'A custom report range must have an end after its start.',
+          );
         }
-        return ReportDateRange(start: customStart, endExclusive: customEndExclusive);
+        return ReportDateRange(
+          start: customStart,
+          endExclusive: customEndExclusive,
+        );
     }
   }
 

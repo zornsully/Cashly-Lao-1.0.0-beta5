@@ -13,13 +13,12 @@ import '../../domain/services/release_manifest_service.dart';
 /// It intentionally lives outside the authenticated app shell: visitors can
 /// learn about Cashly and download the Android release without an account.
 class LandingPage extends StatefulWidget {
-  const LandingPage({
-    super.key,
-    this.releaseManifestService,
-  }) : _page = _PublicSitePage.home;
+  const LandingPage({super.key, this.releaseManifestService})
+    : _page = _PublicSitePage.home;
 
-  const LandingPage.features({super.key}) : _page = _PublicSitePage.features,
-       releaseManifestService = null;
+  const LandingPage.features({super.key})
+    : _page = _PublicSitePage.features,
+      releaseManifestService = null;
 
   const LandingPage.screenshots({super.key})
     : _page = _PublicSitePage.screenshots,
@@ -28,8 +27,9 @@ class LandingPage extends StatefulWidget {
   const LandingPage.download({super.key, this.releaseManifestService})
     : _page = _PublicSitePage.download;
 
-  const LandingPage.privacy({super.key}) : _page = _PublicSitePage.privacy,
-       releaseManifestService = null;
+  const LandingPage.privacy({super.key})
+    : _page = _PublicSitePage.privacy,
+      releaseManifestService = null;
 
   /// Allows focused UI tests and a future release provider to supply metadata
   /// without coupling the landing page to a particular delivery channel.
@@ -107,56 +107,86 @@ class _LandingPageState extends State<LandingPage> {
       body: SafeArea(
         bottom: false,
         child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              _LandingNavigation(
-                currentPage: widget._page,
-                onNavigate: _navigate,
-                onOpenApp: () => context.go(AppRoutes.dashboard),
-              ),
-              _buildPage(),
-              _LandingFooter(
-                onPrivacy: () => context.go(AppRoutes.privacy),
-                onTerms: () => context.go(AppRoutes.terms),
-                onContact: _contact,
-                onFeatures: () => context.go(AppRoutes.features),
-              ),
-            ],
-          ),
+          padding: EdgeInsets.zero,
+          children: [
+            _LandingNavigation(
+              currentPage: widget._page,
+              onNavigate: _navigate,
+              onOpenApp: () => context.go(AppRoutes.dashboard),
+            ),
+            _buildPage(),
+            _LandingFooter(
+              onPrivacy: () => context.go(AppRoutes.privacy),
+              onTerms: () => context.go(AppRoutes.terms),
+              onContact: _contact,
+              onFeatures: () => context.go(AppRoutes.features),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildPage() {
     if (widget._page == _PublicSitePage.features) {
-      return const _LandingShell(child: _PublicSiteBody(child: _FeaturesSection()));
+      return const _LandingShell(
+        child: _PublicSiteBody(child: _FeaturesSection()),
+      );
     }
     if (widget._page == _PublicSitePage.screenshots) {
-      return const _LandingShell(child: _PublicSiteBody(child: _ScreenshotsSection()));
+      return const _LandingShell(
+        child: _PublicSiteBody(child: _ScreenshotsSection()),
+      );
     }
     if (widget._page == _PublicSitePage.privacy) {
-      return const _LandingShell(child: _PublicSiteBody(child: _PrivacyPolicySection()));
+      return const _LandingShell(
+        child: _PublicSiteBody(child: _PrivacyPolicySection()),
+      );
     }
 
     return FutureBuilder<ReleaseManifest>(
       future: _releaseManifestFuture,
       builder: (context, snapshot) {
         final manifest = snapshot.data;
-        final isLoading = snapshot.connectionState != ConnectionState.done && !snapshot.hasError;
-        final errorMessage = snapshot.hasError ? _releaseLoadErrorMessage(snapshot.error) : null;
+        final isLoading =
+            snapshot.connectionState != ConnectionState.done &&
+            !snapshot.hasError;
+        final errorMessage = snapshot.hasError
+            ? _releaseLoadErrorMessage(snapshot.error)
+            : null;
         final isDownloadPage = widget._page == _PublicSitePage.download;
         return _LandingShell(
           child: _PublicSiteBody(
             child: isDownloadPage
-                ? Column(children: [
-                    _ApkDownloadSection(release: manifest?.releaseFor(ReleasePlatform.android), manifest: manifest, isLoading: isLoading, hasLoadError: snapshot.hasError, loadErrorMessage: errorMessage, onOpenRelease: _openRelease, onRetry: _retryReleaseManifest),
-                    if ((manifest?.history.isNotEmpty ?? false)) _VersionHistorySection(history: manifest!.history),
-                    const _FaqSection(),
-                  ])
-                : Column(children: [
-                    _HeroSection(releaseManifest: manifest, isLoading: isLoading, hasLoadError: snapshot.hasError, loadErrorMessage: errorMessage, onOpenRelease: _openRelease, onRetry: _retryReleaseManifest),
-                    _HomePreviewLinks(onNavigate: _navigate),
-                  ]),
+                ? Column(
+                    children: [
+                      _ApkDownloadSection(
+                        release: manifest?.releaseFor(ReleasePlatform.android),
+                        manifest: manifest,
+                        isLoading: isLoading,
+                        hasLoadError: snapshot.hasError,
+                        loadErrorMessage: errorMessage,
+                        onOpenRelease: _openRelease,
+                        onRetry: _retryReleaseManifest,
+                      ),
+                      if ((manifest?.history.isNotEmpty ?? false))
+                        _VersionHistorySection(history: manifest!.history),
+                      const _FaqSection(),
+                    ],
+                  )
+                : Column(
+                    children: [
+                      _HeroSection(
+                        releaseManifest: manifest,
+                        isLoading: isLoading,
+                        hasLoadError: snapshot.hasError,
+                        loadErrorMessage: errorMessage,
+                        onOpenRelease: _openRelease,
+                        onRetry: _retryReleaseManifest,
+                      ),
+                      _HomePreviewLinks(onNavigate: _navigate),
+                    ],
+                  ),
           ),
         );
       },
@@ -287,7 +317,8 @@ class _LandingNavigation extends StatelessWidget {
                       _NavTextButton(
                         label: 'Screenshots',
                         active: currentPage == _PublicSitePage.screenshots,
-                        onPressed: () => onNavigate(_PublicSitePage.screenshots),
+                        onPressed: () =>
+                            onNavigate(_PublicSitePage.screenshots),
                       ),
                       _NavTextButton(
                         label: 'Download',
@@ -389,11 +420,18 @@ class _NavTextButton extends StatelessWidget {
     return TextButton(
       onPressed: onPressed,
       style: TextButton.styleFrom(
-        foregroundColor: active ? _LandingColors.greenDark : _LandingColors.mutedInk,
+        foregroundColor: active
+            ? _LandingColors.greenDark
+            : _LandingColors.mutedInk,
         backgroundColor: active ? _LandingColors.greenTint : null,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       ),
-      child: Text(label, style: TextStyle(fontWeight: active ? FontWeight.w800 : FontWeight.w600)),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontWeight: active ? FontWeight.w800 : FontWeight.w600,
+        ),
+      ),
     );
   }
 }
@@ -406,10 +444,8 @@ class _PublicSiteBody extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) => _FadeInUp(
-    delay: const Duration(milliseconds: 40),
-    child: child,
-  );
+  Widget build(BuildContext context) =>
+      _FadeInUp(delay: const Duration(milliseconds: 40), child: child);
 }
 
 class _HomePreviewLinks extends StatelessWidget {
@@ -420,9 +456,24 @@ class _HomePreviewLinks extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const links = [
-      (page: _PublicSitePage.features, icon: Icons.auto_awesome_rounded, title: 'Explore features', text: 'See the tools that keep your money organized.'),
-      (page: _PublicSitePage.screenshots, icon: Icons.photo_library_outlined, title: 'View screenshots', text: 'Preview the calm, focused app experience.'),
-      (page: _PublicSitePage.download, icon: Icons.download_rounded, title: 'Get Cashly Lao', text: 'Find the latest verified release details.'),
+      (
+        page: _PublicSitePage.features,
+        icon: Icons.auto_awesome_rounded,
+        title: 'Explore features',
+        text: 'See the tools that keep your money organized.',
+      ),
+      (
+        page: _PublicSitePage.screenshots,
+        icon: Icons.photo_library_outlined,
+        title: 'View screenshots',
+        text: 'Preview the calm, focused app experience.',
+      ),
+      (
+        page: _PublicSitePage.download,
+        icon: Icons.download_rounded,
+        title: 'Get Cashly Lao',
+        text: 'Find the latest verified release details.',
+      ),
     ];
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -436,12 +487,16 @@ class _HomePreviewLinks extends StatelessWidget {
             crossAxisSpacing: 18,
             mainAxisSpacing: 14,
             childAspectRatio: columns == 1 ? 3.2 : 1.18,
-            children: links.map((link) => _HomePreviewCard(
-              icon: link.icon,
-              title: link.title,
-              text: link.text,
-              onTap: () => onNavigate(link.page),
-            )).toList(),
+            children: links
+                .map(
+                  (link) => _HomePreviewCard(
+                    icon: link.icon,
+                    title: link.title,
+                    text: link.text,
+                    onTap: () => onNavigate(link.page),
+                  ),
+                )
+                .toList(),
           );
         },
       ),
@@ -450,7 +505,12 @@ class _HomePreviewLinks extends StatelessWidget {
 }
 
 class _HomePreviewCard extends StatelessWidget {
-  const _HomePreviewCard({required this.icon, required this.title, required this.text, required this.onTap});
+  const _HomePreviewCard({
+    required this.icon,
+    required this.title,
+    required this.text,
+    required this.onTap,
+  });
 
   final IconData icon;
   final String title;
@@ -466,16 +526,33 @@ class _HomePreviewCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(22),
       child: Container(
         padding: const EdgeInsets.all(22),
-        decoration: BoxDecoration(border: Border.all(color: _LandingColors.line), borderRadius: BorderRadius.circular(22)),
+        decoration: BoxDecoration(
+          border: Border.all(color: _LandingColors.line),
+          borderRadius: BorderRadius.circular(22),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, color: _LandingColors.green, size: 27),
             const SizedBox(height: 18),
-            Text(title, style: const TextStyle(color: _LandingColors.ink, fontSize: 17, fontWeight: FontWeight.w800)),
+            Text(
+              title,
+              style: const TextStyle(
+                color: _LandingColors.ink,
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
             const SizedBox(height: 7),
-            Text(text, style: const TextStyle(color: _LandingColors.mutedInk, height: 1.4, fontWeight: FontWeight.w500)),
+            Text(
+              text,
+              style: const TextStyle(
+                color: _LandingColors.mutedInk,
+                height: 1.4,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ],
         ),
       ),
@@ -490,12 +567,25 @@ class _PrivacyPolicySection extends StatelessWidget {
   Widget build(BuildContext context) => _LandingSection(
     eyebrow: 'Privacy policy',
     title: 'Your financial life is private by design.',
-    description: 'Effective August 2026. This policy explains how Cashly Lao handles the information needed to provide the app.',
+    description:
+        'Effective August 2026. This policy explains how Cashly Lao handles the information needed to provide the app.',
     child: const Column(
       children: [
-        _PolicyCard(title: 'Information we use', text: 'Cashly Lao stores the account, transaction, budget, category, and profile information you choose to enter so the app can provide personal finance features and secure cloud sync.'),
-        _PolicyCard(title: 'How we use it', text: 'Your information is used only to run the app, secure your account, synchronize your data across your devices, provide support, and improve reliability. We do not sell or rent your personal information.'),
-        _PolicyCard(title: 'Your choices', text: 'You can edit your finance records in the app and request account deletion. For privacy questions or help deleting data, email contact@cashlylao.com.'),
+        _PolicyCard(
+          title: 'Information we use',
+          text:
+              'Cashly Lao stores the account, transaction, budget, category, and profile information you choose to enter so the app can provide personal finance features and secure cloud sync.',
+        ),
+        _PolicyCard(
+          title: 'How we use it',
+          text:
+              'Your information is used only to run the app, secure your account, synchronize your data across your devices, provide support, and improve reliability. We do not sell or rent your personal information.',
+        ),
+        _PolicyCard(
+          title: 'Your choices',
+          text:
+              'You can edit your finance records in the app and request account deletion. For privacy questions or help deleting data, email contact@cashlylao.com.',
+        ),
       ],
     ),
   );
@@ -512,12 +602,33 @@ class _PolicyCard extends StatelessWidget {
     width: double.infinity,
     margin: const EdgeInsets.only(bottom: 16),
     padding: const EdgeInsets.all(24),
-    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(22), border: Border.all(color: _LandingColors.line)),
-    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(title, style: const TextStyle(color: _LandingColors.ink, fontSize: 19, fontWeight: FontWeight.w800)),
-      const SizedBox(height: 10),
-      Text(text, style: const TextStyle(color: _LandingColors.mutedInk, height: 1.55, fontWeight: FontWeight.w500)),
-    ]),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(22),
+      border: Border.all(color: _LandingColors.line),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: _LandingColors.ink,
+            fontSize: 19,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          text,
+          style: const TextStyle(
+            color: _LandingColors.mutedInk,
+            height: 1.55,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    ),
   );
 }
 

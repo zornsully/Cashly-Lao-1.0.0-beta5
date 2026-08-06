@@ -49,9 +49,7 @@ Future<void> main() async {
     // slow or unavailable. Begin Firebase setup before the router subscribes
     // to Auth, but do not await it before rendering the public shell.
     final webServicesReady = initializeRequiredServices();
-    runApp(
-      ProviderScope(child: CashlyApp(webServicesReady: webServicesReady)),
-    );
+    runApp(ProviderScope(child: CashlyApp(webServicesReady: webServicesReady)));
     unawaited(_reportWebServiceInitialization(webServicesReady));
     return;
   }
@@ -65,11 +63,15 @@ Future<void> main() async {
   );
 }
 
-Future<void> _reportWebServiceInitialization(Future<void> initialization) async {
+Future<void> _reportWebServiceInitialization(
+  Future<void> initialization,
+) async {
   try {
     await initialization;
   } catch (error, stackTrace) {
-    debugPrint('FAILED: web Firebase services — ${_sanitizeStartupError(error)}');
+    debugPrint(
+      'FAILED: web Firebase services — ${_sanitizeStartupError(error)}',
+    );
     debugPrintStack(stackTrace: stackTrace);
   }
 }
@@ -80,9 +82,12 @@ Future<void> _reportWebServiceInitialization(Future<void> initialization) async 
 /// particular, browser analytics may wait on a remote configuration request;
 /// waiting for it before [runApp] previously produced a blank web page.
 Future<void> initializeRequiredServices() async {
-  await _runStartupStep('firebase-initialization', () => Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      ).timeout(const Duration(seconds: 15)));
+  await _runStartupStep(
+    'firebase-initialization',
+    () => Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    ).timeout(const Duration(seconds: 15)),
+  );
   debugPrint('START: firestore-offline-cache');
   _configureFirestoreOfflineCache();
   debugPrint('SUCCESS: firestore-offline-cache');
@@ -142,8 +147,14 @@ String _sanitizeStartupError(Object error) {
   return error
       .toString()
       .replaceAll(RegExp(r'AIza[0-9A-Za-z_-]{20,}'), '[redacted-api-key]')
-      .replaceAll(RegExp(r'Bearer\\s+[^\\s]+', caseSensitive: false), 'Bearer [redacted]')
-      .replaceAll(RegExp(r'(token|idToken|accessToken)=([^&\\s]+)', caseSensitive: false), r'$1=[redacted]');
+      .replaceAll(
+        RegExp(r'Bearer\\s+[^\\s]+', caseSensitive: false),
+        'Bearer [redacted]',
+      )
+      .replaceAll(
+        RegExp(r'(token|idToken|accessToken)=([^&\\s]+)', caseSensitive: false),
+        r'$1=[redacted]',
+      );
 }
 
 class StartupFailure implements Exception {

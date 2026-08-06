@@ -137,15 +137,15 @@ class SavingsGoalsListScreen extends ConsumerWidget {
       floatingActionButton: isDesktop
           ? null
           : FloatingActionButton(
-        // See the same fix's comment in accounts_list_screen.dart -- every
-        // shell tab's FAB otherwise shares Flutter's implicit default hero
-        // tag, since the shell keeps all branches mounted simultaneously.
-        // The key gives integration tests an unambiguous target too.
-        key: const ValueKey('savings-goals-fab'),
-        heroTag: 'savings-goals-fab',
-        onPressed: () => context.push(AppRoutes.savingsGoalNew),
-        child: const Icon(AppSymbols.addRounded),
-      ),
+              // See the same fix's comment in accounts_list_screen.dart -- every
+              // shell tab's FAB otherwise shares Flutter's implicit default hero
+              // tag, since the shell keeps all branches mounted simultaneously.
+              // The key gives integration tests an unambiguous target too.
+              key: const ValueKey('savings-goals-fab'),
+              heroTag: 'savings-goals-fab',
+              onPressed: () => context.push(AppRoutes.savingsGoalNew),
+              child: const Icon(AppSymbols.addRounded),
+            ),
     );
   }
 }

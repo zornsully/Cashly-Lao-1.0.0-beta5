@@ -73,9 +73,16 @@ class SelectedReportMonth extends Notifier<DateTime> {
     state = switch (period) {
       ReportPeriod.today => state.add(Duration(days: direction)),
       ReportPeriod.week => state.add(Duration(days: 7 * direction)),
-      ReportPeriod.month || ReportPeriod.custom =>
-        DateTime(state.year, state.month + direction, state.day),
-      ReportPeriod.year => DateTime(state.year + direction, state.month, state.day),
+      ReportPeriod.month || ReportPeriod.custom => DateTime(
+        state.year,
+        state.month + direction,
+        state.day,
+      ),
+      ReportPeriod.year => DateTime(
+        state.year + direction,
+        state.month,
+        state.day,
+      ),
     };
   }
 }

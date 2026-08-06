@@ -53,10 +53,7 @@ void main() {
 
   test('web never leaves an unresolved session on the native splash route', () {
     expect(
-      pendingAuthRedirectForPlatform(
-        isWeb: true,
-        location: AppRoutes.splash,
-      ),
+      pendingAuthRedirectForPlatform(isWeb: true, location: AppRoutes.splash),
       AppRoutes.login,
     );
     expect(
@@ -70,10 +67,7 @@ void main() {
 
   test('native keeps its splash route while restoring authentication', () {
     expect(
-      pendingAuthRedirectForPlatform(
-        isWeb: false,
-        location: AppRoutes.splash,
-      ),
+      pendingAuthRedirectForPlatform(isWeb: false, location: AppRoutes.splash),
       isNull,
     );
   });

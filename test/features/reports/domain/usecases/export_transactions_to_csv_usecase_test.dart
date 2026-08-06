@@ -13,40 +13,65 @@ void main() {
   const useCase = ExportTransactionsToCsvUseCase();
   final now = DateTime(2026, 8, 4, 12, 30);
   final account = AccountEntity(
-    id: 'cash', name: 'Cash', type: AccountType.cash, balance: 0,
-    currencyCode: 'LAK', icon: AppIconKey.cash, color: AppColorKey.emerald,
-    isArchived: false, createdAt: now, updatedAt: now,
+    id: 'cash',
+    name: 'Cash',
+    type: AccountType.cash,
+    balance: 0,
+    currencyCode: 'LAK',
+    icon: AppIconKey.cash,
+    color: AppColorKey.emerald,
+    isArchived: false,
+    createdAt: now,
+    updatedAt: now,
   );
   final category = CategoryEntity(
-    id: 'food', name: 'Food, drinks', type: CategoryType.expense,
-    icon: AppIconKey.other, color: AppColorKey.grey, isDefault: false,
-    isArchived: false, sortOrder: 0, createdAt: now, updatedAt: now,
+    id: 'food',
+    name: 'Food, drinks',
+    type: CategoryType.expense,
+    icon: AppIconKey.other,
+    color: AppColorKey.grey,
+    isDefault: false,
+    isArchived: false,
+    sortOrder: 0,
+    createdAt: now,
+    updatedAt: now,
   );
 
-  test('exports one UTF-8-safe row per real transaction with numeric amount', () {
-    final transaction = TransactionEntity(
-      id: 'TX001', accountId: account.id, categoryId: category.id,
-      type: TransactionType.expense, amount: 75000, date: now,
-      note: 'Lunch, "special"\nອາຫານ', createdAt: now, updatedAt: now,
-    );
+  test(
+    'exports one UTF-8-safe row per real transaction with numeric amount',
+    () {
+      final transaction = TransactionEntity(
+        id: 'TX001',
+        accountId: account.id,
+        categoryId: category.id,
+        type: TransactionType.expense,
+        amount: 75000,
+        date: now,
+        note: 'Lunch, "special"\nອາຫານ',
+        createdAt: now,
+        updatedAt: now,
+      );
 
-    final csv = useCase(
-      transactions: [transaction],
-      accountsById: {account.id: account},
-      categoriesById: {category.id: category},
-    );
+      final csv = useCase(
+        transactions: [transaction],
+        accountsById: {account.id: account},
+        categoriesById: {category.id: category},
+      );
 
-    expect(csv, startsWith('Transaction ID,Date,Time,Type'));
-    expect(csv, contains('TX001,2026-08-04,12:30:00,expense'));
-    expect(csv, contains('75000.0,LAK'));
-    expect(csv, contains('"Food, drinks"'));
-    expect(csv, contains('ອາຫານ'));
-    expect(csv, contains('"Lunch, ""special""'));
-  });
+      expect(csv, startsWith('Transaction ID,Date,Time,Type'));
+      expect(csv, contains('TX001,2026-08-04,12:30:00,expense'));
+      expect(csv, contains('75000.0,LAK'));
+      expect(csv, contains('"Food, drinks"'));
+      expect(csv, contains('ອາຫານ'));
+      expect(csv, contains('"Lunch, ""special""'));
+    },
+  );
 
   test('an empty selection exports the header only', () {
     final csv = useCase(
-      transactions: const [], accountsById: const {}, categoriesById: const {},
+      transactions: const [],
+      accountsById: const {},
+      categoriesById: const {},
     );
     expect(csv.trim().split('\r\n'), hasLength(1));
   });

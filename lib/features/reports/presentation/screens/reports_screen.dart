@@ -158,20 +158,18 @@ class ReportsScreen extends ConsumerWidget {
               if (filter.hasCustomRange) {
                 ref.read(reportFilterProvider.notifier).shiftCustomRange(-1);
               } else {
-                ref.read(selectedReportMonthProvider.notifier).move(
-                      filter.period,
-                      -1,
-                    );
+                ref
+                    .read(selectedReportMonthProvider.notifier)
+                    .move(filter.period, -1);
               }
             },
             onNext: () {
               if (filter.hasCustomRange) {
                 ref.read(reportFilterProvider.notifier).shiftCustomRange(1);
               } else {
-                ref.read(selectedReportMonthProvider.notifier).move(
-                      filter.period,
-                      1,
-                    );
+                ref
+                    .read(selectedReportMonthProvider.notifier)
+                    .move(filter.period, 1);
               }
             },
             onPeriodSelected: (period) {
@@ -389,8 +387,10 @@ class _MonthlySummaryCard extends StatelessWidget {
     final net = report.netByCurrency[currencyCode] ?? 0;
     final savings = net > 0 ? net : 0.0;
     final transactionCount = report.transactions
-        .where((transaction) =>
-            accountsById[transaction.accountId]?.currencyCode == currencyCode)
+        .where(
+          (transaction) =>
+              accountsById[transaction.accountId]?.currencyCode == currencyCode,
+        )
         .length;
     final semanticColors = AppSemanticColors.of(context);
 
@@ -1197,13 +1197,12 @@ class _ReportFilterSheet extends ConsumerWidget {
           isExpanded: true,
           decoration: InputDecoration(labelText: l10n.currencyLabel),
           items: [
-            const DropdownMenuItem(
-              value: null,
-              child: Text('All currencies'),
-            ),
+            const DropdownMenuItem(value: null, child: Text('All currencies')),
             for (final currencyCode
-                in (accounts.map((account) => account.currencyCode).toSet()
-                      .toList()
+                in (accounts
+                    .map((account) => account.currencyCode)
+                    .toSet()
+                    .toList()
                   ..sort()))
               DropdownMenuItem(value: currencyCode, child: Text(currencyCode)),
           ],

@@ -193,22 +193,31 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('renders each marketing detail page independently', (tester) async {
+  testWidgets('renders each marketing detail page independently', (
+    tester,
+  ) async {
     await tester.pumpWidget(const MaterialApp(home: LandingPage.features()));
     await tester.pump(const Duration(seconds: 1));
     expect(find.text('Expense Tracking'), findsOneWidget);
-    expect(find.text('A beautiful view of your everyday finances.'), findsNothing);
-
-    await tester.pumpWidget(
-      const MaterialApp(home: LandingPage.screenshots()),
+    expect(
+      find.text('A beautiful view of your everyday finances.'),
+      findsNothing,
     );
+
+    await tester.pumpWidget(const MaterialApp(home: LandingPage.screenshots()));
     await tester.pump(const Duration(seconds: 1));
-    expect(find.text('A beautiful view of your everyday finances.'), findsOneWidget);
+    expect(
+      find.text('A beautiful view of your everyday finances.'),
+      findsOneWidget,
+    );
     expect(find.text('Expense Tracking'), findsNothing);
 
     await tester.pumpWidget(const MaterialApp(home: LandingPage.privacy()));
     await tester.pump(const Duration(seconds: 1));
-    expect(find.text('Your financial life is private by design.'), findsOneWidget);
+    expect(
+      find.text('Your financial life is private by design.'),
+      findsOneWidget,
+    );
   });
 }
 

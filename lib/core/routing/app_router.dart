@@ -359,17 +359,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.budgetNew,
-        redirect: (context, state) => state.extra is NewBudgetArgs
-            ? null
-            : AppRoutes.budget,
+        redirect: (context, state) =>
+            state.extra is NewBudgetArgs ? null : AppRoutes.budget,
         builder: (context, state) =>
             BudgetFormScreen(newBudgetArgs: state.extra as NewBudgetArgs?),
       ),
       GoRoute(
         path: AppRoutes.budgetEdit,
-        redirect: (context, state) => state.extra is BudgetEntity
-            ? null
-            : AppRoutes.budget,
+        redirect: (context, state) =>
+            state.extra is BudgetEntity ? null : AppRoutes.budget,
         builder: (context, state) =>
             BudgetFormScreen(existing: state.extra as BudgetEntity?),
       ),

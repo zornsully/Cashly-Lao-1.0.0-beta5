@@ -63,15 +63,16 @@ class BuildBudgetProgressUseCase {
             budget.month.month == normalizedMonth.month &&
             budget.limitAmount.isFinite &&
             budget.limitAmount > 0)
-          if (categoriesById[budget.categoryId] case final CategoryEntity category)
-          BudgetProgress(
-            budget: budget,
-            category: category,
-            spentAmount:
-                spentByCategoryAndCurrency[budget.categoryId]?[budget
-                    .currencyCode] ??
-                0,
-          ),
+          if (categoriesById[budget.categoryId]
+              case final CategoryEntity category)
+            BudgetProgress(
+              budget: budget,
+              category: category,
+              spentAmount:
+                  spentByCategoryAndCurrency[budget.categoryId]?[budget
+                      .currencyCode] ??
+                  0,
+            ),
     ];
   }
 }

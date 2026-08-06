@@ -7,6 +7,7 @@ abstract final class AppRoutes {
   static const String screenshots = '/screenshots';
   static const String download = '/download';
   static const String privacy = '/privacy-policy';
+
   /// Kept only so old links continue to work after the public-site split.
   static const String legacyPrivacy = '/privacy';
   static const String terms = '/terms';

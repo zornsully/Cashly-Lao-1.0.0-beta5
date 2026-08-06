@@ -13,7 +13,8 @@ void main() {
 
   test('year and custom periods are valid half-open local ranges', () {
     final year = ReportDateRange.forPeriod(
-      period: ReportPeriod.year, anchor: DateTime(2026, 7, 1),
+      period: ReportPeriod.year,
+      anchor: DateTime(2026, 7, 1),
     );
     expect(year.start, DateTime(2026));
     expect(year.endExclusive, DateTime(2027));

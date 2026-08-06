@@ -58,7 +58,8 @@ class FirestoreBudgetRemoteDataSource implements BudgetRemoteDataSource {
   String _monthKey(DateTime month) =>
       '${month.year}-${month.month.toString().padLeft(2, '0')}';
 
-  DateTime _normalizeMonth(DateTime month) => DateTime.utc(month.year, month.month);
+  DateTime _normalizeMonth(DateTime month) =>
+      DateTime.utc(month.year, month.month);
 
   void _validateBudgetInput({
     required String categoryId,
@@ -83,24 +84,21 @@ class FirestoreBudgetRemoteDataSource implements BudgetRemoteDataSource {
     // A stream of the user's small budget collection avoids brittle equality
     // checks against timestamps created in another time zone. New documents
     // carry monthKey; the timestamp fallback keeps existing budgets visible.
-    return _collection
-        .snapshots()
-        .map(
-          (snapshot) {
-            final budgets = <BudgetModel>[];
-            for (final doc in snapshot.docs) {
-              final data = doc.data();
-              final storedMonth = data['month'];
-              final isRequestedMonth = data['monthKey'] == monthKey ||
-                  (storedMonth is Timestamp &&
-                      storedMonth.toDate().year == normalizedMonth.year &&
-                      storedMonth.toDate().month == normalizedMonth.month);
-              if (isRequestedMonth) budgets.add(BudgetModel.fromFirestore(doc));
-            }
-            budgets.sort((a, b) => a.categoryId.compareTo(b.categoryId));
-            return budgets;
-          },
-        );
+    return _collection.snapshots().map((snapshot) {
+      final budgets = <BudgetModel>[];
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        final storedMonth = data['month'];
+        final isRequestedMonth =
+            data['monthKey'] == monthKey ||
+            (storedMonth is Timestamp &&
+                storedMonth.toDate().year == normalizedMonth.year &&
+                storedMonth.toDate().month == normalizedMonth.month);
+        if (isRequestedMonth) budgets.add(BudgetModel.fromFirestore(doc));
+      }
+      budgets.sort((a, b) => a.categoryId.compareTo(b.categoryId));
+      return budgets;
+    });
   }
 
   @override
