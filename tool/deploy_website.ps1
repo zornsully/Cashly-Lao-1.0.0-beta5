@@ -40,10 +40,23 @@ function Test-GuardedPath {
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Push-Location $projectRoot
 try {
-    foreach ($command in 'flutter', 'firebase', 'git') {
+    foreach ($command in 'flutter', 'git') {
         if (-not (Get-Command $command -ErrorAction SilentlyContinue)) {
             throw "$command is required to deploy the website."
         }
+    }
+    # On this Windows host a same-named development wrapper can take
+    # precedence over the npm-installed CLI and return success without
+    # running a Firebase command. Select the npm command shim explicitly and
+    # require a normal Firebase CLI semantic version before deploying.
+    $firebaseCli = Get-Command firebase.cmd -ErrorAction SilentlyContinue
+    if (-not $firebaseCli) {
+        throw 'firebase.cmd (the npm-installed Firebase CLI) is required to deploy the website.'
+    }
+    $firebaseCliPath = $firebaseCli.Source
+    $firebaseVersion = & $firebaseCliPath --version
+    if ($LASTEXITCODE -ne 0 -or $firebaseVersion -notmatch '^\d+\.\d+\.\d+$') {
+        throw 'The selected firebase.cmd command did not report a valid Firebase CLI version. Not deploying.'
     }
 
     Write-Output 'Checking for release-trust file changes...'
@@ -73,7 +86,11 @@ try {
         throw 'Could not determine committed changes against origin/main (git fetch/merge-base failed). Refusing to deploy without being able to check for release-trust file changes.'
     }
 
-    $guardedHits = $changedPaths | Where-Object { Test-GuardedPath -Path $_ } | Sort-Object -Unique
+    # Wrap the pipeline so an empty result stays an empty array under
+    # StrictMode instead of becoming `$null`, which has no `.Count` property.
+    $guardedHits = @(
+        $changedPaths | Where-Object { Test-GuardedPath -Path $_ } | Sort-Object -Unique
+    )
     if ($guardedHits.Count -gt 0) {
         throw "Refusing a content-only deploy: this change touches release-trust path(s): $($guardedHits -join ', '). Use the manual release pipeline (tool/publish_web_metadata.ps1) instead."
     }
@@ -99,7 +116,7 @@ try {
     }
 
     Write-Output 'Deploying hosting:cashly-lao...'
-    & firebase deploy --only hosting:cashly-lao --project cashly-lao
+    & $firebaseCliPath deploy --only hosting:cashly-lao --project cashly-lao
     if ($LASTEXITCODE -ne 0) { throw 'firebase deploy failed.' }
 
     Write-Output 'Verifying the live website...'

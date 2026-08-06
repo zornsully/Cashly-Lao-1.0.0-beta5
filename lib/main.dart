@@ -9,13 +9,13 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 
 import 'app.dart';
 import 'core/providers/fcm_background_handler.dart';
 import 'core/providers/local_notifications_providers.dart';
 import 'core/startup/cashly_startup_app.dart';
 import 'core/utils/platform_capabilities.dart';
+import 'core/utils/url_strategy.dart';
 import 'firebase_options.dart';
 
 /// Redirects Auth/Firestore to the local Firebase Emulator Suite instead of
@@ -30,10 +30,14 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Public pages use real paths (`/features`, `/download`) rather than hash
   // fragments. Firebase Hosting rewrites those paths to the Flutter shell.
-  if (kIsWeb) usePathUrlStrategy();
+  configureWebUrlStrategy();
+  // Preserve Flutter's existing handler. In production it writes the error
+  // to the console; in widget and integration tests it records the error so
+  // the test fails at the original assertion rather than timing out later.
+  final previousFlutterErrorHandler = FlutterError.onError;
   FlutterError.onError = (details) {
-    FlutterError.presentError(details);
     debugPrint('Cashly Flutter error: ${details.exceptionAsString()}');
+    previousFlutterErrorHandler?.call(details);
   };
   PlatformDispatcher.instance.onError = (error, stackTrace) {
     debugPrint('Cashly uncaught error: ${_sanitizeStartupError(error)}');
@@ -99,7 +103,11 @@ Future<void> initializeRequiredServices() async {
   // must stay off the browser startup path.
   if (AppPlatformCapabilities.supportsCrashReporting) {
     unawaited(_initializeOptionalCrashReporting());
-    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+    final previousFlutterErrorHandler = FlutterError.onError;
+    FlutterError.onError = (details) {
+      FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+      previousFlutterErrorHandler?.call(details);
+    };
     PlatformDispatcher.instance.onError = (error, stack) {
       FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
       return true;

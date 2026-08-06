@@ -2902,6 +2902,71 @@ Next steps:
    minimum Flutter version somewhere, should this project ever want to
    guard against this specific regression recurring on a fresh machine).
 
+### 2026-08-04 — Hosting recovery deploy for the blank login page
+
+The live `/` and `/login` pages were both observed rendering blank before a
+new deploy, so the sign-in issue could not be reached in production. The
+current checked-in release build was then served locally: both the landing
+page and Login screen rendered correctly, including the email/password and
+Google controls.
+
+The guarded website-only deploy script initially stopped before any build or
+remote change because an empty PowerShell pipeline became `$null` under
+`Set-StrictMode`, making `$guardedHits.Count` throw. `tool/deploy_website.ps1`
+now wraps that pipeline in `@(...)`, so an empty result is correctly treated
+as an empty array. A later investigation established that this initial script
+run selected a local `firebase.exe` development wrapper rather than the
+npm-installed Firebase CLI. That wrapper returned success without executing a
+Firebase command, so it did **not** release a Hosting version.
+
+Validation completed before release:
+
+- `flutter analyze` — 0 issues.
+- `flutter test` — 490 passing.
+- `flutter build web --release` — completed successfully.
+- The deploy wrapper reached its nominal release step, but no real Firebase
+  command was run; the actual deployment is recorded below.
+
+The script's final direct HTTP verification could not connect from this
+environment. Browser verification was also blocked by `ERR_TIMED_OUT` on both
+Firebase Hosting domains, so a real-browser render check remains necessary
+once the current network connection is available. No release metadata, APK,
+Firestore rule, or Cloud Function was changed.
+
+### 2026-08-05 — Login-flow regression recovery and deploy
+
+The Windows Firebase Emulator integration test initially exposed two testable
+startup defects: `main.dart` imported the web-only `flutter_web_plugins`
+library on native builds, and the desktop integration test incorrectly looked
+for the web landing page's `Open app` action even though Windows starts at
+Splash and routes directly to Login. The URL strategy is now conditionally
+imported only on web, Flutter error handling preserves the test framework's
+original reporter, and the integration test follows the correct native entry
+flow.
+
+Validation completed:
+
+- `flutter analyze` — 0 issues.
+- `flutter test` — 490 passing.
+- `flutter test integration_test/app_flow_test.dart -d windows
+  --dart-define=USE_FIREBASE_EMULATOR=true` — passed. It registered a fresh
+  emulator account, verified it, created and changed finance data, logged out,
+  and logged in again with its password.
+- `flutter build web --release` — completed successfully.
+
+The first `tool/deploy_website.ps1` run advanced to its live HTTP check, but
+did not actually deploy: Windows command precedence selected
+`C:\src\firebase\firebase.exe`, a development wrapper that returned success
+without invoking Firebase. The script now explicitly selects `firebase.cmd`,
+validates its semantic version, and invokes that exact executable. The
+corrected run used Firebase CLI 15.24.0 and reported `version finalized`,
+`release complete`, and `Deploy complete!` for `hosting[cashly-lao]`.
+
+The final local HTTP check still cannot establish a network connection to the
+Firebase Hosting edge from this environment, so a public-browser refresh is
+the only outstanding external confirmation. The local Firebase emulators used
+by the test were stopped after validation.
+
 ## Product Roadmap
 
 The full staged roadmap — objectives, features, deliverables,
