@@ -147,4 +147,24 @@ void main() {
 
     expect(points.every((p) => p.totalExpenseByCurrency.isEmpty), isTrue);
   });
+
+  test('does not count an own-account transfer as an expense', () {
+    final points = useCase(
+      endMonth: DateTime(2026, 3),
+      monthCount: 1,
+      accounts: [account(id: 'acc-1', currencyCode: 'LAK')],
+      transactions: [
+        transaction(
+          id: 'transfer',
+          accountId: 'acc-1',
+          type: TransactionType.transfer,
+          amount: 500,
+          date: DateTime(2026, 3, 10),
+        ),
+      ],
+    );
+
+    expect(points.single.totalIncomeByCurrency, isEmpty);
+    expect(points.single.totalExpenseByCurrency, isEmpty);
+  });
 }

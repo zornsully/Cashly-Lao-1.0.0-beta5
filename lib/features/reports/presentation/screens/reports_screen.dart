@@ -21,7 +21,6 @@ import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_loading_indicator.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_view.dart';
-import '../../../../core/widgets/month_selector_header.dart';
 import '../../../../core/widgets/responsive_center.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../accounts/domain/entities/account_entity.dart';
@@ -34,11 +33,19 @@ import '../../../transactions/domain/entities/transaction_type.dart';
 import '../../domain/entities/converted_monthly_totals.dart';
 import '../../domain/entities/expense_watch_item.dart';
 import '../../domain/entities/monthly_report.dart';
+import '../../domain/entities/report_filter.dart';
 import '../../domain/entities/report_insights.dart';
+import '../../domain/entities/report_period.dart';
 import '../providers/report_providers.dart';
 import '../widgets/account_pie_chart.dart';
 import '../widgets/category_pie_chart.dart';
 import '../widgets/income_expense_trend_chart.dart';
+
+String _weekRangeLabel(DateTime anchor) {
+  final start = anchor.subtract(Duration(days: anchor.weekday - 1));
+  final end = start.add(const Duration(days: 6));
+  return '${DateFormat.MMMd().format(start)} – ${DateFormat.yMMMd().format(end)}';
+}
 
 class ReportsScreen extends ConsumerWidget {
   const ReportsScreen({super.key});
@@ -47,12 +54,18 @@ class ReportsScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     MonthlyReport report,
+    Map<String, AccountEntity> accountsById,
+    Map<String, CategoryEntity> categoriesById,
   ) async {
     final l10n = AppLocalizations.of(context)!;
     final monthLabel =
         '${report.month.year}-${report.month.month.toString().padLeft(2, '0')}';
-    final csv = ref.read(exportReportToCsvUseCaseProvider)(report);
-    final fileName = 'cashly-report-$monthLabel.csv';
+    final csv = ref.read(exportTransactionsToCsvUseCaseProvider)(
+      transactions: report.transactions,
+      accountsById: accountsById,
+      categoriesById: categoriesById,
+    );
+    final fileName = 'Cashly-Lao-Transactions-$monthLabel.csv';
 
     try {
       await SharePlus.instance.share(
@@ -126,16 +139,51 @@ class ReportsScreen extends ConsumerWidget {
             icon: const Icon(AppSymbols.iosShare),
             tooltip: l10n.exportReportTooltip,
             onPressed: report != null && report.hasAnyActivity
-                ? () => _exportCsv(context, ref, report)
+                ? () => _exportCsv(
+                    context,
+                    ref,
+                    report,
+                    accountsById,
+                    categoriesById,
+                  )
                 : null,
           ),
         ],
-        bottom: MonthSelectorHeader(
-          month: month,
-          onPrevious: () =>
-              ref.read(selectedReportMonthProvider.notifier).previousMonth(),
-          onNext: () =>
-              ref.read(selectedReportMonthProvider.notifier).nextMonth(),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(64),
+          child: _ReportPeriodHeader(
+            anchor: month,
+            filter: filter,
+            onPrevious: () {
+              if (filter.hasCustomRange) {
+                ref.read(reportFilterProvider.notifier).shiftCustomRange(-1);
+              } else {
+                ref
+                    .read(selectedReportMonthProvider.notifier)
+                    .move(filter.period, -1);
+              }
+            },
+            onNext: () {
+              if (filter.hasCustomRange) {
+                ref.read(reportFilterProvider.notifier).shiftCustomRange(1);
+              } else {
+                ref
+                    .read(selectedReportMonthProvider.notifier)
+                    .move(filter.period, 1);
+              }
+            },
+            onPeriodSelected: (period) {
+              if (period == ReportPeriod.custom) {
+                AppBottomSheet.show(
+                  context,
+                  isScrollControlled: true,
+                  builder: (context) => const _ReportFilterSheet(),
+                );
+              } else {
+                ref.read(reportFilterProvider.notifier).setPeriod(period);
+              }
+            },
+          ),
         ),
       ),
       body: ResponsiveCenter(
@@ -182,6 +230,7 @@ class ReportsScreen extends ConsumerWidget {
                   _MonthlySummaryCard(
                     currencyCode: currencyCode,
                     report: report,
+                    accountsById: accountsById,
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   if (insights != null)
@@ -290,7 +339,13 @@ class ReportsScreen extends ConsumerWidget {
                     onSeeAll: () => context.go(AppRoutes.budget),
                   ),
                   for (final progress in report.budgetProgress)
-                    BudgetProgressTile(progress: progress),
+                    BudgetProgressTile(
+                      progress: progress,
+                      onTap: () => context.push(
+                        AppRoutes.budgetEditPath(progress.budget.id),
+                        extra: progress.budget,
+                      ),
+                    ),
                   const SizedBox(height: AppSpacing.lg),
                 ],
                 if (report.transactions.isNotEmpty) ...[
@@ -312,10 +367,15 @@ class ReportsScreen extends ConsumerWidget {
 }
 
 class _MonthlySummaryCard extends StatelessWidget {
-  const _MonthlySummaryCard({required this.currencyCode, required this.report});
+  const _MonthlySummaryCard({
+    required this.currencyCode,
+    required this.report,
+    required this.accountsById,
+  });
 
   final String currencyCode;
   final MonthlyReport report;
+  final Map<String, AccountEntity> accountsById;
 
   @override
   Widget build(BuildContext context) {
@@ -325,6 +385,13 @@ class _MonthlySummaryCard extends StatelessWidget {
     final income = report.totalIncomeByCurrency[currencyCode] ?? 0;
     final expense = report.totalExpenseByCurrency[currencyCode] ?? 0;
     final net = report.netByCurrency[currencyCode] ?? 0;
+    final savings = net > 0 ? net : 0.0;
+    final transactionCount = report.transactions
+        .where(
+          (transaction) =>
+              accountsById[transaction.accountId]?.currencyCode == currencyCode,
+        )
+        .length;
     final semanticColors = AppSemanticColors.of(context);
 
     return Card(
@@ -370,6 +437,14 @@ class _MonthlySummaryCard extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'Savings ${CurrencyFormatter.format(savings, currency)} · '
+              '$transactionCount transaction${transactionCount == 1 ? '' : 's'}',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
           ],
         ),
       ),
@@ -382,6 +457,98 @@ class _MonthlySummaryCard extends StatelessWidget {
 /// [_MonthlySummaryCard]s below it. Clearly labeled as approximate, with
 /// the rates' fetch date and the required data-source attribution, so it's
 /// never mistaken for a live or precise conversion.
+/// The period selector is intentionally owned by the Reports screen instead
+/// of individual cards so a range change refreshes every derived section
+/// from the same Riverpod data source.
+class _ReportPeriodHeader extends StatelessWidget {
+  const _ReportPeriodHeader({
+    required this.anchor,
+    required this.filter,
+    required this.onPrevious,
+    required this.onNext,
+    required this.onPeriodSelected,
+  });
+
+  final DateTime anchor;
+  final ReportFilter filter;
+  final VoidCallback onPrevious;
+  final VoidCallback onNext;
+  final ValueChanged<ReportPeriod> onPeriodSelected;
+
+  String get _rangeLabel {
+    if (filter.hasCustomRange) {
+      return '${DateFormat.MMMd().format(filter.customRangeStart!)} – '
+          '${DateFormat.yMMMd().format(filter.customRangeEndExclusive!.subtract(const Duration(days: 1)))}';
+    }
+    return switch (filter.period) {
+      ReportPeriod.today => DateFormat.yMMMd().format(anchor),
+      ReportPeriod.week => _weekRangeLabel(anchor),
+      ReportPeriod.month => DateFormat.yMMMM().format(anchor),
+      ReportPeriod.year => DateFormat.y().format(anchor),
+      ReportPeriod.custom => 'Choose a custom range',
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        0,
+        AppSpacing.md,
+        AppSpacing.sm,
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(AppSymbols.chevronLeft),
+            tooltip: 'Previous period',
+            onPressed: onPrevious,
+          ),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                DropdownButtonHideUnderline(
+                  child: DropdownButton<ReportPeriod>(
+                    value: filter.period,
+                    isDense: true,
+                    alignment: Alignment.center,
+                    items: [
+                      for (final period in ReportPeriod.values)
+                        DropdownMenuItem(
+                          value: period,
+                          child: Text(period.label),
+                        ),
+                    ],
+                    onChanged: (period) {
+                      if (period != null) onPeriodSelected(period);
+                    },
+                  ),
+                ),
+                Text(
+                  _rangeLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(AppSymbols.chevronRight),
+            tooltip: 'Next period',
+            onPressed: onNext,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ConvertedTotalsCard extends StatelessWidget {
   const _ConvertedTotalsCard({required this.totals});
 
@@ -831,6 +998,10 @@ class _ReportTransactionTile extends StatelessWidget {
     ];
 
     return AppCard(
+      onTap: () => context.push(
+        AppRoutes.transactionEditPath(transaction.id),
+        extra: transaction,
+      ),
       margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
@@ -1019,6 +1190,23 @@ class _ReportFilterSheet extends ConsumerWidget {
               ),
           ],
           onChanged: notifier.setAccountId,
+        ),
+        const SizedBox(height: AppSpacing.md),
+        DropdownButtonFormField<String?>(
+          initialValue: filter.currencyCode,
+          isExpanded: true,
+          decoration: InputDecoration(labelText: l10n.currencyLabel),
+          items: [
+            const DropdownMenuItem(value: null, child: Text('All currencies')),
+            for (final currencyCode
+                in (accounts
+                    .map((account) => account.currencyCode)
+                    .toSet()
+                    .toList()
+                  ..sort()))
+              DropdownMenuItem(value: currencyCode, child: Text(currencyCode)),
+          ],
+          onChanged: notifier.setCurrencyCode,
         ),
         const SizedBox(height: AppSpacing.md),
         DropdownButtonFormField<String?>(

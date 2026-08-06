@@ -15,6 +15,7 @@ import 'core/providers/fcm_background_handler.dart';
 import 'core/providers/local_notifications_providers.dart';
 import 'core/startup/cashly_startup_app.dart';
 import 'core/utils/platform_capabilities.dart';
+import 'core/utils/url_strategy.dart';
 import 'firebase_options.dart';
 
 /// Redirects Auth/Firestore to the local Firebase Emulator Suite instead of
@@ -27,9 +28,16 @@ const bool _useFirebaseEmulator = bool.fromEnvironment('USE_FIREBASE_EMULATOR');
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Public pages use real paths (`/features`, `/download`) rather than hash
+  // fragments. Firebase Hosting rewrites those paths to the Flutter shell.
+  configureWebUrlStrategy();
+  // Preserve Flutter's existing handler. In production it writes the error
+  // to the console; in widget and integration tests it records the error so
+  // the test fails at the original assertion rather than timing out later.
+  final previousFlutterErrorHandler = FlutterError.onError;
   FlutterError.onError = (details) {
-    FlutterError.presentError(details);
     debugPrint('Cashly Flutter error: ${details.exceptionAsString()}');
+    previousFlutterErrorHandler?.call(details);
   };
   PlatformDispatcher.instance.onError = (error, stackTrace) {
     debugPrint('Cashly uncaught error: ${_sanitizeStartupError(error)}');
@@ -41,9 +49,7 @@ Future<void> main() async {
     // slow or unavailable. Begin Firebase setup before the router subscribes
     // to Auth, but do not await it before rendering the public shell.
     final webServicesReady = initializeRequiredServices();
-    runApp(
-      ProviderScope(child: CashlyApp(webServicesReady: webServicesReady)),
-    );
+    runApp(ProviderScope(child: CashlyApp(webServicesReady: webServicesReady)));
     unawaited(_reportWebServiceInitialization(webServicesReady));
     return;
   }
@@ -57,11 +63,15 @@ Future<void> main() async {
   );
 }
 
-Future<void> _reportWebServiceInitialization(Future<void> initialization) async {
+Future<void> _reportWebServiceInitialization(
+  Future<void> initialization,
+) async {
   try {
     await initialization;
   } catch (error, stackTrace) {
-    debugPrint('FAILED: web Firebase services — ${_sanitizeStartupError(error)}');
+    debugPrint(
+      'FAILED: web Firebase services — ${_sanitizeStartupError(error)}',
+    );
     debugPrintStack(stackTrace: stackTrace);
   }
 }
@@ -72,9 +82,12 @@ Future<void> _reportWebServiceInitialization(Future<void> initialization) async 
 /// particular, browser analytics may wait on a remote configuration request;
 /// waiting for it before [runApp] previously produced a blank web page.
 Future<void> initializeRequiredServices() async {
-  await _runStartupStep('firebase-initialization', () => Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      ).timeout(const Duration(seconds: 15)));
+  await _runStartupStep(
+    'firebase-initialization',
+    () => Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    ).timeout(const Duration(seconds: 15)),
+  );
   debugPrint('START: firestore-offline-cache');
   _configureFirestoreOfflineCache();
   debugPrint('SUCCESS: firestore-offline-cache');
@@ -95,7 +108,11 @@ Future<void> initializeRequiredServices() async {
   // must stay off the browser startup path.
   if (AppPlatformCapabilities.supportsCrashReporting) {
     unawaited(_initializeOptionalCrashReporting());
-    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+    final previousFlutterErrorHandler = FlutterError.onError;
+    FlutterError.onError = (details) {
+      FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+      previousFlutterErrorHandler?.call(details);
+    };
     PlatformDispatcher.instance.onError = (error, stack) {
       FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
       return true;
@@ -130,8 +147,14 @@ String _sanitizeStartupError(Object error) {
   return error
       .toString()
       .replaceAll(RegExp(r'AIza[0-9A-Za-z_-]{20,}'), '[redacted-api-key]')
-      .replaceAll(RegExp(r'Bearer\\s+[^\\s]+', caseSensitive: false), 'Bearer [redacted]')
-      .replaceAll(RegExp(r'(token|idToken|accessToken)=([^&\\s]+)', caseSensitive: false), r'$1=[redacted]');
+      .replaceAll(
+        RegExp(r'Bearer\\s+[^\\s]+', caseSensitive: false),
+        'Bearer [redacted]',
+      )
+      .replaceAll(
+        RegExp(r'(token|idToken|accessToken)=([^&\\s]+)', caseSensitive: false),
+        r'$1=[redacted]',
+      );
 }
 
 class StartupFailure implements Exception {

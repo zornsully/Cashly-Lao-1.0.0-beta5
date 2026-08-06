@@ -17,6 +17,7 @@ class BuildBudgetProgressUseCase {
   /// PROJECT_PROGRESS.md for why budgets don't mix currencies.
   List<BudgetProgress> call({
     required List<BudgetEntity> budgets,
+    required DateTime month,
     required List<TransactionEntity> monthTransactions,
     required List<AccountEntity> accounts,
     required List<CategoryEntity> categories,
@@ -28,8 +29,18 @@ class BuildBudgetProgressUseCase {
 
     // categoryId -> currency -> amount spent
     final spentByCategoryAndCurrency = <String, Map<String, double>>{};
+    final normalizedMonth = DateTime(month.year, month.month);
     for (final transaction in monthTransactions) {
       if (transaction.type != TransactionType.expense) continue;
+      if (transaction.categoryId == null || transaction.categoryId!.isEmpty) {
+        continue;
+      }
+      if (transaction.date.year != normalizedMonth.year ||
+          transaction.date.month != normalizedMonth.month ||
+          !transaction.amount.isFinite ||
+          transaction.amount <= 0) {
+        continue;
+      }
       final account = accountsById[transaction.accountId];
       if (account == null) continue; // see Sprint 4's known limitation
 
@@ -48,15 +59,20 @@ class BuildBudgetProgressUseCase {
 
     return [
       for (final budget in budgets)
-        if (categoriesById[budget.categoryId] case final category?)
-          BudgetProgress(
-            budget: budget,
-            category: category,
-            spentAmount:
-                spentByCategoryAndCurrency[budget.categoryId]?[budget
-                    .currencyCode] ??
-                0,
-          ),
+        if (budget.month.year == normalizedMonth.year &&
+            budget.month.month == normalizedMonth.month &&
+            budget.limitAmount.isFinite &&
+            budget.limitAmount > 0)
+          if (categoriesById[budget.categoryId]
+              case final CategoryEntity category)
+            BudgetProgress(
+              budget: budget,
+              category: category,
+              spentAmount:
+                  spentByCategoryAndCurrency[budget.categoryId]?[budget
+                      .currencyCode] ??
+                  0,
+            ),
     ];
   }
 }

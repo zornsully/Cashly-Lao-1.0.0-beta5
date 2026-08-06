@@ -3,7 +3,13 @@
 abstract final class AppRoutes {
   /// Public product site. This stays outside the authenticated app shell.
   static const String landing = '/';
-  static const String privacy = '/privacy';
+  static const String features = '/features';
+  static const String screenshots = '/screenshots';
+  static const String download = '/download';
+  static const String privacy = '/privacy-policy';
+
+  /// Kept only so old links continue to work after the public-site split.
+  static const String legacyPrivacy = '/privacy';
   static const String terms = '/terms';
 
   static const String splash = '/splash';

@@ -208,12 +208,14 @@ void main() {
     final notifier = container.read(reportFilterProvider.notifier);
     notifier.setAccountId('acc-1');
     notifier.setCategoryId('food');
+    notifier.setCurrencyCode('LAK');
     notifier.clear();
 
     final filter = container.read(reportFilterProvider);
     expect(filter.isActive, isFalse);
     expect(filter.accountId, isNull);
     expect(filter.categoryId, isNull);
+    expect(filter.currencyCode, isNull);
   });
 }
 

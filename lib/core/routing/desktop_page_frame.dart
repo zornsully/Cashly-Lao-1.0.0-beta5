@@ -166,7 +166,9 @@ class _RouteDestination extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Material(
-        color: selected ? scheme.primary.withValues(alpha: 0.10) : Colors.transparent,
+        color: selected
+            ? scheme.primary.withValues(alpha: 0.10)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),

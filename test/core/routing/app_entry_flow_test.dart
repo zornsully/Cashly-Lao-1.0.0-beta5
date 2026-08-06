@@ -28,6 +28,21 @@ void main() {
     );
   });
 
+  test('web exposes every public marketing page as a direct route', () {
+    for (final route in [
+      AppRoutes.features,
+      AppRoutes.screenshots,
+      AppRoutes.download,
+      AppRoutes.privacy,
+    ]) {
+      expect(isMarketingRouteAvailable(isWeb: true, location: route), isTrue);
+      expect(
+        appInitialLocationForPlatform(isWeb: true, browserLocation: route),
+        route,
+      );
+    }
+  });
+
   test('native apps start at the auth gate instead of the landing page', () {
     expect(appInitialLocationForPlatform(isWeb: false), AppRoutes.splash);
     expect(
@@ -38,10 +53,7 @@ void main() {
 
   test('web never leaves an unresolved session on the native splash route', () {
     expect(
-      pendingAuthRedirectForPlatform(
-        isWeb: true,
-        location: AppRoutes.splash,
-      ),
+      pendingAuthRedirectForPlatform(isWeb: true, location: AppRoutes.splash),
       AppRoutes.login,
     );
     expect(
@@ -55,10 +67,7 @@ void main() {
 
   test('native keeps its splash route while restoring authentication', () {
     expect(
-      pendingAuthRedirectForPlatform(
-        isWeb: false,
-        location: AppRoutes.splash,
-      ),
+      pendingAuthRedirectForPlatform(isWeb: false, location: AppRoutes.splash),
       isNull,
     );
   });

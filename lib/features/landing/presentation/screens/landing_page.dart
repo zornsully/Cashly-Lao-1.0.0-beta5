@@ -13,11 +13,28 @@ import '../../domain/services/release_manifest_service.dart';
 /// It intentionally lives outside the authenticated app shell: visitors can
 /// learn about Cashly and download the Android release without an account.
 class LandingPage extends StatefulWidget {
-  const LandingPage({super.key, this.releaseManifestService});
+  const LandingPage({super.key, this.releaseManifestService})
+    : _page = _PublicSitePage.home;
+
+  const LandingPage.features({super.key})
+    : _page = _PublicSitePage.features,
+      releaseManifestService = null;
+
+  const LandingPage.screenshots({super.key})
+    : _page = _PublicSitePage.screenshots,
+      releaseManifestService = null;
+
+  const LandingPage.download({super.key, this.releaseManifestService})
+    : _page = _PublicSitePage.download;
+
+  const LandingPage.privacy({super.key})
+    : _page = _PublicSitePage.privacy,
+      releaseManifestService = null;
 
   /// Allows focused UI tests and a future release provider to supply metadata
   /// without coupling the landing page to a particular delivery channel.
   final ReleaseManifestService? releaseManifestService;
+  final _PublicSitePage _page;
 
   @override
   State<LandingPage> createState() => _LandingPageState();
@@ -30,11 +47,6 @@ class _LandingPageState extends State<LandingPage> {
     queryParameters: const {'subject': 'Cashly Lao support'},
   );
 
-  final _scrollController = ScrollController();
-  final _featuresKey = GlobalKey();
-  final _screenshotsKey = GlobalKey();
-  final _downloadKey = GlobalKey();
-  final _faqKey = GlobalKey();
   late final ReleaseManifestService _releaseManifestService;
   late Future<ReleaseManifest> _releaseManifestFuture;
 
@@ -44,23 +56,6 @@ class _LandingPageState extends State<LandingPage> {
     _releaseManifestService =
         widget.releaseManifestService ?? HostedReleaseManifestService();
     _releaseManifestFuture = _releaseManifestService.loadLatest();
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  void _scrollTo(GlobalKey key) {
-    final sectionContext = key.currentContext;
-    if (sectionContext == null) return;
-    Scrollable.ensureVisible(
-      sectionContext,
-      duration: const Duration(milliseconds: 650),
-      curve: Curves.easeOutCubic,
-      alignment: .08,
-    );
   }
 
   void _retryReleaseManifest() {
@@ -101,21 +96,8 @@ class _LandingPageState extends State<LandingPage> {
     }
   }
 
-  void _navigate(_LandingDestination destination) {
-    switch (destination) {
-      case _LandingDestination.features:
-        _scrollTo(_featuresKey);
-        return;
-      case _LandingDestination.screenshots:
-        _scrollTo(_screenshotsKey);
-        return;
-      case _LandingDestination.download:
-        _scrollTo(_downloadKey);
-        return;
-      case _LandingDestination.privacy:
-        context.go(AppRoutes.privacy);
-        return;
-    }
+  void _navigate(_PublicSitePage page) {
+    context.go(page.path);
   }
 
   @override
@@ -124,101 +106,90 @@ class _LandingPageState extends State<LandingPage> {
       backgroundColor: _LandingColors.canvas,
       body: SafeArea(
         bottom: false,
-        child: Scrollbar(
-          controller: _scrollController,
-          child: ListView(
-            controller: _scrollController,
-            padding: EdgeInsets.zero,
-            children: [
-              _LandingNavigation(
-                onNavigate: _navigate,
-                onOpenApp: () => context.go(AppRoutes.dashboard),
-              ),
-              FutureBuilder<ReleaseManifest>(
-                future: _releaseManifestFuture,
-                builder: (context, snapshot) {
-                  final manifest = snapshot.data;
-                  final isLoading =
-                      snapshot.connectionState != ConnectionState.done &&
-                      !snapshot.hasError;
-                  final loadErrorMessage = snapshot.hasError
-                      ? _releaseLoadErrorMessage(snapshot.error)
-                      : null;
-                  return _LandingShell(
-                    child: Column(
-                      children: [
-                        _FadeInUp(
-                          delay: const Duration(milliseconds: 40),
-                          child: _HeroSection(
-                            releaseManifest: manifest,
-                            isLoading: isLoading,
-                            hasLoadError: snapshot.hasError,
-                            loadErrorMessage: loadErrorMessage,
-                            onOpenRelease: _openRelease,
-                            onRetry: _retryReleaseManifest,
-                          ),
-                        ),
-                        KeyedSubtree(
-                          key: _featuresKey,
-                          child: _FadeInUp(
-                            delay: const Duration(milliseconds: 100),
-                            child: const _FeaturesSection(),
-                          ),
-                        ),
-                        KeyedSubtree(
-                          key: _screenshotsKey,
-                          child: _FadeInUp(
-                            delay: const Duration(milliseconds: 160),
-                            child: const _ScreenshotsSection(),
-                          ),
-                        ),
-                        KeyedSubtree(
-                          key: _downloadKey,
-                          child: _FadeInUp(
-                            delay: const Duration(milliseconds: 220),
-                            child: _ApkDownloadSection(
-                              release: manifest?.releaseFor(
-                                ReleasePlatform.android,
-                              ),
-                              manifest: manifest,
-                              isLoading: isLoading,
-                              hasLoadError: snapshot.hasError,
-                              loadErrorMessage: loadErrorMessage,
-                              onOpenRelease: _openRelease,
-                              onRetry: _retryReleaseManifest,
-                            ),
-                          ),
-                        ),
-                        if ((manifest?.history.isNotEmpty ?? false))
-                          _FadeInUp(
-                            key: const ValueKey('versionHistorySection'),
-                            delay: const Duration(milliseconds: 250),
-                            child: _VersionHistorySection(
-                              history: manifest!.history,
-                            ),
-                          ),
-                        KeyedSubtree(
-                          key: _faqKey,
-                          child: _FadeInUp(
-                            delay: const Duration(milliseconds: 280),
-                            child: const _FaqSection(),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-              _LandingFooter(
-                onPrivacy: () => context.go(AppRoutes.privacy),
-                onTerms: () => context.go(AppRoutes.terms),
-                onContact: _contact,
-                onFaq: () => _scrollTo(_faqKey),
-              ),
-            ],
-          ),
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            _LandingNavigation(
+              currentPage: widget._page,
+              onNavigate: _navigate,
+              onOpenApp: () => context.go(AppRoutes.dashboard),
+            ),
+            _buildPage(),
+            _LandingFooter(
+              onPrivacy: () => context.go(AppRoutes.privacy),
+              onTerms: () => context.go(AppRoutes.terms),
+              onContact: _contact,
+              onFeatures: () => context.go(AppRoutes.features),
+            ),
+          ],
         ),
       ),
+    );
+  }
+
+  Widget _buildPage() {
+    if (widget._page == _PublicSitePage.features) {
+      return const _LandingShell(
+        child: _PublicSiteBody(child: _FeaturesSection()),
+      );
+    }
+    if (widget._page == _PublicSitePage.screenshots) {
+      return const _LandingShell(
+        child: _PublicSiteBody(child: _ScreenshotsSection()),
+      );
+    }
+    if (widget._page == _PublicSitePage.privacy) {
+      return const _LandingShell(
+        child: _PublicSiteBody(child: _PrivacyPolicySection()),
+      );
+    }
+
+    return FutureBuilder<ReleaseManifest>(
+      future: _releaseManifestFuture,
+      builder: (context, snapshot) {
+        final manifest = snapshot.data;
+        final isLoading =
+            snapshot.connectionState != ConnectionState.done &&
+            !snapshot.hasError;
+        final errorMessage = snapshot.hasError
+            ? _releaseLoadErrorMessage(snapshot.error)
+            : null;
+        final isDownloadPage = widget._page == _PublicSitePage.download;
+        return _LandingShell(
+          child: _PublicSiteBody(
+            child: isDownloadPage
+                ? Column(
+                    children: [
+                      _ApkDownloadSection(
+                        release: manifest?.releaseFor(ReleasePlatform.android),
+                        manifest: manifest,
+                        isLoading: isLoading,
+                        hasLoadError: snapshot.hasError,
+                        loadErrorMessage: errorMessage,
+                        onOpenRelease: _openRelease,
+                        onRetry: _retryReleaseManifest,
+                      ),
+                      if ((manifest?.history.isNotEmpty ?? false))
+                        _VersionHistorySection(history: manifest!.history),
+                      const _FaqSection(),
+                    ],
+                  )
+                : Column(
+                    children: [
+                      _HeroSection(
+                        releaseManifest: manifest,
+                        isLoading: isLoading,
+                        hasLoadError: snapshot.hasError,
+                        loadErrorMessage: errorMessage,
+                        onOpenRelease: _openRelease,
+                        onRetry: _retryReleaseManifest,
+                      ),
+                      _HomePreviewLinks(onNavigate: _navigate),
+                    ],
+                  ),
+          ),
+        );
+      },
     );
   }
 }
@@ -228,7 +199,17 @@ String _releaseLoadErrorMessage(Object? error) {
   return 'Release details are temporarily unavailable.';
 }
 
-enum _LandingDestination { features, screenshots, download, privacy }
+enum _PublicSitePage { home, features, screenshots, download, privacy }
+
+extension on _PublicSitePage {
+  String get path => switch (this) {
+    _PublicSitePage.home => AppRoutes.landing,
+    _PublicSitePage.features => AppRoutes.features,
+    _PublicSitePage.screenshots => AppRoutes.screenshots,
+    _PublicSitePage.download => AppRoutes.download,
+    _PublicSitePage.privacy => AppRoutes.privacy,
+  };
+}
 
 abstract final class _LandingColors {
   static const canvas = Color(0xFFFBFCFB);
@@ -261,9 +242,14 @@ class _LandingShell extends StatelessWidget {
 }
 
 class _LandingNavigation extends StatelessWidget {
-  const _LandingNavigation({required this.onNavigate, required this.onOpenApp});
+  const _LandingNavigation({
+    required this.currentPage,
+    required this.onNavigate,
+    required this.onOpenApp,
+  });
 
-  final ValueChanged<_LandingDestination> onNavigate;
+  final _PublicSitePage currentPage;
+  final ValueChanged<_PublicSitePage> onNavigate;
   final VoidCallback onOpenApp;
 
   @override
@@ -319,46 +305,61 @@ class _LandingNavigation extends StatelessWidget {
                     const SizedBox(width: 8),
                     if (!compact) ...[
                       _NavTextButton(
+                        label: 'Home',
+                        active: currentPage == _PublicSitePage.home,
+                        onPressed: () => onNavigate(_PublicSitePage.home),
+                      ),
+                      _NavTextButton(
                         label: 'Features',
-                        onPressed: () =>
-                            onNavigate(_LandingDestination.features),
+                        active: currentPage == _PublicSitePage.features,
+                        onPressed: () => onNavigate(_PublicSitePage.features),
                       ),
                       _NavTextButton(
                         label: 'Screenshots',
+                        active: currentPage == _PublicSitePage.screenshots,
                         onPressed: () =>
-                            onNavigate(_LandingDestination.screenshots),
+                            onNavigate(_PublicSitePage.screenshots),
                       ),
                       _NavTextButton(
                         label: 'Download',
-                        onPressed: () =>
-                            onNavigate(_LandingDestination.download),
+                        active: currentPage == _PublicSitePage.download,
+                        onPressed: () => onNavigate(_PublicSitePage.download),
                       ),
                       _NavTextButton(
                         label: 'Privacy Policy',
-                        onPressed: () =>
-                            onNavigate(_LandingDestination.privacy),
+                        active: currentPage == _PublicSitePage.privacy,
+                        onPressed: () => onNavigate(_PublicSitePage.privacy),
                       ),
                       const SizedBox(width: 6),
                     ] else
-                      PopupMenuButton<_LandingDestination>(
+                      PopupMenuButton<_PublicSitePage>(
                         tooltip: 'Open navigation',
                         icon: const Icon(Icons.menu_rounded),
                         onSelected: onNavigate,
-                        itemBuilder: (context) => const [
-                          PopupMenuItem(
-                            value: _LandingDestination.features,
+                        itemBuilder: (context) => [
+                          CheckedPopupMenuItem(
+                            value: _PublicSitePage.home,
+                            checked: currentPage == _PublicSitePage.home,
+                            child: Text('Home'),
+                          ),
+                          CheckedPopupMenuItem(
+                            value: _PublicSitePage.features,
+                            checked: currentPage == _PublicSitePage.features,
                             child: Text('Features'),
                           ),
-                          PopupMenuItem(
-                            value: _LandingDestination.screenshots,
+                          CheckedPopupMenuItem(
+                            value: _PublicSitePage.screenshots,
+                            checked: currentPage == _PublicSitePage.screenshots,
                             child: Text('Screenshots'),
                           ),
-                          PopupMenuItem(
-                            value: _LandingDestination.download,
+                          CheckedPopupMenuItem(
+                            value: _PublicSitePage.download,
+                            checked: currentPage == _PublicSitePage.download,
                             child: Text('Download'),
                           ),
-                          PopupMenuItem(
-                            value: _LandingDestination.privacy,
+                          CheckedPopupMenuItem(
+                            value: _PublicSitePage.privacy,
+                            checked: currentPage == _PublicSitePage.privacy,
                             child: Text('Privacy Policy'),
                           ),
                         ],
@@ -404,22 +405,231 @@ class _LandingNavigation extends StatelessWidget {
 }
 
 class _NavTextButton extends StatelessWidget {
-  const _NavTextButton({required this.label, required this.onPressed});
+  const _NavTextButton({
+    required this.label,
+    required this.onPressed,
+    this.active = false,
+  });
 
   final String label;
   final VoidCallback onPressed;
+  final bool active;
 
   @override
   Widget build(BuildContext context) {
     return TextButton(
       onPressed: onPressed,
       style: TextButton.styleFrom(
-        foregroundColor: _LandingColors.mutedInk,
+        foregroundColor: active
+            ? _LandingColors.greenDark
+            : _LandingColors.mutedInk,
+        backgroundColor: active ? _LandingColors.greenTint : null,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       ),
-      child: Text(label),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontWeight: active ? FontWeight.w800 : FontWeight.w600,
+        ),
+      ),
     );
   }
+}
+
+/// Gives every public page the same breathing room while allowing the home
+/// page to remain intentionally short.
+class _PublicSiteBody extends StatelessWidget {
+  const _PublicSiteBody({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) =>
+      _FadeInUp(delay: const Duration(milliseconds: 40), child: child);
+}
+
+class _HomePreviewLinks extends StatelessWidget {
+  const _HomePreviewLinks({required this.onNavigate});
+
+  final ValueChanged<_PublicSitePage> onNavigate;
+
+  @override
+  Widget build(BuildContext context) {
+    const links = [
+      (
+        page: _PublicSitePage.features,
+        icon: Icons.auto_awesome_rounded,
+        title: 'Explore features',
+        text: 'See the tools that keep your money organized.',
+      ),
+      (
+        page: _PublicSitePage.screenshots,
+        icon: Icons.photo_library_outlined,
+        title: 'View screenshots',
+        text: 'Preview the calm, focused app experience.',
+      ),
+      (
+        page: _PublicSitePage.download,
+        icon: Icons.download_rounded,
+        title: 'Get Cashly Lao',
+        text: 'Find the latest verified release details.',
+      ),
+    ];
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final columns = constraints.maxWidth >= 820 ? 3 : 1;
+          return GridView.count(
+            crossAxisCount: columns,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisSpacing: 18,
+            mainAxisSpacing: 14,
+            childAspectRatio: columns == 1 ? 3.2 : 1.18,
+            children: links
+                .map(
+                  (link) => _HomePreviewCard(
+                    icon: link.icon,
+                    title: link.title,
+                    text: link.text,
+                    onTap: () => onNavigate(link.page),
+                  ),
+                )
+                .toList(),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _HomePreviewCard extends StatelessWidget {
+  const _HomePreviewCard({
+    required this.icon,
+    required this.title,
+    required this.text,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String text;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(22),
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(22),
+      child: Container(
+        padding: const EdgeInsets.all(22),
+        decoration: BoxDecoration(
+          border: Border.all(color: _LandingColors.line),
+          borderRadius: BorderRadius.circular(22),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: _LandingColors.green, size: 27),
+            const SizedBox(height: 18),
+            Text(
+              title,
+              style: const TextStyle(
+                color: _LandingColors.ink,
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 7),
+            Text(
+              text,
+              style: const TextStyle(
+                color: _LandingColors.mutedInk,
+                height: 1.4,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _PrivacyPolicySection extends StatelessWidget {
+  const _PrivacyPolicySection();
+
+  @override
+  Widget build(BuildContext context) => _LandingSection(
+    eyebrow: 'Privacy policy',
+    title: 'Your financial life is private by design.',
+    description:
+        'Effective August 2026. This policy explains how Cashly Lao handles the information needed to provide the app.',
+    child: const Column(
+      children: [
+        _PolicyCard(
+          title: 'Information we use',
+          text:
+              'Cashly Lao stores the account, transaction, budget, category, and profile information you choose to enter so the app can provide personal finance features and secure cloud sync.',
+        ),
+        _PolicyCard(
+          title: 'How we use it',
+          text:
+              'Your information is used only to run the app, secure your account, synchronize your data across your devices, provide support, and improve reliability. We do not sell or rent your personal information.',
+        ),
+        _PolicyCard(
+          title: 'Your choices',
+          text:
+              'You can edit your finance records in the app and request account deletion. For privacy questions or help deleting data, email contact@cashlylao.com.',
+        ),
+      ],
+    ),
+  );
+}
+
+class _PolicyCard extends StatelessWidget {
+  const _PolicyCard({required this.title, required this.text});
+
+  final String title;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    margin: const EdgeInsets.only(bottom: 16),
+    padding: const EdgeInsets.all(24),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(22),
+      border: Border.all(color: _LandingColors.line),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: _LandingColors.ink,
+            fontSize: 19,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          text,
+          style: const TextStyle(
+            color: _LandingColors.mutedInk,
+            height: 1.55,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _HeroSection extends StatelessWidget {
@@ -1951,13 +2161,13 @@ class _LandingFooter extends StatelessWidget {
     required this.onPrivacy,
     required this.onTerms,
     required this.onContact,
-    required this.onFaq,
+    required this.onFeatures,
   });
 
   final VoidCallback onPrivacy;
   final VoidCallback onTerms;
   final VoidCallback onContact;
-  final VoidCallback onFaq;
+  final VoidCallback onFeatures;
 
   @override
   Widget build(BuildContext context) {
@@ -1991,7 +2201,7 @@ class _LandingFooter extends StatelessWidget {
                 _FooterLink(label: 'Privacy Policy', onPressed: onPrivacy),
                 _FooterLink(label: 'Terms of Service', onPressed: onTerms),
                 _FooterLink(label: 'Contact', onPressed: onContact),
-                _FooterLink(label: 'FAQ', onPressed: onFaq),
+                _FooterLink(label: 'Features', onPressed: onFeatures),
                 const _FooterLink(label: 'Facebook - coming soon'),
               ],
             );
@@ -2052,7 +2262,7 @@ class _FooterLink extends StatelessWidget {
 }
 
 class _FadeInUp extends StatefulWidget {
-  const _FadeInUp({required this.child, required this.delay, super.key});
+  const _FadeInUp({required this.child, required this.delay});
 
   final Widget child;
   final Duration delay;

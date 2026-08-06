@@ -28,7 +28,6 @@ void main() {
     expect(find.text('Windows'), findsOneWidget);
     expect(find.text('Mac'), findsOneWidget);
     expect(find.text('v1.0.1'), findsOneWidget);
-    expect(find.text('Latest release'), findsOneWidget);
     expect(find.text('Coming soon'), findsNWidgets(3));
     final androidPosition = tester.getTopLeft(find.text('Android'));
     final iosPosition = tester.getTopLeft(find.text('iOS'));
@@ -40,25 +39,11 @@ void main() {
     expect(androidPosition.dx, lessThan(iosPosition.dx));
     expect(iosPosition.dx, lessThan(windowsPosition.dx));
     expect(windowsPosition.dx, lessThan(macPosition.dx));
-    expect(find.text('Expense Tracking'), findsOneWidget);
-    expect(find.text('Financial Insights'), findsOneWidget);
-    expect(find.text('Budgets'), findsNWidgets(2));
-    expect(find.text('Accounts'), findsNWidgets(2));
-    expect(find.text('Goals'), findsNWidgets(2));
-    expect(find.text('Private and Secure'), findsOneWidget);
-    expect(find.text('Version 1.0.1'), findsOneWidget);
-    expect(find.text('Android 7.0+'), findsOneWidget);
-    expect(find.text('View full release notes on GitHub →'), findsOneWidget);
-    expect(find.text('Is Cashly Lao free?'), findsOneWidget);
-    expect(find.text('Which platforms are supported?'), findsOneWidget);
-    expect(
-      find.text('How is the Smart Money Score calculated?'),
-      findsOneWidget,
-    );
-    expect(
-      find.text('Where can I download the latest release?'),
-      findsOneWidget,
-    );
+    expect(find.text('Explore features'), findsOneWidget);
+    expect(find.text('View screenshots'), findsOneWidget);
+    expect(find.text('Get Cashly Lao'), findsOneWidget);
+    expect(find.text('Expense Tracking'), findsNothing);
+    expect(find.text('Where can I download the latest release?'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -118,7 +103,6 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.text('Refresh release details'), findsOneWidget);
     expect(find.text('Retry'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -131,7 +115,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: LandingPage(
+        home: LandingPage.download(
           releaseManifestService: _StaticReleaseManifestService(
             history: [
               ReleaseHistoryEntry(
@@ -206,8 +190,34 @@ void main() {
 
     expect(find.text('Release channel unavailable.'), findsWidgets);
     expect(find.text('Retry'), findsOneWidget);
-    expect(find.text('Try again'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('renders each marketing detail page independently', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: LandingPage.features()));
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Expense Tracking'), findsOneWidget);
+    expect(
+      find.text('A beautiful view of your everyday finances.'),
+      findsNothing,
+    );
+
+    await tester.pumpWidget(const MaterialApp(home: LandingPage.screenshots()));
+    await tester.pump(const Duration(seconds: 1));
+    expect(
+      find.text('A beautiful view of your everyday finances.'),
+      findsOneWidget,
+    );
+    expect(find.text('Expense Tracking'), findsNothing);
+
+    await tester.pumpWidget(const MaterialApp(home: LandingPage.privacy()));
+    await tester.pump(const Duration(seconds: 1));
+    expect(
+      find.text('Your financial life is private by design.'),
+      findsOneWidget,
+    );
   });
 }
 

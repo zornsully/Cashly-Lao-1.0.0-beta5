@@ -149,6 +149,12 @@ void main() {
       expect(Validators.amount(context, 'abc'), isNotNull);
     });
 
+    testWidgets('rejects NaN and infinity', (tester) async {
+      final context = await _pumpContext(tester);
+      expect(Validators.amount(context, 'NaN'), isNotNull);
+      expect(Validators.amount(context, 'Infinity'), isNotNull);
+    });
+
     testWidgets('accepts positive, negative, and decimal numbers', (
       tester,
     ) async {
@@ -174,6 +180,12 @@ void main() {
       final context = await _pumpContext(tester);
       expect(Validators.positiveAmount(context, '0'), isNotNull);
       expect(Validators.positiveAmount(context, '-10'), isNotNull);
+    });
+
+    testWidgets('rejects NaN and infinity', (tester) async {
+      final context = await _pumpContext(tester);
+      expect(Validators.positiveAmount(context, 'NaN'), isNotNull);
+      expect(Validators.positiveAmount(context, 'Infinity'), isNotNull);
     });
 
     testWidgets('accepts positive decimal amounts', (tester) async {

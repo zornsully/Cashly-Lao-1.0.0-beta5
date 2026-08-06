@@ -89,6 +89,7 @@ void main() {
 
     final result = useCase(
       budgets: budgets,
+      month: DateTime(2026, 3),
       monthTransactions: transactions,
       accounts: accounts,
       categories: categories,
@@ -111,6 +112,7 @@ void main() {
 
     final result = useCase(
       budgets: budgets,
+      month: DateTime(2026, 3),
       monthTransactions: transactions,
       accounts: accounts,
       categories: categories,
@@ -140,6 +142,7 @@ void main() {
 
     final result = useCase(
       budgets: budgets,
+      month: DateTime(2026, 3),
       monthTransactions: transactions,
       accounts: accounts,
       categories: categories,
@@ -168,6 +171,7 @@ void main() {
 
     final result = useCase(
       budgets: budgets,
+      month: DateTime(2026, 3),
       monthTransactions: transactions,
       accounts: accounts,
       categories: categories,
@@ -181,6 +185,7 @@ void main() {
 
     final result = useCase(
       budgets: budgets,
+      month: DateTime(2026, 3),
       monthTransactions: const [],
       accounts: const [],
       categories: const [],
@@ -196,6 +201,7 @@ void main() {
 
     final result = useCase(
       budgets: budgets,
+      month: DateTime(2026, 3),
       monthTransactions: const [],
       accounts: accounts,
       categories: categories,
@@ -204,5 +210,47 @@ void main() {
     expect(result.single.spentAmount, 0);
     expect(result.single.remainingAmount, 200);
     expect(result.single.isOverspent, isFalse);
+  });
+
+  test('ignores an expense outside the selected budget month', () {
+    final accounts = [account(id: 'acc-1', currencyCode: 'LAK')];
+    final categories = [category(id: 'food', name: 'Food')];
+    final budgets = [budget(categoryId: 'food', limitAmount: 200)];
+    final transactions = [
+      expenseTxn(accountId: 'acc-1', categoryId: 'food', amount: 50),
+      TransactionEntity(
+        id: 'april-expense',
+        accountId: 'acc-1',
+        categoryId: 'food',
+        type: TransactionType.expense,
+        amount: 100,
+        date: DateTime(2026, 4, 1),
+        note: '',
+        createdAt: DateTime(2026),
+        updatedAt: DateTime(2026),
+      ),
+    ];
+
+    final result = useCase(
+      budgets: budgets,
+      month: DateTime(2026, 3),
+      monthTransactions: transactions,
+      accounts: accounts,
+      categories: categories,
+    );
+
+    expect(result.single.spentAmount, 50);
+  });
+
+  test('excludes an invalid zero-limit budget before calculating progress', () {
+    final result = useCase(
+      budgets: [budget(categoryId: 'food', limitAmount: 0)],
+      month: DateTime(2026, 3),
+      monthTransactions: const [],
+      accounts: [account(id: 'acc-1', currencyCode: 'LAK')],
+      categories: [category(id: 'food', name: 'Food')],
+    );
+
+    expect(result, isEmpty);
   });
 }

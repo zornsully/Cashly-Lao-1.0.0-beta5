@@ -244,7 +244,9 @@ abstract final class AppTheme {
         elevation: AppElevation.dialogElevation,
         shadowColor: shadowColor.withValues(alpha: 0.2),
         surfaceTintColor: Colors.transparent,
-        backgroundColor: isDark ? colorScheme.surfaceContainerHigh : Colors.white,
+        backgroundColor: isDark
+            ? colorScheme.surfaceContainerHigh
+            : Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),

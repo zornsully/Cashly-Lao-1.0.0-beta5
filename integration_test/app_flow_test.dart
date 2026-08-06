@@ -121,16 +121,10 @@ void main() {
       }
 
       // ---- 1. Register ----------------------------------------------
-      // The router's initial location is the public landing page (marketing
-      // routes are exempt from the auth redirect), not Login directly --
-      // "Open app" navigates to /dashboard, which the redirect then bounces
-      // an unauthenticated visitor to /login from. At this test's narrow
-      // (mobile-shaped) viewport, landing_page.dart renders this as an
-      // icon-only button with a Tooltip (not a visible Text widget) -- see
-      // its own `narrow` branch.
-      expect(find.byTooltip('Open app'), findsOneWidget);
-      await tester.tap(find.byTooltip('Open app'));
-      await tester.pumpAndSettle();
+      // This test runs on Windows, where the router starts at native Splash
+      // and redirects an unauthenticated person directly to Login. The
+      // public web-only landing page (and its "Open app" action) is not part
+      // of this desktop flow.
       expect(find.text(l10n.signIn), findsOneWidget);
       await tester.tap(find.text(l10n.signUpLink));
       await tester.pumpAndSettle();

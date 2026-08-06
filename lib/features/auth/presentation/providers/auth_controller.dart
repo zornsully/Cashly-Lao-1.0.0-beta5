@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
 
@@ -127,7 +129,10 @@ class AuthController extends Notifier<AsyncValue<void>> {
     final keepAliveLink = ref.keepAlive();
     try {
       state = const AsyncLoading();
-      final result = await action();
+      // Browser popups (and an interrupted network request) can otherwise
+      // leave the shared controller loading forever, disabling every login
+      // control as shown on the web sign-in screen.
+      final result = await action().timeout(const Duration(seconds: 30));
       return result.match(
         (failure) {
           state = AsyncError<void>(failure, StackTrace.current);
@@ -138,6 +143,12 @@ class AuthController extends Notifier<AsyncValue<void>> {
           return true;
         },
       );
+    } on TimeoutException {
+      state = AsyncError<void>(
+        const NetworkFailure('Sign-in timed out. Please try again.'),
+        StackTrace.current,
+      );
+      return false;
     } finally {
       keepAliveLink.close();
     }

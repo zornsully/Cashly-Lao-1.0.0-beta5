@@ -248,6 +248,7 @@ describe('budgets subcollection', () => {
     await seedAliceProfile();
     const monthA = new Date('2026-01-01');
     const monthB = new Date('2026-02-01');
+    const createdAt = new Date('2026-01-01T00:00:00Z');
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await ctx
         .firestore()
@@ -255,8 +256,13 @@ describe('budgets subcollection', () => {
         .set({
           categoryId: 'cat-1',
           month: monthA,
+          monthKey: '2026-01',
+          year: 2026,
+          monthNumber: 1,
           limitAmount: 100000,
           currencyCode: 'LAK',
+          createdAt,
+          updatedAt: createdAt,
         });
     });
 
@@ -268,6 +274,11 @@ describe('budgets subcollection', () => {
           month: monthA,
           limitAmount: 100000,
           currencyCode: 'LAK',
+          monthKey: '2026-01',
+          year: 2026,
+          monthNumber: 1,
+          createdAt,
+          updatedAt: new Date('2026-01-02T00:00:00Z'),
         }),
     );
     await assertFails(
@@ -286,6 +297,11 @@ describe('budgets subcollection', () => {
         .set({
           categoryId: 'cat-1',
           month: monthA,
+          monthKey: '2026-01',
+          year: 2026,
+          monthNumber: 1,
+          createdAt,
+          updatedAt: new Date('2026-01-02T00:00:00Z'),
           limitAmount: 150000, // changed — allowed
           currencyCode: 'LAK',
         }),

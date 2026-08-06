@@ -44,7 +44,12 @@ import 'desktop_page_frame.dart';
 import 'home_shell_screen.dart';
 
 const _publicRoutes = {
+  AppRoutes.landing,
+  AppRoutes.features,
+  AppRoutes.screenshots,
+  AppRoutes.download,
   AppRoutes.privacy,
+  AppRoutes.legacyPrivacy,
   AppRoutes.terms,
   AppRoutes.login,
   AppRoutes.register,
@@ -53,7 +58,11 @@ const _publicRoutes = {
 
 const _marketingRoutes = {
   AppRoutes.landing,
+  AppRoutes.features,
+  AppRoutes.screenshots,
+  AppRoutes.download,
   AppRoutes.privacy,
+  AppRoutes.legacyPrivacy,
   AppRoutes.terms,
 };
 
@@ -213,8 +222,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const LandingPage(),
       ),
       GoRoute(
+        path: AppRoutes.features,
+        builder: (context, state) => const LandingPage.features(),
+      ),
+      GoRoute(
+        path: AppRoutes.screenshots,
+        builder: (context, state) => const LandingPage.screenshots(),
+      ),
+      GoRoute(
+        path: AppRoutes.download,
+        builder: (context, state) => const LandingPage.download(),
+      ),
+      GoRoute(
         path: AppRoutes.privacy,
-        builder: (context, state) => const LegalDocumentPage.privacy(),
+        builder: (context, state) => const LandingPage.privacy(),
+      ),
+      GoRoute(
+        path: AppRoutes.legacyPrivacy,
+        redirect: (context, state) => AppRoutes.privacy,
       ),
       GoRoute(
         path: AppRoutes.terms,
@@ -334,11 +359,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.budgetNew,
+        redirect: (context, state) =>
+            state.extra is NewBudgetArgs ? null : AppRoutes.budget,
         builder: (context, state) =>
             BudgetFormScreen(newBudgetArgs: state.extra as NewBudgetArgs?),
       ),
       GoRoute(
         path: AppRoutes.budgetEdit,
+        redirect: (context, state) =>
+            state.extra is BudgetEntity ? null : AppRoutes.budget,
         builder: (context, state) =>
             BudgetFormScreen(existing: state.extra as BudgetEntity?),
       ),
