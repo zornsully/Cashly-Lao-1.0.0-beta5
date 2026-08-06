@@ -2967,6 +2967,160 @@ Firebase Hosting edge from this environment, so a public-browser refresh is
 the only outstanding external confirmation. The local Firebase emulators used
 by the test were stopped after validation.
 
+### 2026-08-06 — Website deploy of login/CI fixes, plus a self-inflicted CSP
+regression found and fixed the same night (live-verified)
+
+Summary:
+
+Three website-only deploys happened in sequence tonight, all via
+`tool/deploy_website.ps1`. The first was a routine deploy of everything
+already merged to `main` (the login/deploy fixes, the `ci.yml` workflow
+fix, and the pinned-action-SHA bump from earlier this session — none of
+which touch app runtime behavior beyond the already-deployed `main.dart`/
+`url_strategy` fix). The second and third were **not** part of the plan:
+independently verifying the first deploy's live response headers surfaced
+a real, pre-existing regression — the production `Content-Security-Policy`
+header had been silently missing since 2026-08-01 (commit `15539fe`
+accidentally deleted it while adding cache-control headers in the same
+edit) — and restoring it verbatim from before that deletion **broke
+Firebase initialization in production** for several minutes, requiring an
+immediate second fix and third deploy. Recorded here in full, mistake
+included, per this project's own rule that a deployment is never recorded
+as successful without independently verifying the live site.
+
+**Deploy 1 — routine.**
+- Build: `flutter build web --release` (via the script), from `main` @
+  `1974ecd`.
+- Deploy: `tool/deploy_website.ps1` → `firebase deploy --only
+  hosting:cashly-lao --project cashly-lao`, Firebase CLI 15.24.0.
+  Reported `version finalized` / `release complete` / `Deploy complete!`.
+- The script's own post-deploy `Invoke-WebRequest` check against
+  `https://cashly-lao.web.app/` failed ("underlying connection was
+  closed") — this is the same pre-existing local network block on the
+  `.web.app` hostname specifically documented earlier this session (DNS
+  resolves identically to `.firebaseapp.com`'s IP; only the `.web.app`
+  hostname is unreachable from this machine). Not a deploy failure.
+- Independently verified instead via `https://cashly-lao.firebaseapp.com`
+  (same Hosting site, same deploy): `main.dart.js`'s `Last-Modified`
+  matched this deploy's build time with `X-Cache: MISS` (fresh, not
+  stale-cached), and the non-CSP security headers
+  (`X-Content-Type-Options`/`X-Frame-Options`/`Referrer-Policy`/
+  `Permissions-Policy`/`Strict-Transport-Security`) were all present and
+  correct.
+- This same header check is what surfaced the missing CSP.
+
+**Deploy 2 — CSP restore that broke Firebase (self-inflicted regression).**
+- Traced the missing CSP to `15539fe` ("Fix resilient web startup and
+  hosting cache", 2026-08-01) via `git log --follow -- firebase.json`:
+  that commit's diff added the startup-file no-cache headers but also
+  deleted the `Content-Security-Policy` entry from the shared `**`
+  headers block, with no mention of CSP in the commit message — clearly
+  unintentional, not a deliberate removal.
+- Restored the CSP verbatim (byte-for-byte as it existed immediately
+  before the accidental deletion) rather than redesigning it, on the
+  reasoning that it had already been tuned twice against real network
+  inspection (`aa593d3`, `0a5cfaa`) and the 2026-08-01 blank-page outage.
+- Asked the owner first given the history of this exact file causing a
+  full outage before; owner approved restoring it (`AskUserQuestion`,
+  "Restore it now").
+- Committed, pushed, redeployed. **Did not stop at a clean deploy exit
+  code** — loaded the redeployed site and read the live browser console,
+  which is what caught the regression before assuming success: every
+  Firebase module's inline bootstrap `<script>` (core, firestore,
+  analytics, auth, messaging — each reporting a distinct sha256 hash)
+  was blocked by `script-src` lacking `'unsafe-inline'`, producing
+  `FAILED: firebase-initialization — Error: a[b] is not a function` and
+  `FAILED: web Firebase services — StartupFailure(firebase-initialization)`.
+  Firebase Auth/Firestore/Analytics/Messaging were non-functional on the
+  live site for the several minutes between this deploy and the next.
+  Root cause: the "known-good" CSP from before its accidental deletion
+  was tuned against an older app/SDK bundle; the current Firebase JS
+  interop layer's inline-script bootstrap pattern is incompatible with a
+  `script-src` that has no `'unsafe-inline'`, hash, or nonce allowance.
+  Separately, `connect-src` had no allowance for `https://cashly-lao.web.app`,
+  so `hosted_release_manifest_service.dart`'s hardcoded canonical
+  manifest URL was also CSP-blocked whenever the app runs from
+  `cashly-lao.firebaseapp.com`.
+
+**Deploy 3 — hotfix, live-verified clean before considering this closed.**
+- Added `'unsafe-inline'` to `script-src` (chosen over pinning the five
+  reported sha256 hashes specifically because those hashes are tied to
+  the exact current SDK/interop bundle and would silently break again on
+  the next dependency bump — the same failure mode that made the
+  previous "known-good" policy stale in the first place) and added
+  `https://cashly-lao.web.app` to `connect-src`.
+- Committed, pushed, redeployed immediately (no approval pause — this
+  was stopping active production breakage caused by the previous step,
+  not a new discretionary change).
+- Verified on a **freshly opened tab** (not reused, to rule out stale
+  console-buffer carryover from the broken deploy) navigating fresh to
+  `https://cashly-lao.firebaseapp.com/`: `SUCCESS: firebase-initialization`
+  and `SUCCESS: firestore-offline-cache`, zero CSP violation errors.
+  Confirmed via `curl` that the live `Content-Security-Policy` header
+  matches the fixed value and `main.dart.js`'s `Last-Modified` reflects
+  this third deploy specifically.
+
+Files modified:
+
+- `firebase.json` — net effect across deploys 2–3: `Content-Security-Policy`
+  restored to the `**` headers block with `'unsafe-inline'` added to
+  `script-src` and `https://cashly-lao.web.app` added to `connect-src`
+  (both new relative to the pre-2026-08-01 "known-good" version).
+
+Validation:
+
+- `flutter analyze` — 0 issues (run by the deploy script, each of the
+  three times).
+- `flutter test` — 490 passing (run by the deploy script, each of the
+  three times).
+- `flutter build web --release` — succeeded each time.
+- Firebase Hosting deploy — `Deploy complete!` reported for
+  `hosting[cashly-lao]` on all three runs.
+- Live verification actually performed (not just a clean exit code):
+  response headers fetched directly via `curl` after each deploy;
+  browser console read directly (twice — once catching the regression,
+  once confirming the fix) rather than assumed from the diff.
+
+Known limitations:
+
+- **`https://cashly-lao.web.app` itself remains unverifiable from this
+  machine** — the same pre-existing local network block documented
+  earlier this session. Every verification above was performed against
+  `https://cashly-lao.firebaseapp.com`, the same Hosting site's alternate
+  domain. The owner should confirm `.web.app` directly loads correctly
+  in their own browser.
+- **A cross-origin CORS gap on the release-manifest fetch was found but
+  not fixed**: loading the app from `cashly-lao.firebaseapp.com` and
+  fetching the hardcoded `https://cashly-lao.web.app/release-manifest.json`
+  now gets past CSP (post-hotfix) but is blocked by CORS (`No
+  'Access-Control-Allow-Origin' header is present`). This only affects
+  the cross-origin case; a visitor on the actual primary domain
+  (`cashly-lao.web.app`) would fetch that same URL same-origin, which
+  isn't subject to CORS at all — so this is very likely not a real
+  production issue, but it couldn't be confirmed either way from this
+  machine (can't reach `.web.app` directly to test the same-origin path).
+  Worth a real-browser check against `.web.app` directly; not chased
+  further here to avoid repeating tonight's mistake of shipping an
+  unverified fix to this exact file.
+- No Android/release-metadata files were touched by any of the three
+  deploys (confirmed via the deploy script's own release-trust guard,
+  which would have refused to run otherwise).
+
+Rollback: the previous stable deploy (before tonight) had no CSP header
+at all — that state was strictly *less* secure but not *broken*, unlike
+the middle deploy tonight. If a future CSP change needs to be rolled
+back in an emergency, removing the `Content-Security-Policy` entry
+entirely from `firebase.json` and redeploying is a safe, known-working
+fallback (that was, after all, tonight's actual starting state).
+
+Next step: owner confirmation that `https://cashly-lao.web.app/login`
+renders and functions correctly in a real browser — this remains the one
+verification this environment cannot perform itself. Consider a real
+integration/E2E test that loads the deployed site and asserts on console
+cleanliness, so a future CSP or header change can't reach production
+without this exact class of regression being caught automatically before
+a human (or agent) has to catch it by hand.
+
 ## Product Roadmap
 
 The full staged roadmap — objectives, features, deliverables,
