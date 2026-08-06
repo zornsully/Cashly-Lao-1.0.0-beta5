@@ -53,6 +53,9 @@ class AppLocalizationsLo extends AppLocalizations {
       'ບໍ່ສາມາດເຂົ້າສູ່ລະບົບໄດ້. ກະລຸນາລອງໃໝ່ອີກຄັ້ງ.';
 
   @override
+  String get authActionStuckMessage => 'ນີ້ໃຊ້ເວລາດົນກວ່າທີ່ຄາດໄວ້.';
+
+  @override
   String get noAccountPrompt => 'ບໍ່ມີບັນຊີ?';
 
   @override

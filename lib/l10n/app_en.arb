@@ -17,6 +17,7 @@
   "forgotPasswordLink": "Forgot password?",
   "signIn": "Sign in",
   "loginFailedMessage": "Could not sign in. Please try again.",
+  "authActionStuckMessage": "This is taking longer than expected.",
   "noAccountPrompt": "Don't have an account?",
   "signUpLink": "Sign up",
   "orDividerLabel": "Or",

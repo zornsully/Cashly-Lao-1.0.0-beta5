@@ -182,6 +182,12 @@ abstract class AppLocalizations {
   /// **'Could not sign in. Please try again.'**
   String get loginFailedMessage;
 
+  /// No description provided for @authActionStuckMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This is taking longer than expected.'**
+  String get authActionStuckMessage;
+
   /// No description provided for @noAccountPrompt.
   ///
   /// In en, this message translates to:

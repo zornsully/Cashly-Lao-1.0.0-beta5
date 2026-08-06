@@ -14,6 +14,7 @@
   "forgotPasswordLink": "ລືມລະຫັດຜ່ານ?",
   "signIn": "ເຂົ້າສູ່ລະບົບ",
   "loginFailedMessage": "ບໍ່ສາມາດເຂົ້າສູ່ລະບົບໄດ້. ກະລຸນາລອງໃໝ່ອີກຄັ້ງ.",
+  "authActionStuckMessage": "ນີ້ໃຊ້ເວລາດົນກວ່າທີ່ຄາດໄວ້.",
   "noAccountPrompt": "ບໍ່ມີບັນຊີ?",
   "signUpLink": "ສະໝັກສະມາຊິກ",
   "orDividerLabel": "ຫຼື",

@@ -52,6 +52,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loginFailedMessage => 'Could not sign in. Please try again.';
 
   @override
+  String get authActionStuckMessage => 'This is taking longer than expected.';
+
+  @override
   String get noAccountPrompt => 'Don\'t have an account?';
 
   @override

@@ -14,6 +14,7 @@ import '../../../../core/widgets/google_sign_in_button.dart';
 import '../../../../core/widgets/primary_button.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../providers/auth_controller.dart';
+import '../widgets/auth_action_stuck_banner.dart';
 import '../widgets/auth_scaffold.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -159,6 +160,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             onPressed: _continueWithGoogle,
           ),
         ],
+        const AuthActionStuckBanner(),
         const SizedBox(height: AppSpacing.lg),
         Wrap(
           alignment: WrapAlignment.center,
