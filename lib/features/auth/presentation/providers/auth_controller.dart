@@ -161,16 +161,7 @@ class AuthController extends Notifier<AsyncValue<void>> {
       // exactly the "every login control disabled with no way to recover"
       // failure mode AuthActionStuckBanner exists to defend against.
       debugPrint('AuthController._run: unhandled error, recovering: $error');
-      // TEMPORARY diagnostic: surfacing the raw error text directly in the
-      // user-facing message (normally just "Something went wrong.") because
-      // repeated attempts to get console output from the person hitting
-      // this in production were unsuccessful, and this exact class of
-      // uncaught error has no message shown anywhere else reachable from a
-      // screenshot. Revert to `const UnknownFailure()` once the real error
-      // behind tonight's live repro is captured -- this should never ship
-      // long-term, since raw exception text isn't something an end user
-      // should see.
-      state = AsyncError<void>(UnknownFailure('Something went wrong: $error'), stackTrace);
+      state = AsyncError<void>(const UnknownFailure(), stackTrace);
       return false;
     } finally {
       keepAliveLink.close();
