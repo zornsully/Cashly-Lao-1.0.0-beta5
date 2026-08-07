@@ -91,6 +91,7 @@ Future<void> initializeRequiredServices() async {
   debugPrint('START: firestore-offline-cache');
   _configureFirestoreOfflineCache();
   debugPrint('SUCCESS: firestore-offline-cache');
+  _warmUpFirebaseAuth();
   if (_useFirebaseEmulator) {
     await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
     FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
@@ -120,6 +121,28 @@ Future<void> initializeRequiredServices() async {
   }
   if (AppPlatformCapabilities.supportsFirebaseAnalytics) {
     unawaited(_initializeOptionalAnalytics());
+  }
+}
+
+/// `FirebaseAuth.instance` is otherwise never touched anywhere in this
+/// startup sequence -- unlike Firestore just above, its first-ever access
+/// only happens lazily, whenever a user first attempts to log in or the
+/// router first checks auth state, with nothing guarding that moment. A
+/// real (if rare) FirebaseAuth-web plugin registration failure has been
+/// observed reaching all the way to an uncaught exception at that later
+/// point, well after this function had already reported startup success.
+/// Forcing the same first touch to happen here instead, inside a sequence
+/// this app already knows how to report and recover from, moves that risk
+/// earlier without adding a new point of failure: if this still throws,
+/// the same lazy-access path (now hardened by AuthController._run()'s own
+/// catch-all) remains the fallback.
+void _warmUpFirebaseAuth() {
+  debugPrint('START: auth-warmup');
+  try {
+    FirebaseAuth.instance;
+    debugPrint('SUCCESS: auth-warmup');
+  } catch (error) {
+    debugPrint('FAILED: auth-warmup — ${_sanitizeStartupError(error)}');
   }
 }
 
