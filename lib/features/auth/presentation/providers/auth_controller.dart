@@ -161,7 +161,11 @@ class AuthController extends Notifier<AsyncValue<void>> {
       // exactly the "every login control disabled with no way to recover"
       // failure mode AuthActionStuckBanner exists to defend against.
       debugPrint('AuthController._run: unhandled error, recovering: $error');
-      state = AsyncError<void>(const UnknownFailure(), stackTrace);
+      // TEMPORARY diagnostic (re-enabled): the firebase_core_web 3.10.0
+      // upgrade did not resolve this in practice, so re-surfacing the raw
+      // error to check whether it's the exact same TypeError as before or
+      // something new. Revert to `const UnknownFailure()` once done.
+      state = AsyncError<void>(UnknownFailure('Something went wrong: $error'), stackTrace);
       return false;
     } finally {
       keepAliveLink.close();
