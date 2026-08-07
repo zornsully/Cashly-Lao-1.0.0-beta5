@@ -37,23 +37,29 @@ class _AuthActionStuckBannerState
   @override
   void initState() {
     super.initState();
-    if (ref.read(authControllerProvider).isLoading) _startTimer();
+    final alreadyLoading = ref.read(authControllerProvider).isLoading;
+    debugPrint('AuthActionStuckBanner: mounted, alreadyLoading=$alreadyLoading');
+    if (alreadyLoading) _startTimer();
   }
 
   void _startTimer() {
+    debugPrint('AuthActionStuckBanner: starting ${_stuckThreshold.inSeconds}s timer');
     _timer?.cancel();
     _timer = Timer(_stuckThreshold, () {
+      debugPrint('AuthActionStuckBanner: threshold reached, showing retry');
       if (mounted) setState(() => _stuck = true);
     });
   }
 
   void _cancelTimer() {
+    if (_timer != null) debugPrint('AuthActionStuckBanner: cancelling timer');
     _timer?.cancel();
     _timer = null;
     if (_stuck && mounted) setState(() => _stuck = false);
   }
 
   void _retry() {
+    debugPrint('AuthActionStuckBanner: retry tapped, invalidating authControllerProvider');
     ref.invalidate(authControllerProvider);
     _cancelTimer();
   }
@@ -67,6 +73,10 @@ class _AuthActionStuckBannerState
   @override
   Widget build(BuildContext context) {
     ref.listen(authControllerProvider, (previous, next) {
+      debugPrint(
+        'AuthActionStuckBanner: authControllerProvider changed '
+        '${previous.runtimeType} -> ${next.runtimeType}, isLoading=${next.isLoading}',
+      );
       if (next.isLoading) {
         _startTimer();
       } else {

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
 
@@ -148,6 +149,19 @@ class AuthController extends Notifier<AsyncValue<void>> {
         const NetworkFailure('Sign-in timed out. Please try again.'),
         StackTrace.current,
       );
+      return false;
+    } catch (error, stackTrace) {
+      // Anything landing here escaped even RepositoryGuard.guard()'s own
+      // catch-all inside the repository layer -- the only way that happens
+      // is if `action()` itself throws before guard()'s try block is ever
+      // entered, e.g. a provider dependency of `action`'s use case (like
+      // authRepositoryProvider) throwing during construction. Without this
+      // clause, `state` would stay AsyncLoading() forever: nothing else in
+      // this method ever gets a chance to move it off that value, which is
+      // exactly the "every login control disabled with no way to recover"
+      // failure mode AuthActionStuckBanner exists to defend against.
+      debugPrint('AuthController._run: unhandled error, recovering: $error');
+      state = AsyncError<void>(const UnknownFailure(), stackTrace);
       return false;
     } finally {
       keepAliveLink.close();

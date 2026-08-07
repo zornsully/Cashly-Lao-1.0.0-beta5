@@ -42,4 +42,36 @@ void main() {
     expect(result, isTrue);
     verify(() => repository.logout()).called(1);
   });
+
+  // Regression guard for a real production bug: `_run()`'s try block only
+  // ever caught TimeoutException, so any other exception thrown while
+  // evaluating `action()` -- most plausibly a provider dependency of the
+  // use case (like authRepositoryProvider) throwing during construction,
+  // exactly the same class of bug the FCM test above already covers for a
+  // different provider -- escaped `_run()` uncaught and left `state`
+  // parked at AsyncLoading() forever, permanently disabling every login
+  // control on the screen with no way to recover short of a page reload.
+  test(
+    'login recovers to an error state instead of staying stuck when its '
+    'use-case provider throws during construction',
+    () async {
+      final brokenContainer = ProviderContainer(
+        overrides: [
+          loginUseCaseProvider.overrideWith(
+            (ref) => throw StateError('simulated provider construction failure'),
+          ),
+        ],
+      );
+      addTearDown(brokenContainer.dispose);
+
+      final result = await brokenContainer
+          .read(authControllerProvider.notifier)
+          .login(email: 'user@example.com', password: 'Str0ngPass');
+
+      expect(result, isFalse);
+      final state = brokenContainer.read(authControllerProvider);
+      expect(state.isLoading, isFalse);
+      expect(state.hasError, isTrue);
+    },
+  );
 }
