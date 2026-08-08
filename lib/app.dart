@@ -147,11 +147,14 @@ class _CashlyAppState extends ConsumerState<CashlyApp>
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: router,
-      // TEMPORARY: mirrors the [AUTH-NN] console trail directly on screen
-      // (behind every route) so a plain screenshot shows exactly where a
-      // login attempt stalled, without needing DevTools. Remove once the
-      // live web auth investigation is closed.
-      builder: kIsWeb
+      // Mirrors the [AUTH-NN] console trail directly on screen (behind every
+      // route) in local debug builds only -- never wired in for a release
+      // build (including every deployed production build), so it can never
+      // appear for a real user. AuthDebugLog itself is also independently
+      // gated behind kDebugMode; this second gate keeps the overlay's own
+      // widget subtree out of the tree entirely in release, rather than
+      // relying solely on it rendering empty.
+      builder: kIsWeb && kDebugMode
           ? (context, child) =>
                 AuthDebugOverlay(child: child ?? const SizedBox.shrink())
           : null,

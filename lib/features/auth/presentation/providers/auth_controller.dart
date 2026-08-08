@@ -195,14 +195,9 @@ class AuthController extends Notifier<AsyncValue<void>> {
       AuthDebugLog.log(
         '[AUTH-09] unhandled error escaped the retry, recovering: $error',
       );
-      // TEMPORARY diagnostic (re-enabled): the firebase_core_web 3.10.0
-      // upgrade did not resolve this in practice, so re-surfacing the raw
-      // error to check whether it's the exact same TypeError as before or
-      // something new. Revert to `const UnknownFailure()` once done.
-      state = AsyncError<void>(
-        UnknownFailure('Something went wrong: $error'),
-        stackTrace,
-      );
+      // Never surface the raw error to the user -- AuthDebugLog already
+      // captured it above for local/DevTools debugging.
+      state = AsyncError<void>(const UnknownFailure(), stackTrace);
       return false;
     } finally {
       keepAliveLink.close();

@@ -1,9 +1,12 @@
 import 'package:flutter/foundation.dart';
 
-/// TEMPORARY mirror of the `[AUTH-NN]` debugPrint trail, kept on-screen (via
-/// [AuthDebugOverlay]) so a plain screenshot of the page shows exactly which
-/// stage a login attempt reached -- no DevTools console needed. Remove once
-/// the live web auth investigation is closed; see CLAUDE.md's dated entries.
+/// Mirror of the `[AUTH-NN]` debugPrint trail, kept on-screen in debug builds
+/// only (via [AuthDebugOverlay]) so a plain screenshot of the page shows
+/// exactly which stage a login attempt reached -- no DevTools console
+/// needed. Gated entirely behind [kDebugMode]: a release build (including
+/// every deployed production build) never prints these lines and never
+/// populates [entries], so [AuthDebugOverlay] always renders empty there
+/// regardless of whether it's still wired in.
 class AuthDebugLog {
   AuthDebugLog._();
 
@@ -16,6 +19,7 @@ class AuthDebugLog {
   static final ValueNotifier<List<String>> entries = ValueNotifier(const []);
 
   static void log(String message) {
+    if (!kDebugMode) return;
     debugPrint(message);
     final next = [...entries.value, message];
     entries.value = next.length > _maxEntries
