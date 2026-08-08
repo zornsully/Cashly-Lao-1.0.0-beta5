@@ -3218,6 +3218,155 @@ appears, the raw error text will confirm whether it's still the same
 TypeError (retry insufficient — consider a longer delay or a second retry)
 or something new.
 
+### 2026-08-08 — Web login fully resolved: three compounding bugs found and
+fixed (register/login/logout/sign-in-again all confirmed live)
+
+Summary:
+
+Direct continuation of the flutterfire#18548 investigation above, escalated
+to a full "find and fix the entire auth flow" mandate after the one-retry
+workaround proved insufficient. Root-caused and fixed three independent,
+compounding bugs — each one had been masking the next, so fixing one
+revealed the next symptom rather than resolving the login flow outright.
+All three are now confirmed fixed against the live production site by the
+owner: Google sign-in, sign-out, and sign-in-again all work end-to-end,
+landing on a fully-populated Dashboard.
+
+**Bug 1 — the flutterfire#18548 masking TypeError (already filed
+upstream).** No code fix possible on our side beyond the mitigation
+already in place; see the entry above.
+
+**Bug 2 — the startup-race retry invalidated the wrong provider.**
+`CashlyApp`'s existing "retry auth once Firebase is ready" logic (in
+`lib/app.dart`) only invalidated `authStateChangesProvider` itself, never
+the `firebaseAuthProvider`/`firestoreProvider` singletons underneath it.
+Since those are plain, non-`autoDispose` `Provider`s that cache a failed
+`create()` forever, and the router reads `authStateChangesProvider` on
+literally the first frame — almost always before `Firebase.initializeApp()`
+resolves over the network — the retry just re-read the same permanently
+cached failure. Fixed to invalidate `firebaseAuthProvider`/
+`firestoreProvider` directly (same fix already applied to
+`AuthController._runWithRetry`), and made it retry up to 4 times (400ms
+apart) rather than once — live testing showed a single retry sometimes
+still weren't enough, since some part of the Firebase JS SDK's own async
+setup settles slightly later than `initializeApp()`'s own promise.
+
+**Bug 3 — the actual "stuck after sign-in" bug, in `app_router.dart`.**
+On web, `redirect` returned `null` (stay put) unconditionally for any
+visit to `/login`/`/register`/`/forgot-password`, *before* ever reading
+`authStateChangesProvider`. That rule exists so those pages stay reachable
+while Firebase is still initializing — correct for that case — but it also
+fired when a user signed in *while sitting on `/login`*: no page
+navigation happens in that scenario, only Firebase's auth stream emitting
+reactively, so `redirect` re-evaluates against the *same* `/login`
+location and this early-return fired regardless of the new auth state.
+Execution never reached the pre-existing `_authOnlyRoutes` check further
+down that already correctly redirects a signed-in user to `/dashboard`.
+This bug had been live in this codebase from well before this session —
+it was simply never reachable in testing until bugs 1 and 2 were fixed
+enough for a real sign-in to actually succeed.
+
+**Contributing issue — missing `Cross-Origin-Opener-Policy` header.**
+`firebase.json` had no COOP header at all. Modern Chrome's default
+cross-origin isolation can silently block `signInWithPopup`'s internal
+`window.closed`/`postMessage` communication with the popup without
+`Cross-Origin-Opener-Policy: same-origin-allow-popups` — the popup opens,
+the account picker works, the popup closes, but the Promise never
+resolves or rejects. Exactly matches
+[firebase/firebase-js-sdk#8541](https://github.com/firebase/firebase-js-sdk/issues/8541).
+Added that header plus `Cross-Origin-Embedder-Policy: unsafe-none`.
+
+**Contributing issue — nested timeout race.** `AuthController`'s generic
+30s per-action timeout always fired before the datasource's own, more
+specific 60s `signInWithPopup` timeout could produce its actionable
+"allow pop-ups" message. `signInWithGoogle()` now passes a 65s outer
+timeout specifically, longer than the inner one.
+
+Files modified: `firebase.json`, `lib/app.dart`, `lib/core/routing/app_router.dart`,
+`lib/features/auth/presentation/providers/auth_controller.dart`,
+`lib/features/auth/data/datasources/auth_remote_datasource.dart`.
+
+Files created (temporary diagnostics, now `kDebugMode`-gated, not removed —
+see below): `lib/core/utils/auth_debug_log.dart`,
+`lib/core/widgets/auth_debug_overlay.dart`.
+
+Implementation decisions:
+
+- `app_router.dart`'s redirect logic was extracted from an inline closure
+  into a standalone, parameterized function (`computeAppRedirect(ref,
+  location, {isWeb})`) specifically so this class of bug is unit-testable
+  going forward — it read the global `kIsWeb` constant directly before,
+  which is always `false` under `flutter test`'s VM, so the web-only
+  branches (including the bug itself) were structurally untestable. 3 new
+  regression tests in `test/core/routing/app_entry_flow_test.dart` cover:
+  a signed-in verified user on `/login` redirects home; an unresolved auth
+  state on `/login` stays put (proves the fix didn't break the original
+  intent); a genuinely signed-out user on `/login` stays put.
+- The on-screen diagnostic overlay (`AuthDebugOverlay`) was what actually
+  cracked bug 3 open — getting DevTools console output from the owner had
+  been the investigation's biggest bottleneck for days; mirroring the same
+  `[AUTH-NN]` trail directly on the page meant a plain screenshot was
+  enough. Kept in the codebase (not deleted) since it's now correctly
+  `kDebugMode`-gated — both `AuthDebugLog.log()` itself and
+  `AuthDebugOverlay`'s wiring in `app.dart` are no-ops in any release
+  build, so it's available again with zero production risk if this area
+  ever needs live diagnosis again.
+- `AuthController._run()`'s catch-all no longer interpolates the raw
+  caught exception into the user-facing failure message (a temporary
+  diagnostic from earlier in this investigation) — reverted to the
+  original generic `const UnknownFailure()` ("Something went wrong.").
+  `AuthDebugLog` still captures the real error for local debugging.
+- Did not restructure the Riverpod provider graph itself (e.g. explicit
+  Firebase dependency injection instead of plain `Provider`-wrapped
+  singletons) — considered, per the owner's explicit permission to
+  restructure if needed, but judged unnecessary once bugs 2 and 3 were
+  correctly fixed: the plain-`Provider`-caches-errors-forever behavior is
+  fine as long as the invalidation logic actually targets the right
+  providers, which it now does in both places that need it
+  (`AuthController._runWithRetry` and `CashlyApp._recoverFirebaseProviders`).
+
+Validation:
+
+- `flutter analyze` — 0 issues. `dart format --set-exit-if-changed lib test
+  tool` — clean. `flutter test` — full suite, 502 passing (12 new across
+  this session), 0 failing.
+- Live-verified directly against the deployed production site at each
+  step (not just reasoning about it) — reloaded the live page repeatedly
+  via a real browser tool and read its actual console output, which is
+  what caught bug 2 needing a bounded retry (a single invalidation
+  attempt was observed to still fail once, live, before a subsequent
+  attempt succeeded) and what caught bug 3 in the first place (the
+  on-screen overlay showed `signInWithPopup` succeeding twice, with a
+  real uid, while the user remained stuck on `/login` both times).
+- Final owner confirmation: full register → Dashboard → sign out →
+  sign back in (Google) → Dashboard cycle works end-to-end on the live
+  site, with real financial data rendering correctly.
+
+Known limitations:
+
+- The underlying flutterfire#18548 bug is still unfixed upstream — bug 2's
+  retry logic works around its symptom, but if Google changes that code
+  path the specific failure shape could change again. No response yet
+  from FlutterFire maintainers on the filed issue.
+- Refresh-while-signed-in and refresh-while-signed-out were not explicitly
+  re-confirmed after the final diagnostic-cleanup deploy (that deploy only
+  touched diagnostic gating and an error-message string, not any
+  auth/redirect logic, so risk is low, but it wasn't a live-tested claim).
+- This investigation consumed a very large fraction of a single session;
+  the diagnostic infrastructure it left behind (`AuthDebugLog`/
+  `AuthDebugOverlay`) is intentionally kept rather than deleted, on the
+  reasoning that web-auth issues in this app have now twice taken
+  multiple sessions to root-cause without on-screen visibility into the
+  live console trail — this pays for itself if anything web-auth-shaped
+  breaks again.
+
+Next recommended step: none required — this closes the login/deployment
+investigation that spanned this and the prior dated entry. If the
+FlutterFire maintainers respond to #18548, revisit whether the app-side
+retry mitigation in `AuthController._runWithRetry`/
+`CashlyApp._recoverFirebaseProviders` can eventually be simplified or
+removed.
+
 ## Product Roadmap
 
 The full staged roadmap — objectives, features, deliverables,
