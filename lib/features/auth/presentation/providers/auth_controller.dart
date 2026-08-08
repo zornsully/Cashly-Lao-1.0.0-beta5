@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+// ProviderException isn't exposed through the main flutter_riverpod.dart
+// barrel file -- only through this narrower one.
+import 'package:flutter_riverpod/misc.dart';
 import 'package:fpdart/fpdart.dart';
 
 import '../../../../core/error/failure.dart';
@@ -175,15 +178,35 @@ class AuthController extends Notifier<AsyncValue<void>> {
     }
   }
 
-  /// A bare [TypeError] escaping this far almost never means our own code
-  /// hit a real type bug -- normal failures already come back as
-  /// `Left(Failure)` well before this point. On web it's the signature of
+  /// A bare [TypeError] reaching here almost never means our own code hit a
+  /// real type bug -- normal failures already come back as `Left(Failure)`
+  /// well before this point. On web it's the signature of
   /// https://github.com/firebase/flutterfire/issues/18548: firebase_core_web's
   /// `FirebaseCoreWeb.app()` force-casts whatever it catches to a JS error
   /// type, so a transient, already-resolved condition on Firebase's side
   /// surfaces here as an unrelated TypeError instead of the real (likely
-  /// harmless) exception. Retrying once, after a short delay, gives that
-  /// condition a chance to clear; a persistent failure throws again
+  /// harmless) exception.
+  ///
+  /// It never arrives as a bare [TypeError] in practice, though: it's thrown
+  /// while `firebaseAuthProvider` (a plain `Provider`) constructs, and
+  /// Riverpod always surfaces a failed provider's error to callers wrapped
+  /// in [ProviderException] -- and wraps it *again* at every provider
+  /// further up the `ref.watch` chain (`authRemoteDataSourceProvider` ->
+  /// `authRepositoryProvider` -> `loginUseCaseProvider`) that also depends
+  /// on it, so by the time it reaches `ref.read(loginUseCaseProvider)` here
+  /// it can be several `ProviderException`s deep. [_typeErrorAtRootOf]
+  /// unwraps that nesting to find the real cause.
+  ///
+  /// Simply retrying `action()` would not give that condition a second
+  /// chance even once correctly detected: Riverpod caches a `Provider`'s
+  /// *error* state forever once `create` throws -- it never re-runs
+  /// `create` on its own. Every subsequent read of `firebaseAuthProvider`
+  /// -- including a plain retry -- would just rethrow the identical cached
+  /// `ProviderException` without ever calling `FirebaseAuth.instance`
+  /// again. Invalidating both Firebase SDK providers forces Riverpod to
+  /// actually reconstruct them (and, via the `ref.watch` chain, everything
+  /// downstream of them) on the retry, so the underlying Firebase call
+  /// gets a genuine second attempt. A persistent failure throws again
   /// immediately and falls straight through to `_run`'s own catch-all,
   /// unchanged from before this retry existed.
   Future<Either<Failure, R>> _runWithRetry<R>(
@@ -191,11 +214,25 @@ class AuthController extends Notifier<AsyncValue<void>> {
   ) async {
     try {
       return await action().timeout(const Duration(seconds: 30));
-    } on TypeError {
+    } catch (error) {
+      if (_typeErrorAtRootOf(error) is! TypeError) rethrow;
       debugPrint('AuthController._run: retrying once after a TypeError');
+      ref.invalidate(firebaseAuthProvider);
+      ref.invalidate(firestoreProvider);
       await Future<void>.delayed(const Duration(milliseconds: 300));
       return action().timeout(const Duration(seconds: 30));
     }
+  }
+
+  /// Unwraps nested [ProviderException]s to find the original error a
+  /// failed provider threw. See [_runWithRetry]'s doc comment for why this
+  /// unwrapping is necessary.
+  Object _typeErrorAtRootOf(Object error) {
+    var current = error;
+    while (current is ProviderException) {
+      current = current.exception;
+    }
+    return current;
   }
 }
 

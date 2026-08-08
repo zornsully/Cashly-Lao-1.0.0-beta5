@@ -1,7 +1,11 @@
+import 'package:cashly_lao/core/providers/firebase_providers.dart';
+import 'package:cashly_lao/features/auth/data/datasources/auth_remote_datasource.dart';
+import 'package:cashly_lao/features/auth/data/models/user_model.dart';
 import 'package:cashly_lao/features/auth/domain/entities/user_entity.dart';
 import 'package:cashly_lao/features/auth/domain/repositories/auth_repository.dart';
 import 'package:cashly_lao/features/auth/presentation/providers/auth_controller.dart';
 import 'package:cashly_lao/features/auth/presentation/providers/auth_providers.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
@@ -15,6 +19,10 @@ final _fixtureUser = UserEntity(
 );
 
 class _MockAuthRepository extends Mock implements AuthRepository {}
+
+class _MockAuthRemoteDataSource extends Mock implements AuthRemoteDataSource {}
+
+class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
 void main() {
   late _MockAuthRepository repository;
@@ -154,4 +162,86 @@ void main() {
       expect(callCount, 1);
     },
   );
+
+  // Documents the exact Riverpod mechanic that makes a plain retry
+  // insufficient on its own: a `Provider` that throws during construction
+  // caches that error forever, so re-reading it (without invalidating
+  // first) just rethrows the same cached failure instead of ever calling
+  // `create` again.
+  test('a plain Provider that throws during construction stays in that error '
+      'state until invalidated', () {
+    var buildCount = 0;
+    final flaky = Provider<int>((ref) {
+      buildCount++;
+      if (buildCount == 1) throw TypeError();
+      return 42;
+    });
+    final isolatedContainer = ProviderContainer();
+    addTearDown(isolatedContainer.dispose);
+
+    // Riverpod always surfaces a failed build as a `ProviderException`
+    // wrapping the original error, even on the very first read.
+    expect(() => isolatedContainer.read(flaky), throwsA(isA<Object>()));
+    expect(buildCount, 1);
+    // Reading again *without* invalidating returns the cached failure --
+    // `create` is not re-invoked (buildCount stays at 1).
+    expect(() => isolatedContainer.read(flaky), throwsA(isA<Object>()));
+    expect(buildCount, 1);
+
+    isolatedContainer.invalidate(flaky);
+
+    expect(isolatedContainer.read(flaky), 42);
+    expect(buildCount, 2);
+  });
+
+  // Regression guard for the real production scenario behind
+  // flutterfire#18548: it's `firebaseAuthProvider` itself (not the
+  // repository) that fails on its first read. Proves AuthController's
+  // retry invalidates it (and the real `ref.watch` chain down through
+  // authRemoteDataSourceProvider/authRepositoryProvider/
+  // loginUseCaseProvider) rather than just re-reading the same cached
+  // failure.
+  test('login recovers when firebaseAuthProvider itself -- not the repository '
+      '-- is the provider that throws on first read', () async {
+    var authBuildCount = 0;
+    final dataSource = _MockAuthRemoteDataSource();
+    when(
+      () => dataSource.login(
+        email: any(named: 'email'),
+        password: any(named: 'password'),
+      ),
+    ).thenAnswer(
+      (_) async => UserModel(
+        uid: 'uid-1',
+        email: 'user@example.com',
+        emailVerified: true,
+        createdAt: DateTime(2026),
+      ),
+    );
+
+    final chainContainer = ProviderContainer(
+      overrides: [
+        firebaseAuthProvider.overrideWith((ref) {
+          authBuildCount++;
+          if (authBuildCount == 1) throw TypeError();
+          return _MockFirebaseAuth();
+        }),
+        // Mocks only the Firebase-SDK boundary; keeps the real
+        // `ref.watch(firebaseAuthProvider)` dependency edge so
+        // invalidation really does cascade through this provider.
+        authRemoteDataSourceProvider.overrideWith((ref) {
+          ref.watch(firebaseAuthProvider);
+          return dataSource;
+        }),
+      ],
+    );
+    addTearDown(chainContainer.dispose);
+
+    final result = await chainContainer
+        .read(authControllerProvider.notifier)
+        .login(email: 'user@example.com', password: 'Str0ngPass');
+
+    expect(result, isTrue);
+    expect(authBuildCount, 2);
+  });
 }
