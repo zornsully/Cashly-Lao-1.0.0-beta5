@@ -133,7 +133,7 @@ class AuthController extends Notifier<AsyncValue<void>> {
       // Browser popups (and an interrupted network request) can otherwise
       // leave the shared controller loading forever, disabling every login
       // control as shown on the web sign-in screen.
-      final result = await action().timeout(const Duration(seconds: 30));
+      final result = await _runWithRetry(action);
       return result.match(
         (failure) {
           state = AsyncError<void>(failure, StackTrace.current);
@@ -165,10 +165,36 @@ class AuthController extends Notifier<AsyncValue<void>> {
       // upgrade did not resolve this in practice, so re-surfacing the raw
       // error to check whether it's the exact same TypeError as before or
       // something new. Revert to `const UnknownFailure()` once done.
-      state = AsyncError<void>(UnknownFailure('Something went wrong: $error'), stackTrace);
+      state = AsyncError<void>(
+        UnknownFailure('Something went wrong: $error'),
+        stackTrace,
+      );
       return false;
     } finally {
       keepAliveLink.close();
+    }
+  }
+
+  /// A bare [TypeError] escaping this far almost never means our own code
+  /// hit a real type bug -- normal failures already come back as
+  /// `Left(Failure)` well before this point. On web it's the signature of
+  /// https://github.com/firebase/flutterfire/issues/18548: firebase_core_web's
+  /// `FirebaseCoreWeb.app()` force-casts whatever it catches to a JS error
+  /// type, so a transient, already-resolved condition on Firebase's side
+  /// surfaces here as an unrelated TypeError instead of the real (likely
+  /// harmless) exception. Retrying once, after a short delay, gives that
+  /// condition a chance to clear; a persistent failure throws again
+  /// immediately and falls straight through to `_run`'s own catch-all,
+  /// unchanged from before this retry existed.
+  Future<Either<Failure, R>> _runWithRetry<R>(
+    Future<Either<Failure, R>> Function() action,
+  ) async {
+    try {
+      return await action().timeout(const Duration(seconds: 30));
+    } on TypeError {
+      debugPrint('AuthController._run: retrying once after a TypeError');
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      return action().timeout(const Duration(seconds: 30));
     }
   }
 }

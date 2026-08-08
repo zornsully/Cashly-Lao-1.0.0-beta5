@@ -24,8 +24,7 @@ class AuthActionStuckBanner extends ConsumerStatefulWidget {
       _AuthActionStuckBannerState();
 }
 
-class _AuthActionStuckBannerState
-    extends ConsumerState<AuthActionStuckBanner> {
+class _AuthActionStuckBannerState extends ConsumerState<AuthActionStuckBanner> {
   // Comfortably longer than _run()'s own 30-second timeout so this never
   // fires for a real, still-in-flight action -- only for loading state that
   // outlived every legitimate way `_run()` itself would have cleared it.
@@ -38,12 +37,16 @@ class _AuthActionStuckBannerState
   void initState() {
     super.initState();
     final alreadyLoading = ref.read(authControllerProvider).isLoading;
-    debugPrint('AuthActionStuckBanner: mounted, alreadyLoading=$alreadyLoading');
+    debugPrint(
+      'AuthActionStuckBanner: mounted, alreadyLoading=$alreadyLoading',
+    );
     if (alreadyLoading) _startTimer();
   }
 
   void _startTimer() {
-    debugPrint('AuthActionStuckBanner: starting ${_stuckThreshold.inSeconds}s timer');
+    debugPrint(
+      'AuthActionStuckBanner: starting ${_stuckThreshold.inSeconds}s timer',
+    );
     _timer?.cancel();
     _timer = Timer(_stuckThreshold, () {
       debugPrint('AuthActionStuckBanner: threshold reached, showing retry');
@@ -59,7 +62,9 @@ class _AuthActionStuckBannerState
   }
 
   void _retry() {
-    debugPrint('AuthActionStuckBanner: retry tapped, invalidating authControllerProvider');
+    debugPrint(
+      'AuthActionStuckBanner: retry tapped, invalidating authControllerProvider',
+    );
     ref.invalidate(authControllerProvider);
     _cancelTimer();
   }
