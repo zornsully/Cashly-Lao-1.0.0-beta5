@@ -149,12 +149,16 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
     required String email,
     required String password,
   }) async {
+    debugPrint('[AUTH-03] before signInWithEmailAndPassword');
     try {
       final credential = await _firebaseAuth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
       final user = credential.user;
+      debugPrint(
+        '[AUTH-04] signInWithEmailAndPassword returned, uid=${user?.uid}',
+      );
       if (user == null) {
         throw const AuthException('Sign-in did not return a user.');
       }
@@ -166,10 +170,16 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
       // rules correctly treat a partial merge against a non-existent doc
       // as a `create` missing required fields. See the same repair in
       // `signInWithGoogle` below.
+      debugPrint('[AUTH-05] before Firestore profile repair');
       await _repairProfileDocIfMissing(model);
+      debugPrint('[AUTH-06] profile repair complete, returning success');
 
       return model;
     } on fb.FirebaseAuthException catch (e) {
+      debugPrint(
+        '[AUTH-04] signInWithEmailAndPassword threw FirebaseAuthException '
+        'code=${e.code}',
+      );
       throw _mapAuthException(e);
     }
   }
@@ -291,25 +301,49 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
   /// returned to the auth controller. A bounded wait prevents an embedded
   /// browser or blocked popup from leaving Login permanently disabled.
   Future<UserModel> _signInWithGooglePopup() async {
+    debugPrint('[AUTH-03] before signInWithPopup');
     try {
       final userCredential = await _firebaseAuth
           .signInWithPopup(fb.GoogleAuthProvider())
           .timeout(const Duration(seconds: 60));
       final user = userCredential.user;
+      debugPrint('[AUTH-04] signInWithPopup returned, uid=${user?.uid}');
       if (user == null) {
         throw const AuthException('Google sign-in did not return a user.');
       }
       final model = UserModel.fromFirebaseUser(user);
+      debugPrint('[AUTH-05] before Firestore profile repair');
       await _repairProfileDocIfMissing(model);
+      debugPrint('[AUTH-06] profile repair complete, returning success');
       return model;
     } on fb.FirebaseAuthException catch (e) {
+      debugPrint(
+        '[AUTH-04] signInWithPopup threw FirebaseAuthException '
+        'code=${e.code}',
+      );
       throw _mapAuthException(e);
     } on TimeoutException {
+      // If this fires, signInWithPopup's own JS promise never settled --
+      // most commonly because the browser blocked the popup-to-opener
+      // communication signInWithPopup relies on to detect completion (see
+      // Cross-Origin-Opener-Policy on the hosting response; missing
+      // `same-origin-allow-popups` reproduces exactly this: popup opens,
+      // account picker works, popup closes, but this Future never resolves
+      // or rejects). AuthController.signInWithGoogle's own timeout is
+      // intentionally longer than this one so this specific, actionable
+      // message reaches the user instead of a generic one.
+      debugPrint(
+        '[AUTH-04] signInWithPopup did not settle within 60s -- likely a '
+        'COOP/popup-communication problem, not a slow network call',
+      );
       throw const AuthException(
         'Google sign-in timed out. Allow pop-ups for Cashly Lao and try again.',
         code: 'popup-timeout',
       );
     } on FirebaseException catch (e) {
+      debugPrint(
+        '[AUTH-04] signInWithPopup threw FirebaseException code=${e.code}',
+      );
       throw _mapGooglePopupFirebaseException(e);
     }
   }

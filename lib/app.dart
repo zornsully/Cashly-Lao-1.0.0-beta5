@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import 'core/providers/app_lock_state_provider.dart';
+import 'core/providers/firebase_providers.dart';
 import 'core/providers/presence_providers.dart';
 import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
@@ -33,7 +34,29 @@ class _CashlyAppState extends ConsumerState<CashlyApp>
     if (kIsWeb && webServicesReady != null) {
       webServicesReady.then(
         (_) {
-          if (mounted) ref.invalidate(authStateChangesProvider);
+          if (!mounted) return;
+          // Router redirects read `authStateChangesProvider` from the very
+          // first frame -- before this Future has any chance to resolve --
+          // so `firebaseAuthProvider`/`firestoreProvider` almost always
+          // make their *first* real construction attempt while
+          // `Firebase.initializeApp()` is still in flight. Both are plain
+          // `Provider`s, so a failed attempt caches that error forever;
+          // invalidating only `authStateChangesProvider` (as this used to
+          // do) just re-reads that same cached failure through
+          // `authRepositoryProvider` -> `authRemoteDataSourceProvider`
+          // without ever giving `FirebaseAuth.instance`/
+          // `FirebaseFirestore.instance` a fresh attempt. Invalidating the
+          // two SDK-singleton providers directly forces Riverpod to
+          // reconstruct the whole chain now that Firebase is *actually*
+          // ready -- same fix, and same reasoning, as
+          // AuthController._runWithRetry.
+          debugPrint(
+            '[AUTH-12] webServicesReady resolved -- invalidating '
+            'firebaseAuthProvider/firestoreProvider/authStateChangesProvider',
+          );
+          ref.invalidate(firebaseAuthProvider);
+          ref.invalidate(firestoreProvider);
+          ref.invalidate(authStateChangesProvider);
         },
         // Failure is logged by main.dart. The public shell and login page
         // remain available with their own recoverable service states.

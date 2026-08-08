@@ -31,6 +31,7 @@ class AuthController extends Notifier<AsyncValue<void>> {
   };
 
   Future<bool> login({required String email, required String password}) async {
+    debugPrint('[AUTH-01] login() called');
     final success = await _run(
       () =>
           ref.read(loginUseCaseProvider).call(email: email, password: password),
@@ -62,8 +63,17 @@ class AuthController extends Notifier<AsyncValue<void>> {
   }
 
   Future<bool> signInWithGoogle() async {
+    debugPrint('[AUTH-01] signInWithGoogle() called');
     final success = await _run(
       () => ref.read(signInWithGoogleUseCaseProvider).call(),
+      // Longer than every other action: this one waits on human interaction
+      // (the Google account picker), not just a network round-trip, and the
+      // datasource's own `_signInWithGooglePopup` already bounds the popup
+      // itself to 60s with a specific, actionable message ("Allow pop-ups
+      // for Cashly Lao and try again."). This timeout must stay longer than
+      // that one -- otherwise this generic timeout always wins the race and
+      // the more useful datasource-level message can never reach the user.
+      timeout: const Duration(seconds: 65),
     );
     if (success) {
       logAnalyticsEvent(() => ref.read(analyticsProvider), 'login', {
@@ -119,7 +129,10 @@ class AuthController extends Notifier<AsyncValue<void>> {
     );
   }
 
-  Future<bool> _run<R>(Future<Either<Failure, R>> Function() action) async {
+  Future<bool> _run<R>(
+    Future<Either<Failure, R>> Function() action, {
+    Duration timeout = const Duration(seconds: 30),
+  }) async {
     // This provider is `autoDispose`, and several of its actions
     // (deleteAccount above all — Firebase signs the user out as a direct
     // side effect) change auth state in a way that makes the router
@@ -133,21 +146,37 @@ class AuthController extends Notifier<AsyncValue<void>> {
     final keepAliveLink = ref.keepAlive();
     try {
       state = const AsyncLoading();
+      debugPrint('[AUTH-02] provider chain resolving, action starting');
       // Browser popups (and an interrupted network request) can otherwise
       // leave the shared controller loading forever, disabling every login
       // control as shown on the web sign-in screen.
-      final result = await _runWithRetry(action);
+      final result = await _runWithRetry(action, timeout);
       return result.match(
         (failure) {
+          final code = switch (failure) {
+            AuthFailure(:final code) => code,
+            _ => null,
+          };
+          debugPrint(
+            '[AUTH-09] action failed: ${failure.runtimeType}'
+            '${code != null ? ' code=$code' : ''} -- ${failure.message}',
+          );
           state = AsyncError<void>(failure, StackTrace.current);
           return false;
         },
         (_) {
+          debugPrint('[AUTH-08] action succeeded, state -> AsyncData');
           state = const AsyncData(null);
           return true;
         },
       );
     } on TimeoutException {
+      debugPrint(
+        '[AUTH-09] action timed out after ${timeout.inSeconds}s -- this '
+        'controller-level timeout should rarely fire for Google sign-in '
+        "specifically; if it does, the datasource's own 60s popup timeout "
+        'and its more specific error never got a chance to run first.',
+      );
       state = AsyncError<void>(
         const NetworkFailure('Sign-in timed out. Please try again.'),
         StackTrace.current,
@@ -211,16 +240,21 @@ class AuthController extends Notifier<AsyncValue<void>> {
   /// unchanged from before this retry existed.
   Future<Either<Failure, R>> _runWithRetry<R>(
     Future<Either<Failure, R>> Function() action,
+    Duration timeout,
   ) async {
     try {
-      return await action().timeout(const Duration(seconds: 30));
+      return await action().timeout(timeout);
     } catch (error) {
       if (_typeErrorAtRootOf(error) is! TypeError) rethrow;
-      debugPrint('AuthController._run: retrying once after a TypeError');
+      debugPrint(
+        '[AUTH-07] caught TypeError (possibly wrapped in ProviderException) '
+        '-- invalidating firebaseAuthProvider/firestoreProvider and '
+        'retrying once',
+      );
       ref.invalidate(firebaseAuthProvider);
       ref.invalidate(firestoreProvider);
       await Future<void>.delayed(const Duration(milliseconds: 300));
-      return action().timeout(const Duration(seconds: 30));
+      return action().timeout(timeout);
     }
   }
 

@@ -135,7 +135,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   // The public-route guard below runs before Auth is read, so listening here
   // never delays the web landing page. Once Firebase finishes bootstrapping,
   // this refresh moves a restored browser session from Login to Dashboard.
-  ref.listen(authStateChangesProvider, (_, _) => refreshNotifier.refresh());
+  ref.listen(authStateChangesProvider, (_, next) {
+    debugPrint(
+      '[AUTH-10] authStateChangesProvider -> '
+      'hasValue=${next.hasValue} uid=${next.value?.uid} '
+      'hasError=${next.hasError}${next.hasError ? ' error=${next.error}' : ''}',
+    );
+    refreshNotifier.refresh();
+  });
   // App lock gate needs the router to re-evaluate `redirect` whenever
   // either changes: the session unlocks/re-locks, or the preference itself
   // is toggled in Settings (so turning it off there immediately clears the
@@ -184,6 +191,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       }
 
       final authState = ref.read(authStateChangesProvider);
+      debugPrint(
+        '[AUTH-11] redirect: location=$location '
+        'hasValue=${authState.hasValue} hasError=${authState.hasError} '
+        'isLoading=${authState.isLoading}'
+        '${authState.hasError ? ' error=${authState.error}' : ''}',
+      );
 
       if (!authState.hasValue) {
         return pendingAuthRedirectForPlatform(
