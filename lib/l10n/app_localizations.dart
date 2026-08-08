@@ -1532,6 +1532,48 @@ abstract class AppLocalizations {
   /// **'Clear filters'**
   String get clearFiltersButton;
 
+  /// No description provided for @allTransactionsChipLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get allTransactionsChipLabel;
+
+  /// No description provided for @periodDayLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Day'**
+  String get periodDayLabel;
+
+  /// No description provided for @periodWeekLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Week'**
+  String get periodWeekLabel;
+
+  /// No description provided for @periodMonthLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get periodMonthLabel;
+
+  /// No description provided for @periodYearLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Year'**
+  String get periodYearLabel;
+
+  /// No description provided for @periodCustomLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get periodCustomLabel;
+
+  /// No description provided for @periodNotYetAvailableMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing by month — other periods are coming soon.'**
+  String get periodNotYetAvailableMessage;
+
   /// No description provided for @noMatchingTransactionsTitle.
   ///
   /// In en, this message translates to:

@@ -20,4 +20,14 @@ abstract final class AppSnackbar {
         SnackBar(content: Text(message), backgroundColor: colorScheme.primary),
       );
   }
+
+  /// Neutral, non-error/non-success notice (e.g. "this isn't available
+  /// yet") — uses the theme's own default `SnackBarThemeData` surface
+  /// rather than a semantic color, since neither error nor success framing
+  /// fits.
+  static void showInfo(BuildContext context, String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
 }

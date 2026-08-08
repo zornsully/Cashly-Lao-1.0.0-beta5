@@ -801,6 +801,28 @@ class AppLocalizationsLo extends AppLocalizations {
   String get clearFiltersButton => 'ລ້າງການກັ່ນຕອງ';
 
   @override
+  String get allTransactionsChipLabel => 'ທັງໝົດ';
+
+  @override
+  String get periodDayLabel => 'ວັນ';
+
+  @override
+  String get periodWeekLabel => 'ອາທິດ';
+
+  @override
+  String get periodMonthLabel => 'ເດືອນ';
+
+  @override
+  String get periodYearLabel => 'ປີ';
+
+  @override
+  String get periodCustomLabel => 'ກຳນົດເອງ';
+
+  @override
+  String get periodNotYetAvailableMessage =>
+      'ສະແດງຕາມເດືອນ — ໄລຍະເວລາອື່ນຈະມາໃນໄວໆນີ້.';
+
+  @override
   String get noMatchingTransactionsTitle => 'ບໍ່ພົບລາຍການທຸລະກຳທີ່ກົງກັນ';
 
   @override

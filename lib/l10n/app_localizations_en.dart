@@ -800,6 +800,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clearFiltersButton => 'Clear filters';
 
   @override
+  String get allTransactionsChipLabel => 'All';
+
+  @override
+  String get periodDayLabel => 'Day';
+
+  @override
+  String get periodWeekLabel => 'Week';
+
+  @override
+  String get periodMonthLabel => 'Month';
+
+  @override
+  String get periodYearLabel => 'Year';
+
+  @override
+  String get periodCustomLabel => 'Custom';
+
+  @override
+  String get periodNotYetAvailableMessage =>
+      'Showing by month — other periods are coming soon.';
+
+  @override
   String get noMatchingTransactionsTitle => 'No matching transactions';
 
   @override

@@ -424,7 +424,10 @@ class _SidebarDestination extends StatelessWidget {
         ? colorScheme.primary
         : enabled
         ? colorScheme.onSurfaceVariant
-        : colorScheme.onSurfaceVariant.withValues(alpha: 0.46);
+        // Deliberately lower than a merely-unselected item's own
+        // onSurfaceVariant -- a "Soon" destination should read as clearly
+        // secondary to every real, tappable one, not just slightly dimmer.
+        : colorScheme.onSurfaceVariant.withValues(alpha: 0.38);
     final content = Container(
       height: 46,
       margin: EdgeInsets.symmetric(
@@ -452,7 +455,11 @@ class _SidebarDestination extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.labelLarge?.copyWith(
                   color: foreground,
-                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                  fontWeight: selected
+                      ? FontWeight.w800
+                      : enabled
+                      ? FontWeight.w600
+                      : FontWeight.w500,
                 ),
               ),
             ),
