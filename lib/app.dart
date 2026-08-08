@@ -33,36 +33,63 @@ class _CashlyAppState extends ConsumerState<CashlyApp>
     final webServicesReady = widget.webServicesReady;
     if (kIsWeb && webServicesReady != null) {
       webServicesReady.then(
-        (_) {
-          if (!mounted) return;
-          // Router redirects read `authStateChangesProvider` from the very
-          // first frame -- before this Future has any chance to resolve --
-          // so `firebaseAuthProvider`/`firestoreProvider` almost always
-          // make their *first* real construction attempt while
-          // `Firebase.initializeApp()` is still in flight. Both are plain
-          // `Provider`s, so a failed attempt caches that error forever;
-          // invalidating only `authStateChangesProvider` (as this used to
-          // do) just re-reads that same cached failure through
-          // `authRepositoryProvider` -> `authRemoteDataSourceProvider`
-          // without ever giving `FirebaseAuth.instance`/
-          // `FirebaseFirestore.instance` a fresh attempt. Invalidating the
-          // two SDK-singleton providers directly forces Riverpod to
-          // reconstruct the whole chain now that Firebase is *actually*
-          // ready -- same fix, and same reasoning, as
-          // AuthController._runWithRetry.
-          debugPrint(
-            '[AUTH-12] webServicesReady resolved -- invalidating '
-            'firebaseAuthProvider/firestoreProvider/authStateChangesProvider',
-          );
-          ref.invalidate(firebaseAuthProvider);
-          ref.invalidate(firestoreProvider);
-          ref.invalidate(authStateChangesProvider);
-        },
+        (_) => _recoverFirebaseProviders(),
         // Failure is logged by main.dart. The public shell and login page
         // remain available with their own recoverable service states.
         onError: (Object error, StackTrace stackTrace) {},
       );
     }
+  }
+
+  /// Router redirects read `authStateChangesProvider` from the very first
+  /// frame -- before `webServicesReady` has any chance to resolve -- so
+  /// `firebaseAuthProvider`/`firestoreProvider` almost always make their
+  /// *first* real construction attempt while `Firebase.initializeApp()` is
+  /// still in flight. Both are plain `Provider`s, so a failed attempt
+  /// caches that error forever; invalidating only `authStateChangesProvider`
+  /// just re-reads that same cached failure through `authRepositoryProvider`
+  /// -> `authRemoteDataSourceProvider` without ever giving
+  /// `FirebaseAuth.instance`/`FirebaseFirestore.instance` a fresh attempt --
+  /// same fix, and same reasoning, as `AuthController._runWithRetry`.
+  ///
+  /// One invalidation right when `webServicesReady` resolves is not always
+  /// enough on its own, confirmed directly against the live site: even
+  /// *after* `Firebase.initializeApp()` reports success, the very next
+  /// construction attempt can still fail once more with the same
+  /// `firebase/flutterfire#18548` TypeError before a subsequent attempt
+  /// succeeds -- some part of the JS SDK's own async setup evidently
+  /// settles slightly later than `initializeApp()`'s own promise. Retrying
+  /// a few times, a short delay apart, absorbs that instead of leaving the
+  /// user stuck on an errored auth state for the rest of the page's
+  /// lifetime.
+  Future<void> _recoverFirebaseProviders() async {
+    const maxAttempts = 4;
+    const retryDelay = Duration(milliseconds: 400);
+    for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+      if (!mounted) return;
+      debugPrint(
+        '[AUTH-12] webServicesReady resolved -- invalidating '
+        'firebaseAuthProvider/firestoreProvider/authStateChangesProvider '
+        '(attempt $attempt/$maxAttempts)',
+      );
+      ref.invalidate(firebaseAuthProvider);
+      ref.invalidate(firestoreProvider);
+      ref.invalidate(authStateChangesProvider);
+      if (!mounted) return;
+      // Let the invalidated providers actually rebuild before checking --
+      // invalidation marks them dirty but the rebuild itself still runs
+      // asynchronously through the `ref.watch` chain.
+      await Future<void>.delayed(retryDelay);
+      if (!mounted) return;
+      if (!ref.read(authStateChangesProvider).hasError) {
+        debugPrint('[AUTH-12] recovered on attempt $attempt');
+        return;
+      }
+    }
+    debugPrint(
+      '[AUTH-12] still erroring after $maxAttempts attempts -- giving up; '
+      'AuthController._runWithRetry remains as a per-action fallback',
+    );
   }
 
   @override
