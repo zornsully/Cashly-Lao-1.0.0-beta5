@@ -3121,6 +3121,103 @@ cleanliness, so a future CSP or header change can't reach production
 without this exact class of regression being caught automatically before
 a human (or agent) has to catch it by hand.
 
+### 2026-08-08 — Root-caused the login TypeError to an upstream FlutterFire
+bug (flutterfire#18548 filed); one-retry workaround shipped and deployed
+
+Summary:
+
+Continuing the multi-session investigation into the "Sign in"/"Continue with
+Google" crash on web (`TypeError: Instance of 'X': type 'X' is not a subtype
+of type 'Y'`, previously confirmed to survive the `firebase_core_web`
+3.9.1→3.10.0 upgrade unchanged). Reading `firebase_core_web`'s actual
+published source (not just its changelog) found the real mechanism:
+`FirebaseCoreWeb.app()` (`firebase_core_web/lib/src/firebase_core_web.dart`,
+lines 423-436) catches any exception from resolving the JS SDK's app
+instance and unconditionally force-casts it to `JSError` (`e as JSError`,
+and again implicitly by passing `e` into `_catchJSError(JSError e)`), with
+no `is JSError` guard. Its own `guardNotInitialized` helper can throw a
+plain Dart `FirebaseException` (`coreNotInitialized()`) — not a `JSError` —
+when the underlying JS call fails with an "of undefined"-shaped error. When
+that happens, `app()`'s catch block's own forced cast throws a *second*,
+unrelated `TypeError` that completely masks the real, actionable
+"Firebase core not initialized" exception — exactly the crash signature
+observed in production. Confirmed via decoding Cashly's own production
+`main.dart.js` build against its source map back to
+`firebase_core_web.dart:434` (`throw _catchJSError(e);`), and confirmed the
+same code is still unfixed on FlutterFire's `main` branch today (not just
+in the published 3.10.0 release). This is the identical anti-pattern
+FlutterFire already fixed once elsewhere — `_flutterfire_internals`'s
+`_testException`, issue #18176 / PR #18177 — just never applied to this
+file.
+
+Filed **[firebase/flutterfire#18548](https://github.com/firebase/flutterfire/issues/18548)**
+with the full mechanism, decoded stack trace, exact versions, and a
+suggested fix mirroring PR #18177's own resolution, offering to send a PR.
+This is an upstream library bug — the underlying trigger (why
+`firebase.app(name)` itself intermittently fails with an "of undefined"
+condition on this specific login attempt) is still unconfirmed.
+
+Shipped an app-side mitigation while the upstream issue is open:
+`AuthController._runWithRetry()` retries the in-flight auth action exactly
+once, after a 300ms delay, if and only if a bare `TypeError` escapes the
+repository layer (any other exception, or a `TypeError` on the retry too,
+falls through to `_run()`'s existing catch-all unchanged — no infinite
+loop, bounded to 2 attempts total). Deliberately not gated to `kIsWeb`:
+the bug is web-specific, but a native `TypeError` escaping this far would
+already be exceptional, and retrying it once before showing the same
+recovery UI it would have shown anyway doesn't hide anything a developer
+would rely on — it also keeps the logic simple to unit-test without a
+platform-detection seam that can't be flipped in a VM-based `flutter test`
+run.
+
+Files modified:
+
+- `lib/features/auth/presentation/providers/auth_controller.dart` —
+  `_runWithRetry()`; `_run()` now calls it instead of invoking `action()`
+  directly. The TEMPORARY raw-error diagnostic banner text is deliberately
+  left in place (not reverted) — the retry is a mitigation, not a fix, and
+  the diagnostic remains useful if the retry doesn't clear a given
+  occurrence.
+- `test/features/auth/presentation/providers/auth_controller_test.dart` —
+  3 new tests: retries once and succeeds on a first-attempt `TypeError`;
+  still recovers to a clean error state (not stuck) when the `TypeError`
+  persists after the retry, bounded to exactly 2 calls; does not retry a
+  non-`TypeError` exception (1 call only).
+
+Validation:
+
+- `flutter analyze` — 0 issues. `dart format --set-exit-if-changed lib test
+  tool` — clean. `flutter test` — full suite, 497 passing, 0 failing.
+- Deployed via `tool/deploy_website.ps1` (`flutter build web --release` →
+  `firebase deploy --only hosting:cashly-lao --project cashly-lao`,
+  Firebase CLI). The script's own final live check against
+  `cashly-lao.web.app` failed with the same pre-existing local network
+  block on that specific hostname documented in earlier entries — not a
+  deploy failure. Independently verified via `curl` against
+  `cashly-lao.firebaseapp.com` (same Hosting site): `main.dart.js`'s
+  `Last-Modified` matched the deploy time with `X-Cache: MISS`, and the
+  literal string `retrying once after a TypeError` (this change's own
+  debug log line) is present in the live bundle, confirming the retry
+  logic is genuinely deployed, not just built locally.
+
+Known limitations:
+
+- The retry is a mitigation for the *symptom*, not a fix for the
+  underlying trigger — if the real race takes longer than ~300ms to
+  clear, or recurs on both attempts, the user still sees the (currently
+  still-raw-text) error banner. Whether the retry is sufficient in
+  practice is unverified — awaiting the owner's next live test.
+- No response yet from the FlutterFire maintainers on #18548.
+- The TEMPORARY raw-error diagnostic in `_run()`'s catch-all is still live
+  in production — revert to `const UnknownFailure()` once the retry is
+  confirmed sufficient (or once a better long-term signal is needed).
+
+Next step: owner re-tests login/Google sign-in on the live site. If the
+retry silently succeeds, no error banner appears at all. If it still
+appears, the raw error text will confirm whether it's still the same
+TypeError (retry insufficient — consider a longer delay or a second retry)
+or something new.
+
 ## Product Roadmap
 
 The full staged roadmap — objectives, features, deliverables,
