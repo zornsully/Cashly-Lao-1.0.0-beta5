@@ -320,7 +320,7 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
     } on fb.FirebaseAuthException catch (e) {
       AuthDebugLog.log(
         '[AUTH-04] signInWithPopup threw FirebaseAuthException '
-        'code=${e.code}',
+        'code=${e.code} message=${e.message}',
       );
       throw _mapAuthException(e);
     } on TimeoutException {
@@ -343,7 +343,8 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
       );
     } on FirebaseException catch (e) {
       AuthDebugLog.log(
-        '[AUTH-04] signInWithPopup threw FirebaseException code=${e.code}',
+        '[AUTH-04] signInWithPopup threw FirebaseException '
+        'code=${e.code} message=${e.message}',
       );
       throw _mapGooglePopupFirebaseException(e);
     }
