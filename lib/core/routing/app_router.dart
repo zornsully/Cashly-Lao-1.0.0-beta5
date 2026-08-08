@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/firebase_providers.dart';
+import '../utils/auth_debug_log.dart';
 
 import '../../features/accounts/domain/entities/account_entity.dart';
 import '../../features/accounts/presentation/screens/account_form_screen.dart';
@@ -136,7 +137,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   // never delays the web landing page. Once Firebase finishes bootstrapping,
   // this refresh moves a restored browser session from Login to Dashboard.
   ref.listen(authStateChangesProvider, (_, next) {
-    debugPrint(
+    AuthDebugLog.log(
       '[AUTH-10] authStateChangesProvider -> '
       'hasValue=${next.hasValue} uid=${next.value?.uid} '
       'hasError=${next.hasError}${next.hasError ? ' error=${next.error}' : ''}',
@@ -191,7 +192,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       }
 
       final authState = ref.read(authStateChangesProvider);
-      debugPrint(
+      AuthDebugLog.log(
         '[AUTH-11] redirect: location=$location '
         'hasValue=${authState.hasValue} hasError=${authState.hasError} '
         'isLoading=${authState.isLoading}'

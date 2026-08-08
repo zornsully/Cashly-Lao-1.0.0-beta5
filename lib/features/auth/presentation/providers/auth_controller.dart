@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // ProviderException isn't exposed through the main flutter_riverpod.dart
 // barrel file -- only through this narrower one.
@@ -10,6 +9,7 @@ import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/providers/firebase_providers.dart';
 import '../../../../core/utils/analytics_logger.dart';
+import '../../../../core/utils/auth_debug_log.dart';
 import '../../../notifications/presentation/providers/fcm_token_providers.dart';
 import 'auth_providers.dart';
 
@@ -31,7 +31,7 @@ class AuthController extends Notifier<AsyncValue<void>> {
   };
 
   Future<bool> login({required String email, required String password}) async {
-    debugPrint('[AUTH-01] login() called');
+    AuthDebugLog.log('[AUTH-01] login() called');
     final success = await _run(
       () =>
           ref.read(loginUseCaseProvider).call(email: email, password: password),
@@ -63,7 +63,7 @@ class AuthController extends Notifier<AsyncValue<void>> {
   }
 
   Future<bool> signInWithGoogle() async {
-    debugPrint('[AUTH-01] signInWithGoogle() called');
+    AuthDebugLog.log('[AUTH-01] signInWithGoogle() called');
     final success = await _run(
       () => ref.read(signInWithGoogleUseCaseProvider).call(),
       // Longer than every other action: this one waits on human interaction
@@ -146,7 +146,7 @@ class AuthController extends Notifier<AsyncValue<void>> {
     final keepAliveLink = ref.keepAlive();
     try {
       state = const AsyncLoading();
-      debugPrint('[AUTH-02] provider chain resolving, action starting');
+      AuthDebugLog.log('[AUTH-02] provider chain resolving, action starting');
       // Browser popups (and an interrupted network request) can otherwise
       // leave the shared controller loading forever, disabling every login
       // control as shown on the web sign-in screen.
@@ -157,7 +157,7 @@ class AuthController extends Notifier<AsyncValue<void>> {
             AuthFailure(:final code) => code,
             _ => null,
           };
-          debugPrint(
+          AuthDebugLog.log(
             '[AUTH-09] action failed: ${failure.runtimeType}'
             '${code != null ? ' code=$code' : ''} -- ${failure.message}',
           );
@@ -165,13 +165,13 @@ class AuthController extends Notifier<AsyncValue<void>> {
           return false;
         },
         (_) {
-          debugPrint('[AUTH-08] action succeeded, state -> AsyncData');
+          AuthDebugLog.log('[AUTH-08] action succeeded, state -> AsyncData');
           state = const AsyncData(null);
           return true;
         },
       );
     } on TimeoutException {
-      debugPrint(
+      AuthDebugLog.log(
         '[AUTH-09] action timed out after ${timeout.inSeconds}s -- this '
         'controller-level timeout should rarely fire for Google sign-in '
         "specifically; if it does, the datasource's own 60s popup timeout "
@@ -192,7 +192,9 @@ class AuthController extends Notifier<AsyncValue<void>> {
       // this method ever gets a chance to move it off that value, which is
       // exactly the "every login control disabled with no way to recover"
       // failure mode AuthActionStuckBanner exists to defend against.
-      debugPrint('AuthController._run: unhandled error, recovering: $error');
+      AuthDebugLog.log(
+        '[AUTH-09] unhandled error escaped the retry, recovering: $error',
+      );
       // TEMPORARY diagnostic (re-enabled): the firebase_core_web 3.10.0
       // upgrade did not resolve this in practice, so re-surfacing the raw
       // error to check whether it's the exact same TypeError as before or
@@ -246,7 +248,7 @@ class AuthController extends Notifier<AsyncValue<void>> {
       return await action().timeout(timeout);
     } catch (error) {
       if (_typeErrorAtRootOf(error) is! TypeError) rethrow;
-      debugPrint(
+      AuthDebugLog.log(
         '[AUTH-07] caught TypeError (possibly wrapped in ProviderException) '
         '-- invalidating firebaseAuthProvider/firestoreProvider and '
         'retrying once',

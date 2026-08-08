@@ -15,6 +15,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../../../core/constants/firestore_paths.dart';
 import '../../../../core/error/exceptions.dart';
+import '../../../../core/utils/auth_debug_log.dart';
 import '../models/user_model.dart';
 
 /// Talks to Firebase Authentication and Firestore directly. Throws
@@ -149,14 +150,14 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
     required String email,
     required String password,
   }) async {
-    debugPrint('[AUTH-03] before signInWithEmailAndPassword');
+    AuthDebugLog.log('[AUTH-03] before signInWithEmailAndPassword');
     try {
       final credential = await _firebaseAuth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
       final user = credential.user;
-      debugPrint(
+      AuthDebugLog.log(
         '[AUTH-04] signInWithEmailAndPassword returned, uid=${user?.uid}',
       );
       if (user == null) {
@@ -170,13 +171,13 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
       // rules correctly treat a partial merge against a non-existent doc
       // as a `create` missing required fields. See the same repair in
       // `signInWithGoogle` below.
-      debugPrint('[AUTH-05] before Firestore profile repair');
+      AuthDebugLog.log('[AUTH-05] before Firestore profile repair');
       await _repairProfileDocIfMissing(model);
-      debugPrint('[AUTH-06] profile repair complete, returning success');
+      AuthDebugLog.log('[AUTH-06] profile repair complete, returning success');
 
       return model;
     } on fb.FirebaseAuthException catch (e) {
-      debugPrint(
+      AuthDebugLog.log(
         '[AUTH-04] signInWithEmailAndPassword threw FirebaseAuthException '
         'code=${e.code}',
       );
@@ -301,23 +302,23 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
   /// returned to the auth controller. A bounded wait prevents an embedded
   /// browser or blocked popup from leaving Login permanently disabled.
   Future<UserModel> _signInWithGooglePopup() async {
-    debugPrint('[AUTH-03] before signInWithPopup');
+    AuthDebugLog.log('[AUTH-03] before signInWithPopup');
     try {
       final userCredential = await _firebaseAuth
           .signInWithPopup(fb.GoogleAuthProvider())
           .timeout(const Duration(seconds: 60));
       final user = userCredential.user;
-      debugPrint('[AUTH-04] signInWithPopup returned, uid=${user?.uid}');
+      AuthDebugLog.log('[AUTH-04] signInWithPopup returned, uid=${user?.uid}');
       if (user == null) {
         throw const AuthException('Google sign-in did not return a user.');
       }
       final model = UserModel.fromFirebaseUser(user);
-      debugPrint('[AUTH-05] before Firestore profile repair');
+      AuthDebugLog.log('[AUTH-05] before Firestore profile repair');
       await _repairProfileDocIfMissing(model);
-      debugPrint('[AUTH-06] profile repair complete, returning success');
+      AuthDebugLog.log('[AUTH-06] profile repair complete, returning success');
       return model;
     } on fb.FirebaseAuthException catch (e) {
-      debugPrint(
+      AuthDebugLog.log(
         '[AUTH-04] signInWithPopup threw FirebaseAuthException '
         'code=${e.code}',
       );
@@ -332,7 +333,7 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
       // or rejects). AuthController.signInWithGoogle's own timeout is
       // intentionally longer than this one so this specific, actionable
       // message reaches the user instead of a generic one.
-      debugPrint(
+      AuthDebugLog.log(
         '[AUTH-04] signInWithPopup did not settle within 60s -- likely a '
         'COOP/popup-communication problem, not a slow network call',
       );
@@ -341,7 +342,7 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
         code: 'popup-timeout',
       );
     } on FirebaseException catch (e) {
-      debugPrint(
+      AuthDebugLog.log(
         '[AUTH-04] signInWithPopup threw FirebaseException code=${e.code}',
       );
       throw _mapGooglePopupFirebaseException(e);

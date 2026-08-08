@@ -8,6 +8,8 @@ import 'core/providers/firebase_providers.dart';
 import 'core/providers/presence_providers.dart';
 import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'core/utils/auth_debug_log.dart';
+import 'core/widgets/auth_debug_overlay.dart';
 import 'features/auth/presentation/providers/auth_providers.dart';
 import 'features/settings/presentation/providers/settings_providers.dart';
 import 'l10n/app_localizations.dart';
@@ -67,7 +69,7 @@ class _CashlyAppState extends ConsumerState<CashlyApp>
     const retryDelay = Duration(milliseconds: 400);
     for (var attempt = 1; attempt <= maxAttempts; attempt++) {
       if (!mounted) return;
-      debugPrint(
+      AuthDebugLog.log(
         '[AUTH-12] webServicesReady resolved -- invalidating '
         'firebaseAuthProvider/firestoreProvider/authStateChangesProvider '
         '(attempt $attempt/$maxAttempts)',
@@ -82,11 +84,11 @@ class _CashlyAppState extends ConsumerState<CashlyApp>
       await Future<void>.delayed(retryDelay);
       if (!mounted) return;
       if (!ref.read(authStateChangesProvider).hasError) {
-        debugPrint('[AUTH-12] recovered on attempt $attempt');
+        AuthDebugLog.log('[AUTH-12] recovered on attempt $attempt');
         return;
       }
     }
-    debugPrint(
+    AuthDebugLog.log(
       '[AUTH-12] still erroring after $maxAttempts attempts -- giving up; '
       'AuthController._runWithRetry remains as a per-action fallback',
     );
@@ -145,6 +147,14 @@ class _CashlyAppState extends ConsumerState<CashlyApp>
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: router,
+      // TEMPORARY: mirrors the [AUTH-NN] console trail directly on screen
+      // (behind every route) so a plain screenshot shows exactly where a
+      // login attempt stalled, without needing DevTools. Remove once the
+      // live web auth investigation is closed.
+      builder: kIsWeb
+          ? (context, child) =>
+                AuthDebugOverlay(child: child ?? const SizedBox.shrink())
+          : null,
     );
   }
 }
