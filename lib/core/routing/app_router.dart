@@ -117,6 +117,84 @@ String? pendingAuthRedirectForPlatform({
   return isWeb ? AppRoutes.login : AppRoutes.splash;
 }
 
+/// The actual auth-guarding decision behind [appRouterProvider]'s
+/// `redirect`, pulled out so the whole decision (not just the inputs to it)
+/// can be logged from a single call site regardless of which branch below
+/// actually returns, and so it's testable without needing a real
+/// [GoRouterState] -- [location] is the only field of it this ever reads.
+/// [isWeb] defaults to the real [kIsWeb] and is only ever overridden by
+/// tests -- `kIsWeb` itself is always false under `flutter test`'s VM, so
+/// without this parameter the web-only branches below could never be
+/// exercised at all.
+@visibleForTesting
+String? computeAppRedirect(Ref ref, String location, {bool isWeb = kIsWeb}) {
+  // The marketing site is web-only. Native launches always flow through
+  // Splash while Firebase restores the session, never through Landing.
+  // This check must come before touching Firebase-backed providers: the
+  // public web shell needs to render even when Firebase is unavailable.
+  if (isMarketingRouteAvailable(isWeb: isWeb, location: location)) {
+    return null;
+  }
+
+  // /splash belongs to the native entry flow. Old hashes, bookmarks, or
+  // an interrupted Auth restore must land at Login on web instead of
+  // leaving a browser visitor behind an indefinite spinner.
+  if (isWeb && location == AppRoutes.splash) {
+    return AppRoutes.login;
+  }
+
+  final authState = ref.read(authStateChangesProvider);
+  AuthDebugLog.log(
+    '[AUTH-11] redirect: location=$location '
+    'hasValue=${authState.hasValue} hasError=${authState.hasError} '
+    'isLoading=${authState.isLoading}'
+    '${authState.hasError ? ' error=${authState.error}' : ''}',
+  );
+
+  if (!authState.hasValue) {
+    // Login, registration, and password recovery must remain reachable
+    // while the background Firebase initialization is still in progress.
+    // These pages show their own recoverable service state when an action
+    // needs Firebase, rather than turning a public URL into a blank page.
+    // Deliberately scoped to *only* the not-yet-resolved case -- this used
+    // to run unconditionally before ever reading `authState`, which meant
+    // a user who signed in while sitting on /login (no explicit
+    // navigation, just Firebase's auth stream emitting reactively) got
+    // stuck there forever: this early-return fired every time regardless
+    // of the new auth state, so execution never reached the
+    // `_authOnlyRoutes` check below that actually redirects a signed-in
+    // user away from /login.
+    if (isWeb && _publicRoutes.contains(location)) {
+      return null;
+    }
+    return pendingAuthRedirectForPlatform(isWeb: isWeb, location: location);
+  }
+
+  final user = authState.value;
+
+  if (user == null) {
+    if (!isWeb && location == AppRoutes.landing) {
+      return AppRoutes.login;
+    }
+    return _publicRoutes.contains(location) ? null : AppRoutes.login;
+  }
+
+  if (!user.emailVerified) {
+    return location == AppRoutes.verifyEmail ? null : AppRoutes.verifyEmail;
+  }
+
+  final appLockEnabled =
+      ref.read(userPreferencesProvider).value?.appLockEnabled ?? false;
+  if (!isWeb && appLockEnabled && !ref.read(isUnlockedProvider)) {
+    return location == AppRoutes.lock ? null : AppRoutes.lock;
+  }
+  if (location == AppRoutes.lock) {
+    return AppRoutes.home;
+  }
+
+  return _authOnlyRoutes.contains(location) ? AppRoutes.home : null;
+}
+
 /// The app's single [GoRouter] instance. Auth guarding lives entirely in
 /// [redirect]: no screen needs to manually check "am I logged in?" before
 /// rendering, and no screen needs to manually navigate after a successful
@@ -166,69 +244,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         FirebaseAnalyticsObserver(analytics: ref.read(analyticsProvider)),
     ],
     redirect: (context, state) {
-      final location = state.matchedLocation;
-
-      // The marketing site is web-only. Native launches always flow through
-      // Splash while Firebase restores the session, never through Landing.
-      // This check must come before touching Firebase-backed providers: the
-      // public web shell needs to render even when Firebase is unavailable.
-      if (isMarketingRouteAvailable(isWeb: kIsWeb, location: location)) {
-        return null;
-      }
-
-      // Login, registration, and password recovery must remain reachable
-      // while the background Firebase initialization is still in progress.
-      // These pages show their own recoverable service state when an action
-      // needs Firebase, rather than turning a public URL into a blank page.
-      if (kIsWeb && _publicRoutes.contains(location)) {
-        return null;
-      }
-
-      // /splash belongs to the native entry flow. Old hashes, bookmarks, or
-      // an interrupted Auth restore must land at Login on web instead of
-      // leaving a browser visitor behind an indefinite spinner.
-      if (kIsWeb && location == AppRoutes.splash) {
-        return AppRoutes.login;
-      }
-
-      final authState = ref.read(authStateChangesProvider);
+      final decision = computeAppRedirect(ref, state.matchedLocation);
       AuthDebugLog.log(
-        '[AUTH-11] redirect: location=$location '
-        'hasValue=${authState.hasValue} hasError=${authState.hasError} '
-        'isLoading=${authState.isLoading}'
-        '${authState.hasError ? ' error=${authState.error}' : ''}',
+        '[AUTH-11b] redirect decision for ${state.matchedLocation}: '
+        '${decision ?? '(stay)'}',
       );
-
-      if (!authState.hasValue) {
-        return pendingAuthRedirectForPlatform(
-          isWeb: kIsWeb,
-          location: location,
-        );
-      }
-
-      final user = authState.value;
-
-      if (user == null) {
-        if (!kIsWeb && location == AppRoutes.landing) {
-          return AppRoutes.login;
-        }
-        return _publicRoutes.contains(location) ? null : AppRoutes.login;
-      }
-
-      if (!user.emailVerified) {
-        return location == AppRoutes.verifyEmail ? null : AppRoutes.verifyEmail;
-      }
-
-      final appLockEnabled =
-          ref.read(userPreferencesProvider).value?.appLockEnabled ?? false;
-      if (!kIsWeb && appLockEnabled && !ref.read(isUnlockedProvider)) {
-        return location == AppRoutes.lock ? null : AppRoutes.lock;
-      }
-      if (location == AppRoutes.lock) {
-        return AppRoutes.home;
-      }
-
-      return _authOnlyRoutes.contains(location) ? AppRoutes.home : null;
+      return decision;
     },
     routes: [
       GoRoute(

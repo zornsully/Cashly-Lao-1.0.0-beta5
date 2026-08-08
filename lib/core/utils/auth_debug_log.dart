@@ -7,7 +7,11 @@ import 'package:flutter/foundation.dart';
 class AuthDebugLog {
   AuthDebugLog._();
 
-  static const _maxEntries = 14;
+  // A full sign-out + sign-in-again cycle alone generates ~20 entries
+  // (AUTH-10/11/11b fire on every redirect re-evaluation, not just once per
+  // action) -- 14 was proven too small during live testing, truncating
+  // exactly the entries needed to see the router's actual decision.
+  static const _maxEntries = 40;
 
   static final ValueNotifier<List<String>> entries = ValueNotifier(const []);
 

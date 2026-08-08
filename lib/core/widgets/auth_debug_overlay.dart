@@ -27,7 +27,7 @@ class AuthDebugOverlay extends StatelessWidget {
               builder: (context, log, _) {
                 if (log.isEmpty) return const SizedBox.shrink();
                 return Container(
-                  constraints: const BoxConstraints(maxHeight: 260),
+                  constraints: const BoxConstraints(maxHeight: 420),
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: const Color(0xE6000000),
